@@ -13,7 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fastify/static": "^10.1.10",
+    "@fastify/static": "^10.1.11",
     "@opensteward/design-system": "workspace:*",
     "@opensteward/platforms-ui": "workspace:*",
     "@opensteward/shared": "workspace:*",
