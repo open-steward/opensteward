@@ -1,0 +1,599 @@
+/* ==========================================================================
+   OpenSteward — Design Tokens
+   Light-first, with dark mode via [data-theme="dark"]
+   --------------------------------------------------------------------------
+   Philosophy: this is infrastructure. The palette is intentionally restrained
+   so consuming companies can wrap their own brand around it with minimal
+   friction. Color carries meaning, not decoration.
+   ========================================================================== */
+
+/* ---- Typography ------------------------------------------------------- */
+/* Self-hosted OFL fonts — TTFs in fonts/ */
+@font-face {
+  font-family: 'Inter Tight';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('fonts/InterTight-Variable.ttf') format('truetype-variations'),
+       url('fonts/InterTight-Variable.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
+  src: url('fonts/JetBrainsMono-Variable.ttf') format('truetype-variations'),
+       url('fonts/JetBrainsMono-Variable.ttf') format('truetype');
+}
+
+:root {
+  /* --- Font families --- */
+  --font-sans: 'Inter Tight', ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+  /* --- Type scale (major third, 1.200) --- */
+  --text-xs:   0.75rem;   /* 12 */
+  --text-sm:   0.8125rem; /* 13 */
+  --text-base: 0.9375rem; /* 15 — intentionally < 16 for density */
+  --text-md:   1rem;      /* 16 */
+  --text-lg:   1.125rem;  /* 18 */
+  --text-xl:   1.375rem;  /* 22 */
+  --text-2xl:  1.75rem;   /* 28 */
+  --text-3xl:  2.25rem;   /* 36 */
+  --text-4xl:  3rem;      /* 48 */
+  --text-5xl:  4rem;      /* 64 */
+
+  --leading-tight:  1.15;
+  --leading-snug:   1.3;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  --tracking-tight:  -0.02em;
+  --tracking-snug:   -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.02em;
+  --tracking-caps:   0.08em;
+
+  /* ========================================================================
+     COLORS — Light (default)
+     A warm near-paper white + warm grayscale. Primary is a deep forest that
+     reads as "open source terminal" without being clichéd green.
+     ======================================================================== */
+
+  /* --- Warm neutrals (the foundation) --- */
+  --paper:      #FAF9F6;   /* app bg, warm white */
+  --surface-0:  #FFFFFF;   /* cards, elevated */
+  --surface-1:  #F3F1EC;   /* subtle fills, code blocks bg */
+  --surface-2:  #E8E5DE;   /* hover on surface-1 */
+  --surface-3:  #D9D5CB;   /* pressed / active */
+
+  --border-subtle: #EBE8E1;
+  --border-default: #DAD6CB;
+  --border-strong:  #B8B2A3;
+
+  --fg-1: #17180F;   /* primary text */
+  --fg-2: #46483A;   /* secondary text, body */
+  --fg-3: #73746A;   /* tertiary, metadata */
+  --fg-4: #A5A599;   /* placeholder, disabled */
+  --fg-on-accent: #FAF9F6;
+
+  /* --- Primary (deep forest — "terminal green grown up") --- */
+  --accent-50:  #F1F5EE;
+  --accent-100: #DDE7D3;
+  --accent-200: #B9CDA6;
+  --accent-300: #90AE78;
+  --accent-400: #6B8E56;
+  --accent-500: #4E7340;   /* primary action */
+  --accent-600: #3D5A33;   /* primary hover */
+  --accent-700: #2F4627;
+  --accent-800: #1F2E19;
+  --accent-900: #142010;
+
+  --accent:        var(--accent-500);
+  --accent-hover:  var(--accent-600);
+  --accent-muted:  var(--accent-100);
+  --accent-fg:     var(--accent-700);
+
+  /* --- Semantic colors --- */
+  --success:    #3D7A47;
+  --success-bg: #E5F0E2;
+  --success-fg: #1F4527;
+
+  --warning:    #B5751E;
+  --warning-bg: #FBEFD7;
+  --warning-fg: #5C3A0E;
+
+  --danger:     #B33A2A;
+  --danger-bg:  #FBE4DF;
+  --danger-fg:  #651A10;
+
+  --info:       #2F6AA8;
+  --info-bg:    #E2EDF8;
+  --info-fg:    #1A3F66;
+
+  /* --- Vertical accent colors (each vertical has an identity) ---
+     Used only as subtle accents in icon tiles / tags. Muted by design. */
+  --vertical-crm:       #B84A7A;   /* rose */
+  --vertical-crm-bg:    #FBE8F0;
+  --vertical-accounting:    #4E7340;   /* forest (matches brand) */
+  --vertical-accounting-bg: #E7F0DF;
+  --vertical-logistics:     #2F6AA8;   /* steel blue */
+  --vertical-logistics-bg:  #E2EDF8;
+  --vertical-ecommerce:     #B5751E;   /* amber */
+  --vertical-ecommerce-bg:  #FBEFD7;
+  --vertical-payments:      #4A5BA6;   /* indigo */
+  --vertical-payments-bg:   #E4E8F4;
+  --vertical-docsign:       #3E6F8A;   /* slate-teal — distinct from logistics steel-blue + payments indigo */
+  --vertical-docsign-bg:    #DEEAF0;
+  --vertical-projects:      #C56A50;   /* terracotta */
+  --vertical-projects-bg:   #F5E1D8;
+  --vertical-customer-support: #C75D7B;   /* warm rose */
+  --vertical-customer-support-bg: #F4D9E2;
+  --vertical-inventory: #8A8A2C;   /* olive */
+  --vertical-inventory-bg: #E8E8C6;
+  --vertical-hr:            #864A24;   /* burnt sienna */
+  --vertical-hr-bg:         #F3E2D4;
+  --vertical-comms:         #2F7A79;   /* teal */
+  --vertical-comms-bg:      #DDECEC;
+
+  /* --- Elevation / shadows --- */
+  --shadow-xs: 0 1px 0 0 rgba(23, 24, 15, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(23, 24, 15, 0.05), 0 0 0 1px rgba(23, 24, 15, 0.04);
+  --shadow-md: 0 2px 4px -1px rgba(23, 24, 15, 0.06), 0 4px 12px -2px rgba(23, 24, 15, 0.08);
+  --shadow-lg: 0 8px 16px -4px rgba(23, 24, 15, 0.08), 0 20px 40px -8px rgba(23, 24, 15, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(78, 115, 64, 0.22);
+
+  /* --- Radii --- */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* --- Spacing (4px base) --- */
+  --space-0: 0;
+  --space-0_5: 2px;
+  --space-1: 4px;
+  --space-1_5: 6px;
+  --space-2: 8px;
+  --space-2_5: 10px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* --- Motion --- */
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:    120ms;
+  --dur-base:    180ms;
+  --dur-slow:    280ms;
+
+  /* --- Layout --- */
+  --content-max:  1200px;
+  --content-read: 680px;  /* prose width */
+  --sidebar-w:    248px;
+}
+
+/* ==========================================================================
+   DARK MODE — warm dark, not cool gray
+   ──────────────────────────────────────────────────────────────────────────
+   Surfaces keep the warm temperature of light mode via oklch hue=70;
+   semantic hues sit at L≥0.72 so badges pass WCAG AA on charcoal;
+   shadows include a subtle rim-light highlight so elevation reads.
+   ========================================================================== */
+[data-theme="dark"] {
+  --paper:           oklch(0.18 0.012 70);
+  --surface-0:       oklch(0.22 0.012 70);
+  --surface-1:       oklch(0.25 0.014 70);
+  --surface-2:       oklch(0.29 0.016 70);
+  --surface-3:       oklch(0.34 0.018 70);
+
+  --border-subtle:   oklch(0.30 0.014 70);
+  --border-default:  oklch(0.36 0.016 70);
+  --border-strong:   oklch(0.48 0.018 70);
+
+  --fg-1:            oklch(0.96 0.008 80);
+  --fg-2:            oklch(0.78 0.010 80);
+  --fg-3:            oklch(0.58 0.010 80);
+  --fg-4:            oklch(0.42 0.010 80);
+  --fg-on-accent:    oklch(0.16 0.04 150);
+
+  --accent:          oklch(0.74 0.13 150);
+  --accent-hover:    oklch(0.82 0.13 150);
+  --accent-muted:    oklch(0.30 0.06 150);
+  --accent-fg:       oklch(0.82 0.13 150);
+  --accent-50:       oklch(0.26 0.04 150);
+  --accent-100:      oklch(0.30 0.06 150);
+  --accent-200:      oklch(0.36 0.09 150);
+  --accent-300:      oklch(0.46 0.10 150);
+  --accent-400:      oklch(0.58 0.12 150);
+  --accent-500:      var(--accent);
+  --accent-700:      oklch(0.84 0.13 150);
+  --accent-800:      oklch(0.90 0.13 150);
+
+  --success:         oklch(0.74 0.16 150);
+  --warning:         oklch(0.82 0.15 75);
+  --danger:          oklch(0.72 0.17 25);
+  --info:            oklch(0.76 0.13 235);
+
+  --success-bg:      color-mix(in srgb, var(--success) 18%, var(--surface-0));
+  --warning-bg:      color-mix(in srgb, var(--warning) 16%, var(--surface-0));
+  --danger-bg:       color-mix(in srgb, var(--danger)  16%, var(--surface-0));
+  --info-bg:         color-mix(in srgb, var(--info)    16%, var(--surface-0));
+
+  /* Status-token foregrounds (.badge--*, .alert--*, .field__error, etc.).
+     Lifted to L≈0.86 so the text reads on the dark tinted-surface bg
+     above. Without these, the light-mode `*-fg` values (e.g. #1F4527
+     forest) bleed through and render dark-on-dark — unreadable. */
+  --success-fg:      oklch(0.86 0.14 150);
+  --warning-fg:      oklch(0.90 0.14 75);
+  --danger-fg:       oklch(0.86 0.14 25);
+  --info-fg:         oklch(0.88 0.10 235);
+
+  --hover-overlay:   color-mix(in srgb, var(--fg-1) 6%, transparent);
+  --pressed-overlay: color-mix(in srgb, var(--fg-1) 12%, transparent);
+  --focus-ring:      0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+
+  --shadow-xs: 0 1px 0 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 0 0 color-mix(in srgb, #fff 4%, transparent), 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 1px 0 0 color-mix(in srgb, #fff 6%, transparent), 0 4px 12px rgba(0,0,0,0.45);
+  --shadow-lg: 0 1px 0 0 color-mix(in srgb, #fff 8%, transparent), 0 12px 32px rgba(0,0,0,0.55);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent);
+
+  /* ─── Payments — dark mode ────────────────────────────────────────────
+     L 0.75 / chroma 0.10 / hue 270 (indigo). Same L band as the other
+     vertical tokens, lifted for dark-surface contrast. */
+  --vertical-payments:    oklch(0.75 0.10 270);
+  --vertical-payments-bg: oklch(0.30 0.04 270);
+
+  /* ─── Docsign — dark mode ─────────────────────────────────────────────
+     L 0.75 / chroma 0.06 / hue 220 (slate-teal). Same L band as the
+     other vertical tokens. */
+  --vertical-docsign:    oklch(0.75 0.06 220);
+  --vertical-docsign-bg: oklch(0.30 0.03 220);
+
+  /* ─── Projects — dark mode ───
+     L 0.75 / chroma 0.08 / hue 35 (terracotta). */
+  --vertical-projects:    oklch(0.75 0.08 35);
+  --vertical-projects-bg: oklch(0.30 0.04 35);
+
+  /* ─── Customer Support — dark mode ──
+     L 0.75 / chroma 0.07 / hue 0 (warm rose). */
+  --vertical-customer-support:    oklch(0.75 0.07 0);
+  --vertical-customer-support-bg: oklch(0.30 0.04 0);
+
+  /* ─── Inventory — dark mode ────
+     L 0.75 / chroma 0.07 / hue 110 (olive). */
+  --vertical-inventory:    oklch(0.75 0.07 110);
+  --vertical-inventory-bg: oklch(0.30 0.04 110);
+
+  /* ─── Brand asset gradients · dark variants ───────────────────────────
+     Consumed by the dark OG / README / hero exporters. Each pair is
+     "start", "end" of a 135° linear gradient. The 1280×640 social card
+     uses the forest-dark gradient (--og-grad-dark-*), so it has no
+     dedicated pair. */
+  --og-grad-dark-1:     oklch(0.18 0.012 70);
+  --og-grad-dark-2:     oklch(0.22 0.014 70);
+  --readme-grad-dark-1: oklch(0.18 0.012 70);
+  --readme-grad-dark-2: oklch(0.22 0.04 150);
+  --hero-grad-dark-1:   oklch(0.20 0.012 70);
+  --hero-grad-dark-2:   oklch(0.16 0.012 70);
+
+  /* ─── Wordmark on dark · explicit alias ───────────────────────────────
+     Live wordmark uses currentColor + 500/700 weight pair so it picks
+     up var(--fg-1) automatically in both themes. This token exists for
+     PNG/SVG exports where the colour has to be baked into the file. */
+  --wordmark-fg-dark:   var(--fg-1);
+}
+
+/* ==========================================================================
+   SEMANTIC TYPE — headings, body, code
+   ========================================================================== */
+html { color-scheme: light; }
+[data-theme="dark"] html, html[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--fg-1);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11";  /* Inter Tight alt letters */
+}
+
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-4xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 600;
+  color: var(--fg-1);
+  text-wrap: balance;
+}
+
+h2, .h2 {
+  font-size: var(--text-3xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  font-weight: 600;
+  color: var(--fg-1);
+  text-wrap: balance;
+}
+
+h3, .h3 {
+  font-size: var(--text-2xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: 600;
+  color: var(--fg-1);
+}
+
+h4, .h4 {
+  font-size: var(--text-xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  font-weight: 600;
+  color: var(--fg-1);
+}
+
+h5, .h5 {
+  font-size: var(--text-lg);
+  line-height: var(--leading-snug);
+  font-weight: 600;
+  color: var(--fg-1);
+}
+
+h6, .h6, .eyebrow {
+  font-size: var(--text-xs);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--fg-3);
+}
+
+p, .body {
+  font-size: var(--text-md);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-2);
+  text-wrap: pretty;
+}
+
+.body-sm { font-size: var(--text-sm); line-height: var(--leading-normal); color: var(--fg-2); }
+.caption { font-size: var(--text-xs); color: var(--fg-3); line-height: var(--leading-snug); }
+
+.lead {
+  font-size: var(--text-xl);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-2);
+  font-weight: 400;
+  letter-spacing: var(--tracking-snug);
+}
+
+/* Display — marketing hero only */
+.display {
+  font-family: var(--font-sans);
+  font-size: var(--text-5xl);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  color: var(--fg-1);
+  text-wrap: balance;
+}
+
+/* Monospace */
+code, kbd, pre, samp, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  font-feature-settings: "calt", "zero";
+}
+
+code {
+  background: var(--surface-1);
+  color: var(--fg-1);
+  padding: 0.1em 0.35em;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+}
+
+pre {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  overflow: auto;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--fg-1);
+}
+pre code { background: none; border: none; padding: 0; font-size: inherit; color: inherit; }
+
+kbd {
+  background: var(--surface-0);
+  border: 1px solid var(--border-default);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  padding: 0.1em 0.5em;
+  font-size: 0.85em;
+  color: var(--fg-2);
+}
+
+a {
+  color: var(--accent-fg);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  text-decoration-color: color-mix(in oklab, var(--accent-fg), transparent 60%);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+a:hover { color: var(--accent); text-decoration-color: currentColor; }
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin: var(--space-8) 0;
+}
+
+::selection { background: var(--accent-200); color: var(--accent-800); }
+
+/* Focus ring (accessibility baseline) */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+  border-radius: var(--radius-sm);
+}
+
+/* ==========================================================================
+   Focus, motion, z-index, and control-sizing tokens
+   ========================================================================== */
+
+:root {
+  /* ── Focus & selection ──────────────────────────────────────────────── */
+  --focus-ring:        0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  --focus-ring-danger: 0 0 0 3px color-mix(in srgb, var(--danger) 35%, transparent);
+  --focus-ring-info:   0 0 0 3px color-mix(in srgb, var(--info)   35%, transparent);
+  --selection-bg:      color-mix(in srgb, var(--accent) 22%, transparent);
+
+  /* ── Interaction tints ──────────────────────────────────────────────── */
+  --hover-overlay:     color-mix(in srgb, var(--fg-1) 4%, transparent);
+  --pressed-overlay:   color-mix(in srgb, var(--fg-1) 8%, transparent);
+  --selected-bg:       color-mix(in srgb, var(--accent) 8%, transparent);
+  --selected-fg:       var(--accent-fg);
+
+  /* ── Status dots ────────────────────────────────────────────────────── */
+  --dot-healthy:       var(--success);
+  --dot-warning:       var(--warning);
+  --dot-error:         var(--danger);
+  --dot-info:          var(--info);
+  --dot-neutral:       var(--fg-3);
+  --dot-syncing:       var(--accent);
+
+  /* ── Motion ─────────────────────────────────────────────────────────── */
+  --motion-fast:       120ms;
+  --motion-base:       200ms;
+  --motion-slow:       320ms;
+  --ease-out:          cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:       cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Z-index layers ─────────────────────────────────────────────────── */
+  --z-sticky:          100;
+  --z-overlay:         900;
+  --z-modal:           1000;
+  --z-toast:           1100;
+  --z-tooltip:         1200;
+
+  /* ── Form sizing ─────────────────────────────────────────────────────── */
+  --control-h-sm:      28px;
+  --control-h-md:      36px;
+  --control-h-lg:      44px;          /* WCAG touch target */
+  --control-px:        12px;
+
+  /* ── Density aliases ─────────────────────────────────────────────────── */
+  --gutter-tight:      var(--space-2);
+  --gutter-default:    var(--space-4);
+  --gutter-loose:      var(--space-6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+/* ==========================================================================
+   OpenSteward · Design System
+   Docs-server tokens
+   ──────────────────────────────────────────────────────────────────────────
+   HTTP method colors, code blocks, Mermaid theme, OG gradients.
+   ========================================================================== */
+
+:root {
+  /* ── HTTP method colors ────────────────────────────────────────────────
+     Aliases over the semantic palette so the swagger theme has one source
+     of truth and the .method-pill component reads from tokens. The five
+     overlapping methods reuse existing semantic colors; PATCH and HEAD get
+     unique hues so the seven verbs are visually distinct.
+     ──────────────────────────────────────────────────────────────────── */
+  --method-get:     var(--info);
+  --method-post:    var(--success);
+  --method-put:     var(--warning);
+  --method-patch:   oklch(0.55 0.10 200);   /* teal */
+  --method-delete:  var(--danger);
+  --method-head:    oklch(0.55 0.10 290);   /* violet */
+  --method-options: var(--fg-3);
+
+  /* ── Code-block colors ────────────────────────────────────────────────
+     Always dark per dev-docs convention, but tokenised so the swagger
+     theme and .code-tabs share one source of truth. */
+  --code-bg:             oklch(0.18 0.012 70);
+  --code-fg:             oklch(0.94 0.008 80);
+  --code-token-string:   oklch(0.84 0.10 150);
+  --code-token-number:   oklch(0.82 0.12  60);
+  --code-token-keyword:  oklch(0.80 0.10 290);
+  --code-token-property: oklch(0.78 0.04  80);
+  --code-token-comment:  oklch(0.58 0.02  80);
+
+  /* ── Mermaid theme variables ──────────────────────────────────────────
+     Consumed by guides.ts when calling mermaid.initialize(). The mermaid
+     library reads themeVariables at initialisation; we feed it tokens so
+     diagrams reflect the page theme automatically. */
+  --mermaid-bg:           var(--surface-1);
+  --mermaid-node-fill:    var(--surface-0);
+  --mermaid-node-stroke:  var(--border-default);
+  --mermaid-node-text:    var(--fg-1);
+  --mermaid-line:         var(--fg-3);
+  --mermaid-edge-text:    var(--fg-2);
+  /* per-vertical fills used by classDef aux/vert/side in the markdown */
+  --mermaid-aux-fill:     var(--info-bg);
+  --mermaid-aux-stroke:   color-mix(in srgb, var(--info) 30%, transparent);
+  --mermaid-aux-text:     var(--info-fg);
+  --mermaid-vert-fill:    var(--accent-50);
+  --mermaid-vert-stroke:  var(--accent-200);
+  --mermaid-vert-text:    var(--accent-fg);
+  --mermaid-side-fill:    oklch(0.92 0.04 290);
+  --mermaid-side-stroke:  oklch(0.70 0.07 290);
+  --mermaid-side-text:    oklch(0.30 0.10 290);
+
+  /* ── OG / share-image gradients ──────────────────────────────────────
+     For the per-page OG image generator (run at build time). */
+  --og-grad-1: var(--accent-700);
+  --og-grad-2: var(--accent-900);
+}
+
+/* ── Dark-mode overrides for the docs additions ────────────────────────── */
+[data-theme="dark"] {
+  --code-bg:             oklch(0.14 0.010 70);
+  --code-fg:             oklch(0.94 0.008 80);
+
+  --mermaid-bg:          oklch(0.25 0.014 70);
+  --mermaid-node-fill:   oklch(0.22 0.012 70);
+  --mermaid-node-stroke: oklch(0.40 0.018 70);
+  --mermaid-node-text:   oklch(0.96 0.008 80);
+  --mermaid-line:        oklch(0.62 0.010 80);
+  --mermaid-edge-text:   oklch(0.84 0.008 80);
+
+  --mermaid-aux-fill:    oklch(0.30 0.05 220);
+  --mermaid-aux-stroke:  oklch(0.48 0.10 220);
+  --mermaid-aux-text:    oklch(0.92 0.04 220);
+  --mermaid-vert-fill:   oklch(0.30 0.05 150);
+  --mermaid-vert-stroke: oklch(0.48 0.10 150);
+  --mermaid-vert-text:   oklch(0.92 0.04 150);
+  --mermaid-side-fill:   oklch(0.30 0.05 310);
+  --mermaid-side-stroke: oklch(0.48 0.10 310);
+  --mermaid-side-text:   oklch(0.92 0.04 310);
+}

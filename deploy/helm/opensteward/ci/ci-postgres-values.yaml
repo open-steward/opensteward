@@ -1,0 +1,35 @@
+# `helm template`/lint + kind-install fixture: Postgres mode (stateless, HA),
+# external secret refs, HPA + PDB on.
+database:
+  mode: postgres
+  external:
+    existingSecret: opensteward-db
+    secretKey: DATABASE_URL
+redis:
+  enabled: true
+  url: "redis://opensteward-redis:6379"
+secrets:
+  source: existingSecret
+  existingSecret: opensteward-secrets
+podDisruptionBudget:
+  enabled: true
+publicUrls:
+  adminApi: "https://admin-api.example.test"
+  adminUi: "https://admin.example.test"
+  docsServer: "https://docs.example.test"
+  integrationServer: "https://api.example.test"
+services:
+  integration-server:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 75
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: admin.example.test
+      service: admin
+    - host: api.example.test
+      service: integration-server

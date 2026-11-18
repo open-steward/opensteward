@@ -1,0 +1,102 @@
+<% layout('../layout', { title: 'Data' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Activity</div>
+    <h1 class="page-header__title">Data</h1>
+    <p class="page-header__desc">Browse what the data store holds for each connection in your scope. Personal and financial values are masked unless you hold the permission to reveal them.</p>
+  </div>
+</header>
+
+<% if (disabled) { %>
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="empty-state">
+    <div class="empty-state__icon"><i class="ph ph-database"></i></div>
+    <h3 class="empty-state__title">The data store is turned off</h3>
+    <p class="empty-state__body">This deployment runs in passthrough mode, so nothing is stored and there is nothing to browse. Set <code class="mono">DATA_STORE_MODE=database</code> and restart to keep synced records here.</p>
+  </div>
+</div>
+<% } else { %>
+<%
+  // The filter form and header render whenever the store is on, even when
+  // the filter matches nothing — hiding them would strand an operator with no
+  // Clear control (the property every filtered admin table shares).
+  const hasFilters = Object.keys(tableState.filters).length > 0
+  const colspan = tableSpec.columns.filter((c) => !c.hidden).length
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (connections.length === 0) { %>
+      <tr>
+        <td colspan="<%= colspan %>">
+          <% if (totalConnections === 0) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon"><i class="ph ph-database"></i></div>
+            <h3 class="empty-state__title">No stored data yet</h3>
+            <p class="empty-state__body">Records appear here once a connection has synced. Start a sync from the connection page, or wait for the next scheduled one.</p>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="/sync-jobs">Sync jobs →</a>
+            </div>
+          </div>
+          <% } else { %>
+          <div class="empty-state empty-state--no-results">
+            <% if (tableState.filters.label) { %>
+            <h3 class="empty-state__title">No connection matches “<%= tableState.filters.label %>”</h3>
+            <p class="empty-state__body">Label matches a substring, case-insensitively.</p>
+            <% } else if (tableState.filters.id) { %>
+            <h3 class="empty-state__title">No connection matches “<%= tableState.filters.id %>”</h3>
+            <p class="empty-state__body">Connection id matches a substring — an id prefix is enough, the first block of the UUID will do.</p>
+            <% } else { %>
+            <h3 class="empty-state__title">No connections match your filters</h3>
+            <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+            <% } %>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+            </div>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+      <% for (const c of connections) { %>
+      <tr>
+        <td>
+          <a href="/data/connections/<%= encodeURIComponent(c.connectionId) %>" style="font-weight: 500"><%= c.label || c.platform %></a>
+        </td>
+        <td>
+          <%# The full id, copyable, as on /connections — it is what every /v1
+              call takes as ?connection_id=. %>
+          <span class="row" style="gap: var(--space-2); align-items: center">
+            <code class="mono" style="font-size: var(--text-xs)"><%= c.connectionId %></code>
+            <button type="button" class="btn btn--ghost btn--sm" data-copy="<%= c.connectionId %>"
+              title="Copy connection id" aria-label="Copy connection id">Copy</button>
+          </span>
+        </td>
+        <td style="text-transform: capitalize"><%= c.vertical %></td>
+        <td style="font-size: var(--text-xs)"><%- include('../_tenant', { tenantId: c.ownerTenantId, tenants }) %></td>
+        <td><%= c.platform %></td>
+        <td>
+          <% if (c.resources.length === 0) { %><span class="muted">—</span><% } %>
+          <% for (const r of c.resources) { %>
+          <a class="badge badge--muted" href="/data/connections/<%= encodeURIComponent(c.connectionId) %>?type=<%= encodeURIComponent(r.resourceType) %>"><%= r.resourceType %> · <%= r.count.toLocaleString() %></a>
+          <% } %>
+        </td>
+        <td class="muted"><%= c.total.toLocaleString() %></td>
+        <td class="muted"<% if (c.latestMs) { %> title="<%= new Date(c.latestMs).toLocaleString() %>"<% } %>><%= c.freshness %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<% } %>

@@ -1,0 +1,68 @@
+<% layout('../layout', { title: title }) -%>
+<%
+  const heading = kind === 'created' ? 'SQL login created' : kind === 'rotated' ? 'Password rotated' : 'SQL login revoked'
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/sql-access">SQL access</a></div>
+    <h1 class="page-header__title"><%= heading %></h1>
+    <p class="page-header__desc">
+      <strong><%= principal.label %></strong> · <span class="mono"><%= principal.username %></span>
+      <% if (principal.pii) { %><span class="badge badge--warning">unmasked (PII)</span><% } %>
+    </p>
+  </div>
+</header>
+
+<% if (password) { %>
+<div class="alert alert--warning" style="margin-top: var(--space-4)" role="status" data-password-once>
+  <strong>Copy the password now.</strong> This is the only time it is shown: OpenSteward keeps no copy, and
+  this page is not cached. If you lose it, rotate the password.
+  <% if (kind === 'rotated') { %> The previous password no longer works<%= typeof sessionsTerminated === 'number' ? ' and ' + sessionsTerminated + ' open session(s) were ended' : '' %>.<% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-4)">
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4)">
+    <div class="stack stack--sm"><span class="eyebrow">Host</span><p style="margin: 0" class="mono"><%= snippets.host %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Port</span><p style="margin: 0" class="mono">5432</p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Database</span><p style="margin: 0" class="mono"><%= snippets.database %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Username</span><p style="margin: 0" class="mono"><%= principal.username %> <button type="button" class="btn btn--ghost btn--sm" data-copy="<%= principal.username %>">Copy</button></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Schema</span><p style="margin: 0" class="mono"><%= searchPath %></p></div>
+  </div>
+  <div class="stack stack--sm" style="margin-top: var(--space-4)">
+    <span class="eyebrow">Password</span>
+    <div class="row" style="gap: var(--space-2); align-items: center">
+      <code class="mono" style="font-size: var(--text-md); word-break: break-all" data-password><%= password %></code>
+      <button type="button" class="btn btn--secondary btn--sm" data-copy="<%= password %>">Copy</button>
+    </div>
+  </div>
+  <% if (!snippets.hostKnown) { %>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-3)">No read host is advertised (<code class="mono">ANALYTICS_READ_HOST</code>): use the host your OpenSteward Postgres is reachable at.</p>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-4)" data-snippets>
+  <h2 class="card__title">Connect</h2>
+  <div class="stack stack--sm">
+    <div class="row row--between" style="align-items: center"><span class="eyebrow">psql</span><button type="button" class="btn btn--ghost btn--sm" data-copy="<%= snippets.psql %>">Copy</button></div>
+    <pre class="mono" style="margin: 0; white-space: pre-wrap; word-break: break-all; font-size: var(--text-sm)"><%= snippets.psql %></pre>
+    <div class="row row--between" style="align-items: center; margin-top: var(--space-3)"><span class="eyebrow">JDBC</span><button type="button" class="btn btn--ghost btn--sm" data-copy="<%= snippets.jdbc %>">Copy</button></div>
+    <pre class="mono" style="margin: 0; white-space: pre-wrap; word-break: break-all; font-size: var(--text-sm)"><%= snippets.jdbc %></pre>
+  </div>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-3)">Metabase, Superset, Tableau and other BI tools: add a PostgreSQL source with the host, database, username and password above. Tables appear without a schema prefix.</p>
+</div>
+<% } %>
+
+<% if (script) { %>
+<div class="card" style="margin-top: var(--space-4)" data-manual-script>
+  <div class="row row--between" style="align-items: center">
+    <h2 class="card__title" style="margin: 0">Run this to apply the change</h2>
+    <button type="button" class="btn btn--ghost btn--sm" data-copy="<%= script %>">Copy</button>
+  </div>
+  <p class="muted" style="font-size: var(--text-sm)">This deployment provisions SQL access manually. The change takes effect only once a role with <code class="mono">CREATEROLE</code> runs this script. It holds a password verifier, never the password itself.</p>
+  <pre class="mono" style="max-height: 360px; overflow: auto; font-size: var(--text-xs); white-space: pre"><%= script %></pre>
+</div>
+<% } %>
+
+<div class="row" style="margin-top: var(--space-4)">
+  <a href="/sql-access" class="btn btn--primary">Done</a>
+</div>

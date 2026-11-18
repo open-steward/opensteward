@@ -1,0 +1,88 @@
+<% layout('../layout', { title: 'Delivery settings' }) -%>
+<% if (!sub) { %>
+<h1>Subscription not found</h1>
+<p class="muted" style="margin-top: var(--space-2)">It was deleted, or the id is wrong.</p>
+<p style="margin-top: var(--space-4)"><a href="/webhooks">Back to webhooks</a></p>
+<% } else { %>
+<%
+  const FORMAT_LABELS = {
+    opensteward: 'OpenSteward envelope',
+    slack: 'Slack',
+    teams: 'Microsoft Teams',
+    flat: 'Flat JSON',
+  }
+  // After a validation failure the operator's own input comes back in
+  // `submitted`, so the form shows what they typed rather than resetting to
+  // what is stored — the correction is made right here.
+  const posted = typeof submitted !== 'undefined' && submitted ? submitted : null
+  const fmt = (posted && posted.format) || sub.format || 'opensteward'
+  const hdrs = sub.headerNames || []
+  const headerText = posted ? posted.headers : ''
+  // Empty string, not `sub.label`, when a post came back: the operator may
+  // have deliberately cleared the box, and re-filling it would silently undo
+  // that on their next submit.
+  const labelText = posted ? (posted.label || '') : (sub.label || '')
+%>
+<div class="row row--between">
+  <h1 style="margin: 0">Delivery settings</h1>
+  <%# data-modal-omit: in the dialog copy of this page the close button is the
+      way back, so a second one would only compete with it. The page keeps it. %>
+  <a href="/webhooks" class="btn btn--ghost btn--sm" data-modal-omit>Back to webhooks</a>
+</div>
+<p class="muted" style="margin: var(--space-1) 0 0">
+  How events are shaped and authenticated on their way to
+  <span class="mono"><%= sub.url %></span> — tenant <span class="mono"><%= sub.tenantId %></span>.
+</p>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4); max-width: 640px"><%= error %></div>
+<% } %>
+
+<form method="POST" action="/webhooks/<%= sub.id %>/settings" class="card stack" style="margin-top: var(--space-6); max-width: 640px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="field">
+    <label class="field__label" for="wh-label">Label</label>
+    <input class="input" type="text" id="wh-label" name="label" maxlength="200"
+           value="<%= labelText %>" placeholder="Billing service">
+    <span class="field__hint">
+      What the webhooks list shows and searches. Clearing the box removes the label.
+    </span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="wh-format">Payload format</label>
+    <select class="input" id="wh-format" name="format">
+      <% Object.keys(FORMAT_LABELS).forEach((key) => { %>
+      <option value="<%= key %>" <%= fmt === key ? 'selected' : '' %>><%= FORMAT_LABELS[key] %></option>
+      <% }) %>
+    </select>
+    <span class="field__hint">
+      The OpenSteward envelope is the signed event JSON — use it for an endpoint you control.
+      Slack expects a Slack incoming-webhook URL, Teams a Workflows (Power Automate) URL, and
+      Flat JSON is one level of dotted keys for tools that only map top-level fields.
+    </span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="wh-headers">Custom headers</label>
+    <% if (hdrs.length) { %>
+    <%# The names are all the API returns. Showing them is the only way an
+        operator can tell what they are about to replace. %>
+    <p class="muted" style="font-size: var(--text-xs); margin: 0 0 var(--space-2)">
+      Currently sending
+      <% hdrs.forEach((h, i) => { %><% if (i > 0) { %>, <% } %><span class="mono"><%= h %></span>: ••••<% }) %>
+    </p>
+    <% } %>
+    <textarea class="input mono" id="wh-headers" name="headers" rows="3" placeholder="X-Api-Key: your-key"><%= headerText %></textarea>
+    <span class="field__hint">
+      One <span class="mono">Name: value</span> per line. Values are never shown again, so saving
+      replaces every custom header on this subscription — leave the box empty to remove them all.
+    </span>
+  </div>
+
+  <div class="row" style="margin-top: var(--space-4)">
+    <button type="submit" class="btn btn--primary">Save settings</button>
+  </div>
+</form>
+<% } %>

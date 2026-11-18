@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "OpenSteward Helm values",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "nodeEnv": {
+      "const": "production",
+      "description": "Must stay 'production' so assertSecret() fails closed."
+    },
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "registry": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "digest": { "type": "string" },
+        "pullPolicy": { "enum": ["Always", "IfNotPresent", "Never"] },
+        "pullSecrets": { "type": "array", "items": { "type": "object" } }
+      },
+      "required": ["registry"]
+    },
+    "database": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["sqlite", "postgres"] },
+        "external": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": { "type": "string" },
+            "secretKey": { "type": "string" }
+          }
+        },
+        "persistence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "storageClass": { "type": "string" },
+            "size": { "type": "string" },
+            "accessMode": { "type": "string" }
+          }
+        }
+      },
+      "required": ["mode"]
+    },
+    "redis": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "url": { "type": "string" }
+      }
+    },
+    "license": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OpenSteward license, mounted on integration-server only (docs/deployment/license.md).",
+      "properties": {
+        "existingSecret": {
+          "type": "string",
+          "description": "A Secret NAME (RFC 1123 subdomain), never the license itself. The pattern applies only within the length limit, so a pasted token is refused by length and helm's error never quotes it.",
+          "maxLength": 253,
+          "if": { "maxLength": 253 },
+          "then": { "pattern": "^$|^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$" }
+        },
+        "secretKey": { "type": "string", "minLength": 1 }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": { "enum": ["existingSecret", "externalSecrets", "generate", "plain"] },
+        "existingSecret": { "type": "string" },
+        "plain": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "jwtSecret": { "type": "string" },
+            "sessionSecret": { "type": "string" },
+            "storeSecret": { "type": "string" },
+            "adminSecret": { "type": "string" },
+            "serviceSecret": { "type": "string" },
+            "bootstrapToken": { "type": "string" }
+          }
+        },
+        "externalSecrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "apiVersion": { "type": "string", "minLength": 1 },
+            "refreshInterval": { "type": "string" },
+            "createStore": { "type": "boolean" },
+            "provider": { "enum": ["aws", "azure", "gcp"] },
+            "secretStore": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string" },
+                "kind": { "enum": ["ClusterSecretStore", "SecretStore"] }
+              }
+            },
+            "aws": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": { "region": { "type": "string" } }
+            },
+            "azure": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "vaultUrl": { "type": "string" },
+                "tenantId": { "type": "string" }
+              }
+            },
+            "gcp": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "projectID": { "type": "string" },
+                "clusterLocation": { "type": "string" },
+                "clusterName": { "type": "string" }
+              }
+            },
+            "remoteSecretName": { "type": "string" },
+            "keys": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "jwtSecret": { "type": "string" },
+                "sessionSecret": { "type": "string" },
+                "storeSecret": { "type": "string" },
+                "adminSecret": { "type": "string" },
+                "serviceSecret": { "type": "string" },
+                "bootstrapToken": { "type": "string" }
+              }
+            }
+          }
+        },
+        "generate": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "image": { "type": "string", "minLength": 1 },
+            "imagePullPolicy": { "enum": ["Always", "IfNotPresent", "Never"] },
+            "includeAdminSecret": { "type": "boolean" },
+            "bootstrapToken": { "type": "boolean" }
+          }
+        }
+      },
+      "required": ["source"]
+    },
+    "rotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "target": { "enum": ["postgres", "admin-api", "integration-server"] },
+        "existingSecret": { "type": "string" },
+        "image": { "type": "string" },
+        "sqlitePaths": { "type": "array", "items": { "type": "string" } },
+        "quiesceWaitSeconds": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "publicUrls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "scheme": { "enum": ["http", "https"] },
+        "adminApi": { "type": "string" },
+        "adminUi": { "type": "string" },
+        "docsServer": { "type": "string" },
+        "integrationServer": { "type": "string" }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "className": { "type": "string" },
+        "annotations": { "type": "object" },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["host", "service"],
+            "properties": {
+              "host": { "type": "string" },
+              "service": {
+                "enum": ["admin", "docs-server", "webhook-gateway", "integration-server"],
+                "description": "admin-api is intentionally not allowed (ClusterIP-only)."
+              },
+              "paths": { "type": "array", "items": { "type": "object" } }
+            }
+          }
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "existingSecret": { "type": "string" },
+            "certManager": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "clusterIssuer": { "type": "string" }
+              }
+            }
+          }
+        },
+        "sso": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "host": { "type": "string" },
+            "slugs": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64,
+                "pattern": "^[a-z0-9-]+$"
+              }
+            },
+            "scim": { "type": "boolean" },
+            "allowFrom": { "type": "array", "items": { "type": "object" } }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": { "type": "boolean" },
+        "name": { "type": "string" },
+        "annotations": { "type": "object" }
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": { "enabled": { "type": "boolean" } }
+    },
+    "services": { "type": "object" },
+    "analytics": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Optional read-only SQL access and embedded Superset. Postgres only.",
+      "properties": {
+        "sqlAccess": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "adminDatabaseUrl": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "existingSecret": { "type": "string" },
+                "secretKey": { "type": "string" }
+              }
+            },
+            "readHost": { "type": "string" },
+            "rolePrefix": { "type": "string", "pattern": "^([a-z][a-z0-9_]{0,15})?$" },
+            "provisionJob": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "image": { "type": "string" }
+              }
+            }
+          }
+        },
+        "superset": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": { "type": "string" },
+            "internalUrl": { "type": "string" },
+            "publicUrl": { "type": "string" },
+            "bootstrap": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean" },
+                "backoffLimit": { "type": "integer", "minimum": 0 },
+                "activeDeadlineSeconds": { "type": "integer", "minimum": 60 },
+                "extraEnv": { "type": "array", "items": { "type": "object" } }
+              }
+            },
+            "networkPolicy": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "allowFrom": { "type": "array", "items": { "type": "object" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "superset": {
+      "type": "object",
+      "description": "Values for the Apache Superset chart dependency (condition superset.enabled).",
+      "properties": { "enabled": { "type": "boolean" } }
+    }
+  },
+  "required": ["image", "database", "secrets", "nodeEnv"],
+  "allOf": [
+    {
+      "$comment": "Embedded Superset reads the Postgres analytics views.",
+      "if": {
+        "properties": {
+          "superset": { "properties": { "enabled": { "const": true } }, "required": ["enabled"] }
+        },
+        "required": ["superset"]
+      },
+      "then": {
+        "properties": { "database": { "properties": { "mode": { "const": "postgres" } } } }
+      }
+    },
+    {
+      "$comment": "Read-only SQL access runs on the Postgres backend only.",
+      "if": {
+        "properties": {
+          "analytics": {
+            "properties": {
+              "sqlAccess": {
+                "properties": { "enabled": { "const": true } },
+                "required": ["enabled"]
+              }
+            },
+            "required": ["sqlAccess"]
+          }
+        },
+        "required": ["analytics"]
+      },
+      "then": {
+        "properties": { "database": { "properties": { "mode": { "const": "postgres" } } } }
+      }
+    }
+  ]
+}

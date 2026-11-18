@@ -1,0 +1,20 @@
+export const metadata = {
+  platform: 'dualentry',
+  totalResources: 13,
+  availableResources: [
+    'account',
+    'bill',
+    'contact',
+    'creditmemo',
+    'expense',
+    'invoice',
+    'journal',
+    'order',
+    'organization',
+    'purchaseorder',
+    'salesorder',
+    'taxrate',
+    'transaction',
+  ],
+  unavailableResources: [],
+} as const

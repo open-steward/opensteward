@@ -1,0 +1,21 @@
+<!-- OpenSteward wordmark — single colour, two weights (500/700)
+
+     Spec:
+       * Both halves SAME colour. A two-tone split (accent on "Steward")
+         breaks on dark surfaces — the accent jumps and "Open" reads as a
+         prefix.
+       * Weight pair 500 / 700 carries the brand-half cue instead.
+       * Family: Inter Tight (variable font shipped under fonts/).
+       * Tracking: -0.02em.
+       * Casing: ALWAYS "OpenSteward" — never two words, never lowercase 's'.
+
+     SVG used here so the asset is a single file consumed by docs-server,
+     admin, mcp-server README and any HTML-to-PNG export pipeline. For inline
+     HTML headers the equivalent treatment is two <span> children with
+     font-weight: 500 then 700. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 36" role="img" aria-label="OpenSteward">
+  <title>OpenSteward</title>
+  <text x="0" y="26" fill="currentColor" font-family="Inter Tight, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" letter-spacing="-0.48">
+    <tspan font-weight="500">Open</tspan><tspan font-weight="700">Steward</tspan>
+  </text>
+</svg>

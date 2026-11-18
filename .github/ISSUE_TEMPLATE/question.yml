@@ -1,0 +1,20 @@
+name: Question
+description: How to set something up, or whether OpenSteward fits your use case.
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The guides in [`docs/`](https://github.com/open-steward/opensteward/tree/main/docs) may already answer it.
+        Issues are public, so leave out secrets and your customers' data.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What you are building, how OpenSteward is deployed, and what you have tried.

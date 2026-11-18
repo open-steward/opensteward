@@ -1,0 +1,27 @@
+server:
+  port: 3004
+  host: 0.0.0.0
+
+db:
+  path: ./data/webhook-gateway.db
+
+# Map platform slugs to their vertical + webhook signing secret. Every
+# inbound webhook for a known platform gets POSTed to the unified
+# integration-server at /webhooks/{vertical}/{platform}.
+platforms:
+  xero:
+    vertical: accounting
+    url: http://localhost:3010
+    secret: ""
+  quickbooks:
+    vertical: accounting
+    url: http://localhost:3010
+    secret: ""
+  fedex:
+    vertical: logistics
+    url: http://localhost:3010
+    secret: ""
+  ups:
+    vertical: logistics
+    url: http://localhost:3010
+    secret: ""

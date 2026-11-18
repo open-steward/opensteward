@@ -1,0 +1,231 @@
+<% layout('../layout', { title: 'Company info' }) -%>
+<div style="max-width: 840px">
+  <h1>My company</h1>
+  <p class="muted" style="margin-top: var(--space-2); font-size: var(--text-sm)">
+    These details brand the admin UI and serve as the source of truth when registering OAuth apps
+    on each adapter's developer portal. All fields are optional — fill in what's relevant.
+  </p>
+
+  <% if (error) { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+  <% } %>
+  <% if (success) { %>
+  <div class="alert alert--success" style="margin-top: var(--space-4)">Saved.</div>
+  <% } %>
+  <div id="brandingFormError" class="alert alert--danger" style="margin-top: var(--space-4); display: none"></div>
+
+  <form method="POST" action="/company-info" class="card stack stack--lg" style="margin-top: var(--space-6)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <!-- ── Identity ──────────────────────────────────────── -->
+    <section>
+      <h2 class="card__title" style="margin-bottom: var(--space-3)">Identity</h2>
+      <div class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="field">
+          <label class="field__label" for="name">Display name</label>
+          <input class="input" type="text" name="name" id="name" value="<%= company.name || '' %>" placeholder="Acme Inc.">
+        </div>
+        <div class="field">
+          <label class="field__label" for="legalName">Legal name</label>
+          <input class="input" type="text" name="legalName" id="legalName" value="<%= company.legalName || '' %>" placeholder="Acme Holdings B.V.">
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label" for="description">Description</label>
+          <textarea class="textarea" name="description" id="description" rows="2"
+            placeholder="One or two sentences about your company"><%= company.description || '' %></textarea>
+        </div>
+        <div class="field">
+          <label class="field__label" for="website">Website</label>
+          <input class="input" type="url" name="website" id="website" value="<%= company.website || '' %>" placeholder="https://acme.example.com">
+        </div>
+        <div class="field">
+          <label class="field__label" for="baseUrl">Base URL <span class="muted" style="font-weight: 400">(this admin's public URL)</span></label>
+          <input class="input" type="url" name="baseUrl" id="baseUrl" value="<%= company.baseUrl || '' %>" placeholder="https://oi.acme.example.com">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Branding ──────────────────────────────────────── -->
+    <section>
+      <h2 class="card__title" style="margin-bottom: var(--space-3)">Branding</h2>
+      <div class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="field">
+          <label class="field__label" for="logoFile">Logo</label>
+          <% if (company.logoDataUrl) { %>
+          <div style="padding: var(--space-3); background: var(--surface-1); border-radius: var(--radius-sm); display: inline-block; margin-bottom: var(--space-2)">
+            <img src="<%= company.logoDataUrl %>" alt="Current logo" style="height: 48px; width: auto; display: block">
+          </div>
+          <% } %>
+          <input type="file" id="logoFile" accept="image/*"
+            data-target="logoDataUrl" data-hint="logoFileHint" data-max-bytes="524288" data-label="Logo">
+          <input type="hidden" name="logoDataUrl" id="logoDataUrl" value="<%= company.logoDataUrl || '' %>">
+          <p class="field__hint" id="logoFileHint">SVG, PNG or JPEG, 512KB max. Stored inline as a data URL — no upload server needed.</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="primaryColor">Primary color</label>
+          <div class="row" style="gap: var(--space-2)">
+            <input type="color" value="<%= company.primaryColor || '#2D6ADB' %>"
+              onchange="document.getElementById('primaryColor').value = this.value"
+              style="height: 36px; width: 56px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; background: var(--surface-0)">
+            <input class="input input--mono" type="text" name="primaryColor" id="primaryColor" value="<%= company.primaryColor || '' %>"
+              placeholder="#2D6ADB"
+              pattern="^#[0-9a-fA-F]{6}$">
+          </div>
+          <p class="field__hint">Accent colour for buttons, links and highlights.</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="secondaryColor">Secondary color</label>
+          <div class="row" style="gap: var(--space-2)">
+            <input type="color" value="<%= company.secondaryColor || '#2D6ADB' %>"
+              onchange="document.getElementById('secondaryColor').value = this.value"
+              style="height: 36px; width: 56px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; background: var(--surface-0)">
+            <input class="input input--mono" type="text" name="secondaryColor" id="secondaryColor" value="<%= company.secondaryColor || '' %>"
+              placeholder="#1B4FB0"
+              pattern="^#[0-9a-fA-F]{6}$">
+          </div>
+          <p class="field__hint">Used for hover/active accent states. Falls back to the primary colour.</p>
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label" for="faviconFile">Favicon</label>
+          <% if (company.faviconDataUrl) { %>
+          <div style="padding: var(--space-3); background: var(--surface-1); border-radius: var(--radius-sm); display: inline-block; margin-bottom: var(--space-2)">
+            <img src="<%= company.faviconDataUrl %>" alt="Current favicon" style="height: 32px; width: auto; display: block">
+          </div>
+          <% } %>
+          <input type="file" id="faviconFile" accept="image/png,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico"
+            data-target="faviconDataUrl" data-hint="faviconFileHint" data-max-bytes="262144" data-label="Favicon">
+          <input type="hidden" name="faviconDataUrl" id="faviconDataUrl" value="<%= company.faviconDataUrl || '' %>">
+          <p class="field__hint" id="faviconFileHint">PNG, SVG or ICO, 256KB max. Stored inline as a data URL — shown in the browser tab.</p>
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label">White-label</label>
+          <!-- Hidden companion carries the value when the box is off; a bare
+               checkbox would omit the key entirely and the flag could never be
+               turned back off. The checkbox just toggles the hidden value. -->
+          <input type="hidden" name="hideAttribution" id="hideAttribution" value="<%= company.hideAttribution ? 'true' : 'false' %>">
+          <label style="display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm)">
+            <input type="checkbox" id="hideAttributionToggle" <%= company.hideAttribution ? 'checked' : '' %>
+              onchange="document.getElementById('hideAttribution').value = this.checked ? 'true' : 'false'">
+            Hide “OpenSteward” branding where I haven’t set my own logo or name
+          </label>
+          <p class="field__hint">When on, the default OpenSteward mark and wordmark are suppressed on the admin UI, Connect Links and the developer portal. Your own logo and name always show.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Typography ────────────────────────────────────── -->
+    <section>
+      <h2 class="card__title" style="margin-bottom: var(--space-3)">Typography</h2>
+      <p class="muted" style="margin-bottom: var(--space-3); font-size: var(--text-sm)">
+        Apply a custom font across the admin UI, Connect Links and the developer portal. Either
+        upload a font file or point at a hosted stylesheet (e.g. Google Fonts) — then name the
+        family so it can be applied. An uploaded file takes precedence over the stylesheet URL.
+      </p>
+      <div class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="field">
+          <label class="field__label" for="fontFamily">Font family</label>
+          <input class="input" type="text" name="fontFamily" id="fontFamily" value="<%= company.fontFamily || '' %>"
+            placeholder="Roboto"
+            pattern="^[\w ,'&quot;-]{1,120}$">
+          <p class="field__hint">The CSS family name, e.g. <code>Roboto</code> or <code>"IBM Plex Sans"</code>.</p>
+        </div>
+        <div class="field">
+          <label class="field__label" for="fontUrl">Font stylesheet URL <span class="muted" style="font-weight: 400">(optional)</span></label>
+          <input class="input" type="url" name="fontUrl" id="fontUrl" value="<%= company.fontUrl || '' %>"
+            placeholder="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
+          <p class="field__hint">https only. Used when no font file is uploaded.</p>
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label" for="fontFile">Font file <span class="muted" style="font-weight: 400">(optional)</span></label>
+          <% if (company.fontDataUrl) { %>
+          <p class="muted" style="font-size: var(--text-sm); margin-bottom: var(--space-2)">A font file is currently uploaded.</p>
+          <% } %>
+          <input type="file" id="fontFile" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf"
+            data-target="fontDataUrl" data-hint="fontFileHint" data-max-bytes="524288" data-label="Font">
+          <input type="hidden" name="fontDataUrl" id="fontDataUrl" value="<%= company.fontDataUrl || '' %>">
+          <p class="field__hint" id="fontFileHint">WOFF2, WOFF, TTF or OTF, 512KB max. Stored inline as a data URL.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Contact / legal ───────────────────────────────── -->
+    <section>
+      <h2 class="card__title" style="margin-bottom: var(--space-3)">Contact &amp; legal</h2>
+      <div class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="field">
+          <label class="field__label" for="supportEmail">Support email</label>
+          <input class="input" type="email" name="supportEmail" id="supportEmail" value="<%= company.supportEmail || '' %>" placeholder="support@acme.example.com">
+        </div>
+        <div></div>
+        <div class="field">
+          <label class="field__label" for="privacyPolicyUrl">Privacy policy URL</label>
+          <input class="input" type="url" name="privacyPolicyUrl" id="privacyPolicyUrl" value="<%= company.privacyPolicyUrl || '' %>" placeholder="https://acme.example.com/privacy">
+        </div>
+        <div class="field">
+          <label class="field__label" for="termsOfServiceUrl">Terms of service URL</label>
+          <input class="input" type="url" name="termsOfServiceUrl" id="termsOfServiceUrl" value="<%= company.termsOfServiceUrl || '' %>" placeholder="https://acme.example.com/terms">
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Address ───────────────────────────────────────── -->
+    <section>
+      <h2 class="card__title" style="margin-bottom: var(--space-3)">Address</h2>
+      <div class="grid" style="grid-template-columns: 1fr 1fr">
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label" for="addressLine1">Street</label>
+          <input class="input" type="text" name="addressLine1" id="addressLine1" value="<%= company.addressLine1 || '' %>" placeholder="1 Main Street">
+        </div>
+        <div class="field" style="grid-column: span 2">
+          <label class="field__label" for="addressLine2">Address line 2</label>
+          <input class="input" type="text" name="addressLine2" id="addressLine2" value="<%= company.addressLine2 || '' %>" placeholder="Suite 200">
+        </div>
+        <div class="field">
+          <label class="field__label" for="city">City</label>
+          <input class="input" type="text" name="city" id="city" value="<%= company.city || '' %>">
+        </div>
+        <div class="field">
+          <label class="field__label" for="region">Region / state</label>
+          <input class="input" type="text" name="region" id="region" value="<%= company.region || '' %>">
+        </div>
+        <div class="field">
+          <label class="field__label" for="postalCode">Postal code</label>
+          <input class="input" type="text" name="postalCode" id="postalCode" value="<%= company.postalCode || '' %>">
+        </div>
+        <div class="field">
+          <label class="field__label" for="country">Country</label>
+          <% const _cur = company.country || ''; const _known = (countries || []).some((c) => c.code === _cur); %>
+          <select class="input" name="country" id="country">
+            <option value="">Select a country…</option>
+            <% if (_cur && !_known) { %><option value="<%= _cur %>" selected><%= _cur %> (current)</option><% } %>
+            <% for (const c of (countries || [])) { %>
+            <option value="<%= c.code %>" <% if (_cur === c.code) { %>selected<% } %>><%= c.name %></option>
+            <% } %>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div class="row" style="padding-top: var(--space-2); border-top: 1px solid var(--border-subtle)">
+      <button type="submit" class="btn btn--primary">Save changes</button>
+      <a href="/" class="btn btn--ghost">Cancel</a>
+    </div>
+  </form>
+
+  <!-- A form of its own: forms cannot nest, and the reset must never ride the
+       Save button's submit. `data-confirm` is the browser confirm (shell.js). -->
+  <form method="POST" action="/company-info/reset" class="card stack stack--sm" style="margin-top: var(--space-6)"
+        data-company-reset
+        data-confirm="Reset company info to the OpenSteward defaults? Every field on this page is cleared, including the logo, favicon and font. This cannot be undone.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="card__title">Reset to defaults</h2>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+      Clears everything above and returns every branded page to OpenSteward's own branding, as on a
+      fresh install. Connect Link pages and the docs portal catch up within a minute. The setup wizard's Branding step
+      shows as not done until you save again.
+    </p>
+    <button type="submit" class="btn btn--danger btn--sm" style="align-self: flex-start">Reset Company Info</button>
+  </form>
+</div>
+
+<script src="/public/js/branding-upload.js" defer></script>

@@ -1,0 +1,173 @@
+<%# The dashboard's "Needs attention" panel. Rows come from
+    src/core/routes/dashboard-tasks.ts, already role-filtered: `canAct`,
+    `canClear` and `canRetry` decide which controls a row offers, so this
+    partial holds no role logic of its own.
+
+    Absent when there is nothing to show AND every source answered — an
+    outage renders a line here, never an empty page that reads as "nothing to
+    do". Included from dashboard.ejs with `tasks`, `tasksHidden`,
+    `tasksHiddenHref`, `tasksUnavailable`, `tasksUnavailableVerticals`,
+    `tasksAllVerticalsDown`, `recentlyCleared` and `tenants`.
+
+    A `vertical_down` row has no platform, no logo and no Clear: it is the
+    one row that says why the rest of the page cannot be trusted, and the
+    only action is the System page, which is admin-only. When every vertical
+    is down there is one such row, for the integration server.
+
+    Repeated controls get distinct accessible names — the platform's display
+    name and the label, or "<platform> credentials" for a platform row — so
+    "Clear, button" is never read out eight times over. -%>
+<%
+  const _canClear = user && (user.role === 'admin' || user.role === 'operator')
+  const _clearable = tasks.filter((t) => t.canClear)
+  const _batch = (rows) => JSON.stringify(rows.map((t) => ({ key: t.key, fingerprint: t.fingerprint })))
+  const _total = tasks.length + tasksHidden
+  const _name = (t) => t.kind === 'platform_creds' ? `${t.platformName} credentials`
+    : t.kind === 'vertical_down' ? (t.key === 'vertical:down:all' ? t.title : `${t.title} vertical`)
+    : `${t.platformName} ${t.title}`
+  // Whether some role could clear something here. A panel of nothing but
+  // vertical_down rows has no clear for anyone, so telling a viewer that
+  // "clearing needs the operator role" would promise a control that does not
+  // exist. Hidden rows are always of a clearable kind.
+  const _anyClearable = tasksHidden > 0 || tasks.some((t) => t.kind !== 'vertical_down')
+  const _verticalsAre = tasksUnavailableVerticals.length > 1
+    ? 'those verticals are down, so their'
+    : 'that vertical is down, so its'
+  const _list = (names) => names.length <= 1 ? names.join('')
+    : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+-%>
+<% if (tasks.length || tasksUnavailable.length || tasksUnavailableVerticals.length || recentlyCleared.length) { %>
+<section class="card tasks" aria-labelledby="dashboard-tasks-heading" style="margin-top: var(--space-6)">
+  <div class="tasks__header">
+    <h2 id="dashboard-tasks-heading" class="card__title">
+      Needs attention<% if (_total) { %> <span class="badge badge--warning"><%= _total %></span><% } %>
+    </h2>
+    <% if (!_canClear && _anyClearable) { %>
+    <span class="muted tasks__note">Read-only — clearing needs the operator role.</span>
+    <% } else if (_clearable.length > 1) { %>
+    <form method="POST" action="/dashboard/tasks/dismiss">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="items" value="<%= _batch(_clearable) %>">
+      <button type="submit" class="btn btn--ghost btn--sm">Clear all</button>
+    </form>
+    <% } %>
+  </div>
+
+  <% if (tasksUnavailable.includes('sync')) { %>
+  <p class="tasks__unavailable"><i class="ph ph-warning" aria-hidden="true"></i> Couldn't check sync jobs — see <a href="/sync-jobs">Sync jobs</a>.</p>
+  <% } %>
+  <% if (tasksUnavailable.includes('dismissals')) { %>
+  <p class="tasks__unavailable"><i class="ph ph-warning" aria-hidden="true"></i> Couldn't read what was cleared — Cleared items may reappear.</p>
+  <% } %>
+  <% if (tasksAllVerticalsDown) { %>
+  <p class="tasks__unavailable"><i class="ph ph-warning" aria-hidden="true"></i> Couldn't check any connections — the integration server is not answering, so the rows below may be incomplete.</p>
+  <% } else if (tasksUnavailableVerticals.length) { %>
+  <%# admin-api answers `[]` for a backend that is down, so an empty list is
+      not "none expired" for these verticals; say so where the rows would be.
+      "May be missing", not "none are listed": /health and the connection
+      list are separate requests, and the second can succeed while the first
+      timed out, in which case the vertical's rows sit right below this line. -%>
+  <p class="tasks__unavailable"><i class="ph ph-warning" aria-hidden="true"></i> Couldn't check <%= _list(tasksUnavailableVerticals) %> connections — <%= _verticalsAre %> connections and syncs may be missing from this list.</p>
+  <% } %>
+
+  <% if (tasks.length) { %>
+  <ul class="tasks__list">
+    <% for (const t of tasks) { %>
+    <li class="tasks__row">
+      <div class="tasks__main">
+        <div class="tasks__id">
+          <%- statusPill(t.status) %>
+          <% if (t.kind === 'vertical_down') { %>
+          <strong class="tasks__title"><%= t.title %></strong>
+          <% } else { %>
+          <span class="tasks__platform"><%- t.logoHtml %><%= t.platformName %></span>
+          <% if (t.kind !== 'platform_creds') { %>
+          <strong class="tasks__title"><%= t.title %></strong>
+          <span class="tasks__tenant"><%- include('_tenant', { tenantId: t.tenantId, tenants: tenants }) %></span>
+          <% } %>
+          <% } %>
+        </div>
+        <p class="tasks__sentence"><%= t.sentence %></p>
+      </div>
+      <div class="tasks__actions">
+        <% if (t.kind === 'conn_expired') { %>
+          <% if (t.canAct) { %>
+          <a class="btn btn--primary btn--sm" href="/connect-links/new">Mint Connect Link</a>
+          <form method="POST" action="/connections/<%= t.vertical %>/<%= t.connectionId %>/delete"
+            onsubmit="return confirm('Delete this connection?\n\nIts stored credentials, cached data and sync history are removed. The customer must complete a new connect link to restore it. This cannot be undone.')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="returnTo" value="dashboard">
+            <button type="submit" class="btn btn--danger btn--sm" aria-label="Delete: <%= _name(t) %>">Delete</button>
+          </form>
+          <% } %>
+        <% } else if (t.kind === 'platform_creds') { %>
+          <% if (t.canAct) { %>
+          <a class="btn btn--primary btn--sm" href="/platforms/<%= t.vertical %>/<%= t.platform %>" aria-label="Fix credentials: <%= t.platformName %>">Fix credentials</a>
+          <% } else { %>
+          <span class="muted tasks__note">Needs an admin</span>
+          <% } %>
+        <% } else if (t.kind === 'vertical_down') { %>
+          <%# Named for what the page is — build and schema state, with each
+              service's reachability — not for a diagnosis it does not offer;
+              the health check's own error is in the sentence. -%>
+          <% if (t.canAct) { %>
+          <a class="btn btn--primary btn--sm" href="/settings/system" aria-label="Open System page: <%= _name(t) %>">Open System page</a>
+          <% } else { %>
+          <span class="muted tasks__note">Needs an admin</span>
+          <% } %>
+        <% } else if (t.kind === 'refresh_failing') { %>
+          <a class="btn btn--secondary btn--sm" href="/connections/<%= t.vertical %>/<%= t.connectionId %>" aria-label="Open connection: <%= _name(t) %>">Open connection</a>
+          <% if (t.canAct) { %>
+          <a class="btn btn--primary btn--sm" href="/connect-links/new">Mint Connect Link</a>
+          <% } %>
+        <% } else if (t.canRetry) { %>
+          <form method="POST" action="/connections/<%= t.vertical %>/<%= t.connectionId %>/sync">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="returnTo" value="dashboard">
+            <button type="submit" class="btn btn--primary btn--sm" aria-label="Retry sync: <%= _name(t) %>">Retry sync</button>
+          </form>
+        <% } %>
+        <% if (t.job) { %>
+        <a href="/sync-jobs/<%= t.job.id %>" data-modal class="btn btn--secondary btn--sm" aria-label="Open job: <%= _name(t) %>">Open job</a>
+        <% } %>
+        <% if (t.canClear) { %>
+        <form method="POST" action="/dashboard/tasks/dismiss">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="items" value="<%= _batch([t]) %>">
+          <button type="submit" class="btn btn--ghost btn--sm" aria-label="Clear: <%= _name(t) %>" title="Hide this until it recurs">Clear</button>
+        </form>
+        <% } %>
+      </div>
+    </li>
+    <% } %>
+  </ul>
+  <% } %>
+
+  <% if (tasksHidden > 0) { %>
+  <p class="tasks__more muted">and <%= tasksHidden %> more — <a href="<%= tasksHiddenHref %>">see the full list</a></p>
+  <% } %>
+
+  <% if (recentlyCleared.length) { %>
+  <%# The Undo behind a clear. A toast body is plain text (see
+      src/core/flash.ts), so the form lives here, for every clear recent
+      enough that taking it back is still the likely intent. "Recently", not
+      "just now": the window is 15 minutes, deployment-wide, and the clear
+      may have been a colleague's on another replica. A reader who cannot
+      undo is told which role can, rather than shown a line with no button. -%>
+  <ul class="tasks__cleared">
+    <% for (const c of recentlyCleared) { %>
+    <li class="tasks__cleared-row">
+      <span class="muted">Cleared recently: <% if (c.kind === 'platform_creds') { %><%= c.platformName %> credentials<% } else { %><%= c.platformName %> <strong><%= c.title %></strong><% } %><% if (!c.canUndo) { %> — undo needs the <%= c.undoRole %> role<% } %></span>
+      <% if (c.canUndo) { %>
+      <form method="POST" action="/dashboard/tasks/undismiss">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="key" value="<%= c.key %>">
+        <button type="submit" class="btn btn--ghost btn--sm" aria-label="Undo clear: <%= _name(c) %>">Undo</button>
+      </form>
+      <% } %>
+    </li>
+    <% } %>
+  </ul>
+  <% } %>
+</section>
+<% } %>

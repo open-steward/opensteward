@@ -1,0 +1,93 @@
+<% layout('layout', { title: 'Notifications' }) -%>
+<%
+  // Acknowledging clears the notice for everyone, so it is a write: operator
+  // or above. A viewer reads the list and gets no button that would 403.
+  const canAct = user && (user.role === 'admin' || user.role === 'operator')
+  // Where a notification points. A connection opens in the shared dialog
+  // (connections/index.ejs marks the same link data-modal); the platform
+  // page has no modal and is admin-only, so only an admin is offered it.
+  const openHref = (n) => {
+    if (n.connectionId && n.vertical) {
+      return { href: '/connections/' + n.vertical + '/' + n.connectionId, modal: true }
+    }
+    if (n.type === 'platform_credentials_invalid' && n.vertical && n.platform && user.role === 'admin') {
+      return { href: '/platforms/' + n.vertical + '/' + n.platform, modal: false }
+    }
+    return null
+  }
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Overview</div>
+    <h1 class="page-header__title">Notifications</h1>
+    <% if (notifications.length > 0) { %>
+    <%
+      // The bell's count (admin-api's unread-count) leaves credential_expiring
+      // out; the page lists every row. Say so when the two numbers differ, or
+      // "4 active" beside a bell saying 3 reads as a bug. `unreadCount` applies
+      // the same rule to these rows — see routes/notifications.ts.
+      const notCounted = notifications.length - unreadCount
+    %>
+    <p class="page-header__desc"><%= notifications.length %> active<% if (notCounted > 0) { %> &middot; <%= notCounted %> expiring soon, not counted on the bell<% } %></p>
+    <% } %>
+  </div>
+  <% if (canAct && notifications.length > 0) { %>
+  <div class="page-header__actions">
+    <form method="POST" action="/notifications/acknowledge-all">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--ghost btn--sm">Dismiss all</button>
+    </form>
+  </div>
+  <% } %>
+</header>
+
+<% if (notifications.length === 0) { %>
+<p class="muted" style="margin-top: var(--space-6)">No active notifications.</p>
+<% } else { %>
+<div class="stack" style="margin-top: var(--space-6); gap: var(--space-3)">
+  <% for (const n of notifications) { %>
+  <%
+    const borderColor = (n.type.includes('expired') || n.type.includes('invalid') || n.type.includes('down'))
+      ? 'var(--danger)'
+      : n.type.includes('expiring')
+        ? 'var(--warning)'
+        : 'var(--border-default)'
+  -%>
+  <div class="card card--list row row--between" style="border-left: 4px solid <%= borderColor %>">
+    <div class="stack stack--sm">
+      <%# The message carries an id so each row's Open and Dismiss can name it:
+          a screen reader's controls list then reads "Dismiss, notification 1"
+          rather than three identical "Dismiss" entries. %>
+      <p id="notification-<%= n.id %>" style="margin: 0; font-size: var(--text-sm)"><%= n.message %></p>
+      <p class="muted" style="margin: 0; font-size: var(--text-xs)">
+        <%= new Date(n.createdAt).toLocaleString() %>
+        <% if (n.vertical) { %> &middot; <span style="text-transform: capitalize"><%= n.vertical %></span><% } %>
+      </p>
+    </div>
+    <% const open = openHref(n) -%>
+    <%
+      // Rejected platform credentials are fixed on the admin-only platform
+      // page. Without a hint, the only thing a viewer or operator can do with
+      // the row is dismiss it — which hides an outage from the admin.
+      const needsAdmin = n.type === 'platform_credentials_invalid' && user.role !== 'admin'
+    -%>
+    <% if (open || canAct || needsAdmin) { %>
+    <div class="row" style="gap: var(--space-2); flex-shrink: 0">
+      <% if (needsAdmin) { %>
+      <span class="muted" style="font-size: var(--text-xs)">Needs an admin to update the platform credentials.</span>
+      <% } %>
+      <% if (open) { %>
+      <a id="open-<%= n.id %>" aria-labelledby="open-<%= n.id %> notification-<%= n.id %>" class="btn btn--ghost btn--sm" href="<%= open.href %>"<%- open.modal ? ' data-modal' : '' %>>Open</a>
+      <% } %>
+      <% if (canAct) { %>
+      <form method="POST" action="/notifications/<%= n.id %>/acknowledge">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" id="dismiss-<%= n.id %>" aria-labelledby="dismiss-<%= n.id %> notification-<%= n.id %>" class="btn btn--ghost btn--sm">Dismiss</button>
+      </form>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+<% } %>

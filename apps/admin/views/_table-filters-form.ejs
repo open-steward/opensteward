@@ -1,0 +1,43 @@
+<%
+  /* The filter row's form, deliberately OUTSIDE the table below.
+     A form element is not a permitted child of a table, thead, or tr
+     element, and most of these tables carry POST forms in their cells — an
+     inline one can be handed the first row's form by the parser, turning its
+     action button into a filter GET and leaking that row's _csrf into the
+     query string. Controls associate by a form attribute naming this id
+     instead; see _table-head.ejs.
+     Written as prose rather than markup on purpose: spelling the tag names
+     out as real angle-bracket tags here once made
+     table-filter-form-placement.test.ts's depth-tracking regex read this
+     comment as an actual open tag with no matching close, which permanently
+     mis-tracked depth for the rest of this file. */
+-%>
+<form id="<%= tableSpec.id %>" method="GET" action="<%= tableSpec.baseUrl %>"
+  aria-label="Filter this table"></form>
+<% for (const key of (tableSpec.preserve || [])) { if (tableState.extra[key]) { %>
+<input type="hidden" form="<%= tableSpec.id %>" name="<%= key %>" value="<%= tableState.extra[key] %>">
+<% } } %>
+<%# Sorting survives a filter submit. `page` deliberately does not: a changed
+    filter returns to page 1. -%>
+<% if (tableState.sort) { %>
+<input type="hidden" form="<%= tableSpec.id %>" name="sort" value="<%= tableState.sort %>">
+<input type="hidden" form="<%= tableSpec.id %>" name="dir" value="<%= tableState.dir %>">
+<% } %>
+<%# A `hidden` column (table-controls.ts's ColumnSpec.hidden — a synthetic
+    column with no cell of its own, e.g. a legacy search-across-fields alias)
+    renders no `<th>` in _table-head.ejs, so it has no visible control to
+    carry its value across a submit. Without this, an active filter on a
+    hidden column vanished the moment the operator submitted the form for ANY
+    reason — typing in an unrelated box, clicking Search — silently widening
+    the result set, with the only on-screen evidence a lone "Clear" button.
+
+    `rendered` (table-controls.ts's ColumnSpec.rendered) opts a hidden column
+    OUT of that mirror: /audit's from/to date range is hidden from the filter
+    row because one control per column cannot express a two-value range, but
+    the view renders its own date inputs under the same `f_from`/`f_to`
+    names. Mirroring it here too would submit each name twice, and the last
+    value wins — so an operator clearing the date box would have the stale
+    hidden value re-applied. -%>
+<% for (const col of tableSpec.columns) { if (col.hidden && !col.rendered && tableState.filters[col.key]) { %>
+<input type="hidden" form="<%= tableSpec.id %>" name="f_<%= col.key %>" value="<%= tableState.filters[col.key] %>">
+<% } } %>

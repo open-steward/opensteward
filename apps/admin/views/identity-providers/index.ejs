@@ -1,0 +1,88 @@
+<% layout('../layout', { title: 'SSO & identity' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Admin</div>
+    <h1 class="page-header__title">SSO &amp; identity providers</h1>
+    <p class="page-header__desc">Connect a corporate identity system (SAML, OIDC/OAuth2, or LDAP/Active Directory). SCIM provisioning is configured per provider.</p>
+  </div>
+  <div class="page-header__actions">
+    <a href="/identity-providers/new" class="btn btn--primary btn--sm">Add provider</a>
+  </div>
+</header>
+
+<%
+  const guideHref = (typeof docsServerUrl !== 'undefined' && docsServerUrl)
+    ? docsServerUrl + '/guides/deployment/sso-setup.md' : null
+  const base = (typeof ssoBaseUrl !== 'undefined' && ssoBaseUrl) ? ssoBaseUrl : ''
+%>
+<details class="card" style="margin-top: var(--space-6)" <%= providers.length === 0 ? 'open' : '' %>>
+  <summary style="cursor: pointer; font-weight: 600"><i class="ph ph-info"></i> How to set up SSO</summary>
+  <div style="margin-top: var(--space-4)">
+    <ol class="stack" style="padding-left: var(--space-5); line-height: 1.7">
+      <li><strong>Prerequisites (env):</strong> set <code>STORE_SECRET</code>, <code>SSO_PUBLIC_BASE_URL</code>, and <code>ADMIN_UI_URL</code> on admin-api (and <code>SSO_PUBLIC_BASE_URL</code> on this admin app).</li>
+      <li><strong>Add a provider</strong> (button top-right): pick OIDC, SAML, or LDAP and fill in the issuer/endpoints, secret, default role, and JIT.</li>
+      <li><strong>Register these URLs in your IdP</strong> (replace <code>&lt;slug&gt;</code> with the provider slug you choose):
+        <ul style="margin-top: var(--space-2)">
+          <li>OIDC redirect: <code><%= base %>/api/sso/&lt;slug&gt;/callback</code></li>
+          <li>SAML ACS: <code><%= base %>/api/sso/&lt;slug&gt;/acs</code></li>
+          <li>SCIM base: <code><%= base %>/scim/v2</code></li>
+        </ul>
+      </li>
+      <li><strong>Map groups → roles</strong> and (optionally) <strong>mint a SCIM token</strong> on the provider's page.</li>
+      <li><strong>Test the login</strong>, then optionally disable local password login in <a href="/settings">Settings</a> — a break-glass admin always keeps password access.</li>
+    </ol>
+    <% if (guideHref) { %>
+    <a class="btn btn--secondary btn--sm" href="<%= guideHref %>" target="_blank" rel="noopener">Read the full setup guide →</a>
+    <% } %>
+  </div>
+</details>
+
+<%
+  // Must-fix 2 (mild variant): the filter row already survived a
+  // filtered-to-zero result here — only the MESSAGE was wrong, claiming
+  // "configured yet" (a fresh-install sentence) for a filter that simply
+  // matched nothing on a deployment that has providers. The colspan is the
+  // other half: the last hardcoded `colspan="6"` in this file — every other
+  // empty state on these tables now computes it from the column list.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (providers.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>" class="muted">
+          <% if (hasFilters) { %>
+          No identity providers match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+          <% } else { %>
+          No identity providers configured yet.
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+      <% for (const p of providers) { %>
+      <tr>
+        <td style="font-weight: 500"><a href="/identity-providers/<%= p.id %>"><%= p.name %></a></td>
+        <td><span class="badge badge--info"><%= p.protocol.toUpperCase() %></span></td>
+        <td class="muted" style="font-family: var(--font-mono)"><%= p.slug %></td>
+        <td>
+          <% if (p.enabled) { %><span class="badge badge--accent">enabled</span><% } else { %><span class="badge">disabled</span><% } %>
+        </td>
+        <td class="muted"><%= p.jitEnabled ? 'on' : 'off' %></td>
+        <td class="muted"><%= p.defaultRole %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>

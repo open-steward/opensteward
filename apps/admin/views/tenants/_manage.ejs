@@ -1,0 +1,181 @@
+<%#
+  Tenants & domains management: create, attach a domain, and the table of both.
+
+  Shared by /tenants and setup wizard step 6 — one implementation, two
+  surfaces, the same shape as platforms/_logo-settings.ejs. The forms post to
+  the real /tenants routes on both surfaces rather than wizard copies, so there
+  is one set of routes to change.
+
+  `returnTo` is a token, never a path: those routes map 'wizard' to the wizard
+  step and anything else to /tenants. A path taken from a form body would be an
+  open redirect; a token cannot be. Same shape as the returnTo at
+  routes/connections.ts.
+-%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<% const backTo = (typeof returnTo !== 'undefined' && returnTo) || '' %>
+<%#
+  Sort/filter row: gated off inside the setup wizard. This partial is included
+  from both /tenants (tableSpec/tableState set) and wizard step 6
+  (returnTo: 'wizard', no tableSpec) — a GET filter form submitting to
+  /tenants from inside the wizard would eject the operator mid-flow.
+-%>
+<% const showFilters = typeof tableSpec !== 'undefined' && !backTo %>
+<%#
+  Filtered/sorted rows for the table body ONLY — must-fix 1. `tenants` stays
+  the unfiltered list the forms above read (the domain-attach picker's
+  <select>, and the true-empty checks both here and below); a separate `rows`
+  local, supplied only by /tenants' route, is what the <tbody> loop iterates.
+  Falls back to `tenants` itself when no `rows` was passed — the wizard's
+  include (step6-tenants.ejs) supplies no tableSpec/tableState and therefore
+  never filters, so `tenants` already IS the table's rows there.
+-%>
+<% const tableRows = typeof rows !== 'undefined' ? rows : tenants %>
+<%# `showFilters &&` short-circuits before touching `tableState`, which is
+    never passed from the wizard include either. -%>
+<% const hasFilters = showFilters && Object.keys(tableState.filters).length > 0 %>
+
+<!-- ── Create tenant ──────────────────────────────────────── -->
+<div class="card" style="margin-top: var(--space-6)">
+  <h2 class="card__title" style="margin-bottom: var(--space-3)">New tenant</h2>
+  <%#
+    align-items is flex-start, NOT flex-end. `.field` is a column and only some
+    fields here carry a `field__hint`, so the fields are unequal heights.
+    Bottom-aligning them lined up the hint's baseline with the hint-less input,
+    which pushed "Display name" a whole hint-height below "Tenant id" and left
+    the button floating under both. Top-aligning lines the inputs up, because
+    every label above them is one line, and lets the hints hang below.
+
+    The button's field carries a spacer label for the same reason: it has no
+    label of its own, so without one the button would sit level with the other
+    fields' labels instead of their inputs. Using field__label rather than a
+    hardcoded offset means it tracks the label's real height.
+  -%>
+  <% if (canAct) { %><form method="POST" action="/tenants" class="row" style="gap: var(--space-2); align-items: flex-start; flex-wrap: wrap">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (backTo) { %><input type="hidden" name="returnTo" value="<%= backTo %>"><% } %>
+    <div class="field" style="flex: 1 1 220px">
+      <label class="field__label" for="t-name">Display name</label>
+      <input class="input" type="text" name="name" id="t-name" placeholder="Department A" required>
+    </div>
+    <div class="field" style="flex: 1 1 220px">
+      <label class="field__label" for="t-id">Tenant id <span class="muted" style="font-weight: 400">(optional)</span></label>
+      <input class="input input--mono" type="text" name="id" id="t-id" placeholder="dept-a">
+      <p class="field__hint">Lowercase slug used on keys/links. Derived from the name if left blank.</p>
+    </div>
+    <div class="field" style="flex: 0 0 auto">
+      <span class="field__label" aria-hidden="true">&nbsp;</span>
+      <button type="submit" class="btn btn--primary btn--sm">Create tenant</button>
+    </div>
+  </form><% } %>
+</div>
+
+<!-- ── Attach domain ──────────────────────────────────────── -->
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title" style="margin-bottom: var(--space-3)">Attach a custom domain</h2>
+  <% if (tenants.length === 0) { %>
+  <p class="muted">Create a tenant first.</p>
+  <% } else { %>
+  <%# Same alignment rule as the New tenant form above. -%>
+  <% if (canAct) { %><form method="POST" action="/tenant-domains" class="row" style="gap: var(--space-2); align-items: flex-start; flex-wrap: wrap">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (backTo) { %><input type="hidden" name="returnTo" value="<%= backTo %>"><% } %>
+    <div class="field" style="flex: 1 1 260px">
+      <label class="field__label" for="d-domain">Domain</label>
+      <input class="input input--mono" type="text" name="domain" id="d-domain" placeholder="connect.dept-a.acme.com" required>
+      <p class="field__hint">Bare hostname (no https:// or path). Point it at this deployment in your reverse proxy.</p>
+    </div>
+    <div class="field" style="flex: 0 1 220px">
+      <label class="field__label" for="d-tenant">Tenant</label>
+      <select class="select" name="tenantId" id="d-tenant" required>
+        <% for (const t of tenants) { %>
+        <option value="<%= t.id %>"><%= t.name %> (<%= t.id %>)</option>
+        <% } %>
+      </select>
+    </div>
+    <div class="field" style="flex: 0 0 auto">
+      <span class="field__label" aria-hidden="true">&nbsp;</span>
+      <button type="submit" class="btn btn--primary btn--sm">Attach domain</button>
+    </div>
+  </form><% } %>
+  <% } %>
+</div>
+
+<!-- ── Tenant list ────────────────────────────────────────── -->
+<%#
+  The filter form and the table render unconditionally — must-fix 2, the same
+  correction already made on /webhooks, /api-keys, /scope-groups and
+  /platforms. Hiding them whenever the CURRENT (possibly filtered) view is
+  empty stranded an operator whose filter matched nothing with no visible
+  Clear control. Only the <tbody> below branches, and it tells a
+  filtered-to-zero result apart from a genuinely empty deployment.
+-%>
+<% if (showFilters) { %>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<% } %>
+<div class="card" style="margin-top: var(--space-4); padding: 0">
+<div class="table-scroll">
+<table class="table">
+  <% if (showFilters) { %><%- include('../_table-head', { tableSpec, tableState }) %><% } else { %>
+  <thead><tr><th>Tenant</th><th>Id</th><th>Custom domains</th><th></th></tr></thead>
+  <% } %>
+  <tbody>
+    <% if (tableRows.length === 0) { %>
+    <tr>
+      <td colspan="<%= showFilters ? tableSpec.columns.filter((c) => !c.hidden).length : 4 %>">
+        <% if (hasFilters) { %>
+        <p class="muted" style="margin: var(--space-4) 0">
+          No tenants match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+        </p>
+        <% } else { %>
+        <p class="muted" style="margin: var(--space-4) 0">No tenants yet.</p>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const t of tableRows) { %>
+    <tr>
+      <td><strong><%= t.name %></strong></td>
+      <td class="mono" style="font-size: var(--text-xs)"><%= t.id %></td>
+      <td style="font-size: var(--text-xs)">
+        <% if (t.domains.length === 0) { %>
+        <span class="muted">—</span>
+        <% } else { %>
+        <% t.domains.forEach((d) => { %>
+        <div style="display: inline-flex; align-items: center; gap: var(--space-1); margin: 0 var(--space-2) var(--space-1) 0">
+          <span class="mono"><%= d %></span>
+          <% if (canAct) { %><form method="POST" action="/tenant-domains/delete" style="display: inline"
+            onsubmit="return confirm('Detach this domain?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (backTo) { %><input type="hidden" name="returnTo" value="<%= backTo %>"><% } %>
+            <input type="hidden" name="domain" value="<%= d %>">
+            <button type="submit" class="btn btn--ghost btn--sm" title="Detach domain" style="padding: 0 var(--space-1)">✕</button>
+          </form><% } %>
+        </div>
+        <% }) %>
+        <% } %>
+      </td>
+      <td style="white-space: nowrap; text-align: right">
+        <% if (t.id === 'default') { %>
+        <span class="muted" style="font-size: var(--text-xs)">catch-all</span>
+        <% } else { %>
+        <% if (canAct) { %><form method="POST" action="/tenants/<%= t.id %>/delete" style="display: inline"
+          onsubmit="return confirm('Delete this tenant? Detach its domains first.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (backTo) { %><input type="hidden" name="returnTo" value="<%= backTo %>"><% } %>
+          <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+        </form><% } %>
+        <% } %>
+      </td>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>

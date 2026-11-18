@@ -1,0 +1,121 @@
+# OpenSteward — compose customization template
+#
+# Copy this to `docker-compose.override.yml` (gitignored) and uncomment
+# the blocks you want. Docker Compose automatically merges
+# `docker-compose.override.yml` on top of `docker-compose.yml`, so you
+# never have to edit the base file and `git pull` will never conflict.
+#
+# Apply with the normal `docker compose up -d`. Inspect the merged result
+# with `docker compose config`.
+#
+# Several blocks below configure the same service (four configure
+# integration-server). YAML keeps only the LAST duplicate key, so merge the
+# blocks you uncomment into one `integration-server:` entry.
+
+services:
+  # ── Expose admin on a different host port ─────────────────────────────────
+  # Use when port 3000 is taken on the host. Every port in docker-compose.yml
+  # is published on 127.0.0.1 only; `!override` replaces that mapping instead
+  # of adding a second one.
+  # admin:
+  #   ports: !override
+  #     - "127.0.0.1:3100:3000"
+
+  # ── Reach admin from another device on a private network ─────────────────
+  # The services speak plain http. Publishing on 0.0.0.0 puts the admin
+  # login on the LAN in cleartext, and the browser on the other device also
+  # needs SESSION_COOKIE_SECURE=false to keep the session cookie (see
+  # apps/admin/src/core/auth/session-cookie.ts). Prefer a TLS reverse proxy
+  # (docs/deployment/custom-domain.md) or a VPN/overlay network.
+  # admin:
+  #   ports: !override
+  #     - "0.0.0.0:3000:3000"
+
+  # ── Publish admin-api's SSO/SCIM routes through Traefik ─────────────────
+  # admin-api is never published as a whole (docs/security/README.md). Only
+  # with SSO or SCIM, route exactly the paths the IdP and the browser need.
+  # Everything else stays private, including /api/sso/handoff/exchange and
+  # /api/sso/login-options. Same rule as docs/deployment/custom-domain.md.
+  # Also set SSO_PUBLIC_BASE_URL=https://sso.example.com on admin-api (and
+  # admin) in .env or the environment: the base compose defaults it to
+  # http://localhost:3001, which breaks the OIDC redirect URI, SAML ACS and
+  # SCIM base. TLS uses the `letsencrypt` cert resolver from the Traefik
+  # recipe in docs/deployment/custom-domain.md.
+  # admin-api:
+  #   networks:
+  #     - default
+  #     - reverse-proxy
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.opensteward-sso.rule=Host(`sso.example.com`) && (PathRegexp(`^/api/sso/[^/]+/(login|callback|acs)$`) || PathPrefix(`/scim/v2/`))"
+  #     - "traefik.http.routers.opensteward-sso.entrypoints=websecure"
+  #     - "traefik.http.routers.opensteward-sso.tls.certresolver=letsencrypt"
+  #     - "traefik.http.services.opensteward-sso.loadbalancer.server.port=3001"
+
+  # ── Override non-default env vars ────────────────────────────────────────
+  # Use when you want to flip a feature flag, point at a custom Redis, or
+  # turn on the resource cache. Don't edit the base file for this — env
+  # always wins over YAML in our config loader.
+  # integration-server:
+  #   environment:
+  #     - DATA_STORE_MODE=database
+  #     - DATA_STORE_AUTO_SYNC_ON_BOOT=true
+  #     - REDIS_URL=redis://redis:6379
+  #     - RATE_LIMIT_MAX=500
+
+  # ── Add extra integration-server replicas behind compose's built-in DNS ──
+  # Use when one integration-server can't keep up with sync throughput.
+  # Pair with REDIS_URL above so the rate-limit budget is shared across
+  # replicas. Bring up the redis service with `docker compose --profile scale up`.
+  # integration-server:
+  #   deploy:
+  #     replicas: 3
+  #   environment:
+  #     - REDIS_URL=redis://redis:6379
+
+  # ── Mount a custom CA cert into every node-based service ─────────────────
+  # Use when your environment requires a private CA for outbound HTTPS
+  # (e.g. corporate MITM proxy). NODE_EXTRA_CA_CERTS makes node trust it
+  # in addition to the system store.
+  # admin-api:
+  #   volumes:
+  #     - ./certs/internal-ca.pem:/etc/ssl/certs/internal-ca.pem:ro
+  #   environment:
+  #     - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/internal-ca.pem
+  # integration-server:
+  #   volumes:
+  #     - ./certs/internal-ca.pem:/etc/ssl/certs/internal-ca.pem:ro
+  #   environment:
+  #     - NODE_EXTRA_CA_CERTS=/etc/ssl/certs/internal-ca.pem
+
+  # ── OpenSteward license from another folder, or a dev-key image ──────────
+  # docker-compose.yml already mounts ./opensteward-license (next to it)
+  # read-only at /etc/opensteward/license, and OPENSTEWARD_LICENSE_FILE points
+  # into it, so usually you only copy license.key into ./opensteward-license
+  # (docs/deployment/license.md). Uncomment the volume to keep the license in
+  # another FOLDER instead. Same container path, so it replaces the base
+  # mount. Mount a folder, never the file: a single-file bind mount pins the
+  # original inode, and a renewed license.key would never reach the container.
+  #
+  # The build arg is for OpenSteward maintainers only. Images build with
+  # OPENSTEWARD_BUILD_PROFILE=production by default and trust only the five
+  # production license keys. A `development` image still trusts the dev1
+  # license key, whose private key is public in this repository, so a dev1
+  # license (`pnpm -s license:dev-token mint --org "…"`) verifies there; the
+  # build log warns, the image is labelled
+  # org.opensteward.build-profile=development, and it logs "this build trusts
+  # development license keys" at startup. Never run one in production. The
+  # release workflow never builds one, and its in-image probe rejects any image
+  # that carries dev keys.
+  # integration-server:
+  #   volumes:
+  #     - /srv/opensteward/license:/etc/opensteward/license:ro
+  #   build:
+  #     args:
+  #       OPENSTEWARD_BUILD_PROFILE: development
+
+# Uncomment to attach to an external reverse-proxy network you created
+# yourself (e.g. `docker network create reverse-proxy`).
+# networks:
+#   reverse-proxy:
+#     external: true

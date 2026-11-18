@@ -1,0 +1,38 @@
+server:
+  port: 3001
+  host: 0.0.0.0
+
+jwt:
+  secret: change-me-to-a-long-random-string-at-least-32-chars
+  expiresIn: 24h
+
+# Enterprise SSO (SAML / OIDC / LDAP) + SCIM provisioning.
+# Provider secrets are encrypted at rest with STORE_SECRET (env only — never
+# put it here). publicBaseUrl is where IdPs send SAML ACS / OIDC callbacks and
+# where SCIM clients connect; adminUiUrl is where the post-login handoff lands.
+# Both must be reachable from the user's browser / the IdP. Env overrides:
+# SSO_PUBLIC_BASE_URL, ADMIN_UI_URL.
+sso:
+  publicBaseUrl: http://localhost:3001
+  adminUiUrl: http://localhost:3000
+
+db:
+  path: ./data/admin.db
+
+# All four verticals point at the unified integration-server. The
+# `name` field drives /api/verticals/:vertical/* routing in admin-api;
+# the URL is the same backend for every entry. Compose overrides each
+# `url` with the in-network DNS name (http://integration-server:3010).
+verticals:
+  - name: accounting
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: crm
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: ecommerce
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: logistics
+    url: http://localhost:3010
+    admin_secret: ""

@@ -1,0 +1,43 @@
+import type { Bill, BillStatus } from '../../../schema/bill'
+
+export interface FattureCloudBill {
+  id?: number | string
+  number?: string
+  entity?: { id?: number | string }
+  date?: string
+  due_date?: string
+  currency?: { id?: string }
+  totals?: { amount?: number; vat_amount?: number; amount_due?: number }
+  status?: { id?: string }
+  [key: string]: unknown
+}
+
+function mapStatus(statusId: string | undefined): BillStatus {
+  switch (statusId) {
+    case 'draft':
+      return 'DRAFT'
+    case 'not_paid':
+    case 'partial':
+      return 'AUTHORIZED'
+    case 'paid':
+      return 'PAID'
+    default:
+      return 'DRAFT'
+  }
+}
+
+export function transformBill(raw: FattureCloudBill): Bill {
+  return {
+    id: raw.id !== undefined ? String(raw.id) : undefined,
+    billNumber: raw.number || undefined,
+    contactId: raw.entity?.id !== undefined ? String(raw.entity.id) : undefined,
+    status: mapStatus(raw.status?.id),
+    totalAmount: raw.totals?.amount,
+    taxAmount: raw.totals?.vat_amount,
+    balanceAmount: raw.totals?.amount_due,
+    currency: raw.currency?.id || undefined,
+    postedAt: raw.date ? new Date(raw.date) : undefined,
+    dueAt: raw.due_date ? new Date(raw.due_date) : undefined,
+    metadata: raw as Record<string, unknown>,
+  }
+}

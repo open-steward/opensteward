@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-logistics"
+  },
+  "include": [
+    "src/verticals/logistics/**/*",
+    "src/types/**/*"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    }
+  ]
+}

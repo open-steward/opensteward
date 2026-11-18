@@ -1,0 +1,97 @@
+<% layout('../layout', { title: 'New destination' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/destinations">Destinations</a></div>
+    <h1 class="page-header__title">New destination</h1>
+    <p class="page-header__desc">Where to export, with which credentials, and which records. Credentials are stored encrypted and are write-only: they are never shown again.</p>
+  </div>
+</header>
+
+<nav class="row" style="gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4)" aria-label="Destination type" data-type-picker>
+  <% for (const t of types) { %>
+  <% if (t.available) { %>
+  <a class="btn btn--sm <%= type && type.type === t.type ? 'btn--primary' : 'btn--ghost' %>" href="/destinations/new?type=<%= encodeURIComponent(t.type) %>"<%- type && type.type === t.type ? ' aria-current="page"' : '' %>>
+    <%= t.label %><% if (t.experimental) { %> <span class="badge badge--warning" data-experimental>experimental</span><% } %>
+  </a>
+  <% } else { %>
+  <span class="btn btn--sm btn--ghost" aria-disabled="true" style="opacity: 0.55; cursor: not-allowed" title="Not available yet">
+    <%= t.label %> <span class="badge">coming soon</span>
+  </span>
+  <% } %>
+  <% } %>
+</nav>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)" role="alert" data-form-error>
+  <strong><%= error.message %></strong><% if (error.code) { %> <span class="mono muted">(<%= error.code %>)</span><% } %>
+  <% if (error.details && error.details.length) { %>
+  <ul style="margin: var(--space-2) 0 0">
+    <% for (const d of error.details) { %><li><%= d %></li><% } %>
+  </ul>
+  <% } %>
+</div>
+<% } %>
+
+<% if (!type) { %>
+<div class="card" style="margin-top: var(--space-4)">
+  <p class="muted" style="margin: 0">No destination type is available.</p>
+</div>
+<% } else { %>
+<form method="POST" action="/destinations" class="stack" style="margin-top: var(--space-4)" data-destination-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <input type="hidden" name="type" value="<%= type.type %>">
+
+  <div class="card stack stack--sm">
+    <h2 class="card__title"><%= type.label %><% if (type.experimental) { %> <span class="badge badge--warning">experimental</span><% } %></h2>
+    <% if (type.experimental) { %>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">This type is experimental: its output format and behaviour may still change between releases.</p>
+    <% } %>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4)">
+      <label class="field">
+        <span class="field__label">Name <span class="muted">(required)</span></span>
+        <input class="input" type="text" name="name" value="<%= form.name %>" maxlength="200" required placeholder="e.g. Lake (prod)">
+      </label>
+      <label class="field">
+        <span class="field__label">Run every (minutes)</span>
+        <input class="input" type="number" name="interval_min" min="1" max="10080" value="<%= form.intervalMin %>">
+        <span class="field__hint">Minimum 1 minute, maximum 7 days.</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="card stack stack--sm">
+    <h2 class="card__title">Settings</h2>
+    <%- include('_fields', { groups: configGroups }) %>
+  </div>
+
+  <% if (secretGroups.length > 0) { %>
+  <div class="card stack stack--sm" data-secret-fields>
+    <h2 class="card__title">Credentials</h2>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">Write-only. Leave a field blank to leave it unset (some types then use the platform's default credential chain).</p>
+    <%- include('_fields', { groups: secretGroups }) %>
+  </div>
+  <% } %>
+
+  <div class="card stack stack--sm">
+    <h2 class="card__title">What to export</h2>
+    <%- include('../_scope-picker', { picker, selected }) %>
+    <label class="row" style="gap: var(--space-2); margin-top: var(--space-3)">
+      <input type="checkbox" name="mask_financial" <%= form.maskFinancial ? 'checked' : '' %>> Also mask financial fields (amounts, balances)
+    </label>
+    <% if (canReadPii) { %>
+    <label class="row" style="gap: var(--space-2)" data-include-pii>
+      <input type="checkbox" name="include_pii" <%= form.includePii ? 'checked' : '' %>>
+      <span>Export personal data <strong>unmasked</strong> — you are recorded as the approver. Exported files cannot be retracted.</span>
+    </label>
+    <% } %>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="enabled" <%= form.enabled ? 'checked' : '' %>> Run on schedule
+    </label>
+  </div>
+
+  <div class="row" style="gap: var(--space-2)">
+    <button type="submit" class="btn btn--primary">Create destination</button>
+    <a href="/destinations" class="btn btn--ghost">Cancel</a>
+  </div>
+</form>
+<% } %>

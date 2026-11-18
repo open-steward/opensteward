@@ -1,0 +1,65 @@
+<% layout('../layout', { title: 'Users' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">People</div>
+    <h1 class="page-header__title">Users</h1>
+    <p class="page-header__desc">Admin users with access to this dashboard. Roles: admin, operator, viewer.</p>
+  </div>
+  <div class="page-header__actions">
+    <a href="/users/new" class="btn btn--primary btn--sm">Add user</a>
+  </div>
+</header>
+
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (Object.keys(tableState.filters).length > 0) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% for (const u of users) { %>
+      <tr>
+        <td style="font-weight: 500">
+          <%# data-modal opens the detail as a dialog, matching api-keys; the
+              href stays a real deep link. %>
+          <span class="avatar-name"><%- avatar(u) %><a href="/users/<%= u.id %>" data-modal><%= u.username %></a></span>
+          <% if (u.isSelf) { %><span class="muted" style="font-size: var(--text-xs); margin-left: var(--space-1)">(you)</span><% } %>
+          <% if (u.email) { %><div class="muted" style="font-size: var(--text-xs); font-weight: 400"><%= u.email %></div><% } %>
+        </td>
+        <td>
+          <% if (u.role === 'admin') { %>
+          <span class="badge badge--accent"><%= u.role %></span>
+          <% } else if (u.role === 'operator') { %>
+          <span class="badge badge--info"><%= u.role %></span>
+          <% } else { %>
+          <span class="badge"><%= u.role %></span>
+          <% } %>
+          <% if (u.roleName && u.roleId && u.roleId !== u.role) { %>
+          <span class="badge" title="Custom role on the <%= u.role %> base"><%= u.roleName %></span>
+          <% } %>
+          <% if (u.scopeMode === 'restricted') { %>
+          <span class="badge badge--warning" title="Sees only some tenants">scoped</span>
+          <% } %>
+        </td>
+        <td class="muted"><%= u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—' %></td>
+        <td>
+          <% if (!u.isSelf) { %>
+          <form method="POST" action="/users/<%= u.id %>/delete" style="display: inline"
+            onsubmit="return confirm('Delete this user?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>

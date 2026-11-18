@@ -1,0 +1,274 @@
+name: images
+
+# Build, scan, sign, and publish the five service container images to GHCR.
+#
+# Triggers:
+#   - `platform/vX.Y.Z` tag → builds ALL five images at the coordinated version
+#     (this is the tag the Helm chart pins; `:X.Y.Z`, `:X.Y`, `:sha-…`, `:latest`).
+#   - `<service>/vX.Y.Z` tag → builds just that service (`:X.Y.Z`, `:X.Y`, `:sha-…`).
+#   - workflow_dispatch → manual build of selected services (no `:latest`).
+#
+# Multi-arch (amd64 + arm64) is built on NATIVE runners rather than QEMU,
+# because every image compiles `better-sqlite3` (a native node module) and
+# QEMU-emulated node-gyp builds are slow and flaky. Each (service × arch) job
+# pushes by digest; a per-service merge job assembles the manifest list, then
+# generates an SBOM, gates on a Trivy scan, and signs with cosign (keyless).
+on:
+  push:
+    tags:
+      - 'platform/v*'
+      - '*/v*'
+  workflow_dispatch:
+    inputs:
+      services:
+        description: 'Comma-separated services, or "all"'
+        default: 'all'
+        required: true
+
+permissions:
+  contents: read
+  packages: write # push to GHCR
+  id-token: write # cosign keyless (Sigstore OIDC) + GHCR OIDC
+  attestations: write
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: open-steward
+
+jobs:
+  # ── Resolve what to build + the tag set ────────────────────────────────────
+  prepare:
+    runs-on: ubuntu-latest
+    # Only a checkout's worth: this job installs packages and runs tsx scripts
+    # on the runner host, so it must not inherit the workflow's push, OIDC and
+    # attestation tokens. The jobs that build, sign and publish keep them.
+    permissions:
+      contents: read
+    outputs:
+      services: ${{ steps.plan.outputs.services }}
+      version: ${{ steps.plan.outputs.version }}
+      tag_latest: ${{ steps.plan.outputs.tag_latest }}
+      build_time: ${{ steps.plan.outputs.build_time }}
+      short_sha: ${{ steps.plan.outputs.short_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The release gate compares the revocation list with the one the
+          # previous platform/v* tag shipped, so it needs every tag.
+          fetch-depth: 0
+      # License release gate. No image is built from a tree that still trusts
+      # a placeholder key, ships a missing, invalid or regressed revocation
+      # list, or carries a license bypass. It runs for <service>/v* tags and
+      # workflow_dispatch too, which never pass through release.ts. It reads
+      # TypeScript source only and builds nothing.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: install root deps
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: license gate — real keys, current signed revocation list, no bypass
+        # The same commands as LICENSE_GATE_COMMANDS in scripts/release.ts
+        # (release.test.ts pins the two to each other).
+        run: |
+          pnpm run check:license-keys:release
+          pnpm run check:no-license-bypass
+      - id: plan
+        env:
+          REF: ${{ github.ref }}
+          EVENT: ${{ github.event_name }}
+          INPUT_SERVICES: ${{ github.event.inputs.services }}
+        run: |
+          set -euo pipefail
+          ALL='["admin","admin-api","docs-server","webhook-gateway","integration-server"]'
+          version="dev"
+          tag_latest="false"
+          services="$ALL"
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            version="$(cat VERSION 2>/dev/null || echo dev)"
+            if [ "${INPUT_SERVICES}" != "all" ] && [ -n "${INPUT_SERVICES}" ]; then
+              services="$(echo "$INPUT_SERVICES" | tr ',' '\n' | jq -R . | jq -cs .)"
+            fi
+          else
+            # tag: refs/tags/platform/vX.Y.Z  or  refs/tags/<service>/vX.Y.Z
+            tag="${REF#refs/tags/}"
+            scope="${tag%/*}"
+            version="${tag##*/v}"
+            if [ "$scope" = "platform" ]; then
+              services="$ALL"
+              tag_latest="true"
+            else
+              services="$(jq -cn --arg s "$scope" '[$s]')"
+            fi
+          fi
+
+          {
+            echo "services=$services"
+            echo "version=$version"
+            echo "tag_latest=$tag_latest"
+            echo "short_sha=${GITHUB_SHA::12}"
+            echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_OUTPUT"
+          echo "Planned: services=$services version=$version latest=$tag_latest"
+
+  # ── Build each (service × arch) on a native runner, push by digest ─────────
+  build:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.prepare.outputs.services) }}
+        platform:
+          - { arch: amd64, runner: ubuntu-24.04 }
+          - { arch: arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.platform.runner }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push by digest
+        id: build
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/${{ matrix.platform.arch }}
+          build-args: |
+            APP=${{ matrix.service }}
+            GIT_SHA=${{ github.sha }}
+            BUILD_TIME=${{ needs.prepare.outputs.build_time }}
+          # Push by digest only; the manifest list + tags are assembled in the
+          # publish job once both arches exist.
+          outputs: type=image,name=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }},push-by-digest=true,name-canonical=true,push=true
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.service }}-${{ matrix.platform.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}-${{ matrix.platform.arch }}
+      - name: License probe — the pushed image trusts exactly the five production kids
+        # Runs scripts/image-license-probe.cjs INSIDE the image just pushed: by
+        # digest, without network, on this arch's native runner. Nothing is
+        # tagged yet (the publish job tags), and the digest is exported below
+        # only if this passes, so a failing image never gets a tag. It also
+        # refuses an image built with the development profile.
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          ref="${IMAGE}@${DIGEST}"
+          docker pull --quiet "$ref" >/dev/null
+          profile="$(docker image inspect --format '{{ index .Config.Labels "org.opensteward.build-profile" }}' "$ref")"
+          if [ "$profile" != "production" ]; then
+            echo "::error::$ref carries build profile '$profile'; only production images are published"
+            exit 1
+          fi
+          docker run --rm -i --network none --entrypoint node "$ref" - --release < scripts/image-license-probe.cjs
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          echo "${{ steps.build.outputs.digest }}" > "/tmp/digests/${{ matrix.platform.arch }}.txt"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: digest-${{ matrix.service }}-${{ matrix.platform.arch }}
+          path: /tmp/digests/*.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  # ── Per service: merge arches → manifest list, SBOM, Trivy gate, cosign ────
+  publish:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.prepare.outputs.services) }}
+    steps:
+      - uses: docker/setup-buildx-action@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digest-${{ matrix.service }}-*
+          merge-multiple: true
+      - name: Create + push the multi-arch manifest list
+        id: manifest
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          SHORT_SHA: ${{ needs.prepare.outputs.short_sha }}
+          TAG_LATEST: ${{ needs.prepare.outputs.tag_latest }}
+        run: |
+          set -euo pipefail
+          minor="${VERSION%.*}"
+          tags=( "-t" "${IMAGE}:${VERSION}" "-t" "${IMAGE}:${minor}" "-t" "${IMAGE}:sha-${SHORT_SHA}" )
+          if [ "$TAG_LATEST" = "true" ]; then tags+=( "-t" "${IMAGE}:latest" ); fi
+          sources=()
+          for f in /tmp/digests/*.txt; do sources+=( "${IMAGE}@$(cat "$f")" ); done
+          docker buildx imagetools create "${tags[@]}" "${sources[@]}"
+          digest="$(docker buildx imagetools inspect "${IMAGE}:${VERSION}" --format '{{json .Manifest.Digest}}' | tr -d '"')"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "Published ${IMAGE}:${VERSION} (${digest})"
+
+      - name: Generate SBOM (SPDX)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }}@${{ steps.manifest.outputs.digest }}
+          format: spdx-json
+          output-file: sbom-${{ matrix.service }}.spdx.json
+          upload-artifact: true
+
+      - name: Trivy scan (gate on fixable HIGH/CRITICAL)
+        # SHA-pinned to v0.35.0 (GHSA-69fq-xp46-6x23 / CVE-2026-33634): the
+        # trivy-action supply-chain compromise was delivered by force-pushing
+        # mutable version tags, so pin by immutable commit SHA, not a tag.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }}@${{ steps.manifest.outputs.digest }}
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          exit-code: '1'
+          vuln-type: 'os,library'
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Sign (keyless) + attest the SBOM
+        env:
+          IMAGE: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.service }}
+          DIGEST: ${{ steps.manifest.outputs.digest }}
+        run: |
+          set -euo pipefail
+          cosign sign --yes "${IMAGE}@${DIGEST}"
+          cosign attest --yes --predicate sbom-${{ matrix.service }}.spdx.json \
+            --type spdxjson "${IMAGE}@${DIGEST}"
+
+  # ── Surface the verification recipe in the run summary ─────────────────────
+  summary:
+    needs: [prepare, publish]
+    if: always() && needs.publish.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write summary
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          {
+            echo "## Published images (version \`${VERSION}\`)"
+            echo "Verify a signature:"
+            echo '```'
+            echo "cosign verify ${REGISTRY}/${OWNER}/integration-server:${VERSION} \\"
+            echo "  --certificate-identity-regexp 'https://github.com/${OWNER}/.*' \\"
+            echo "  --certificate-oidc-issuer https://token.actions.githubusercontent.com"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

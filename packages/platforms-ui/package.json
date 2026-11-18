@@ -1,0 +1,40 @@
+{
+  "name": "@opensteward/platforms-ui",
+  "version": "0.1.0",
+  "description": "Shared HTML body for the OpenSteward platforms catalog page",
+  "license": "Elastic-2.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

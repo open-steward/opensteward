@@ -1,0 +1,74 @@
+{
+  "name": "@opensteward/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for OpenSteward — typed public (tenant developer) and operator clients, generated from the OpenAPI specs.",
+  "license": "Apache-2.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-steward/opensteward.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/open-steward/opensteward/blob/main/packages/sdk/README.md",
+  "bugs": {
+    "url": "https://github.com/open-steward/opensteward/issues"
+  },
+  "keywords": [
+    "opensteward",
+    "sdk",
+    "openapi",
+    "typescript",
+    "integration",
+    "rest-api"
+  ],
+  "scripts": {
+    "build": "tsc && node ../../scripts/build-stamp.mts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "generate": "tsx scripts/sdk-codegen.ts"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@redocly/openapi-core": "^1.34.24",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Ecommerce">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 7 13 L 9 27 L 23 27 L 25 13 Z"></path>
+    <path d="M 12 13 V 10 a 4 3.5 0 0 1 8 0 V 13"></path>
+    <circle cx="16" cy="20" r="1.5" fill="currentColor" stroke="none"></circle>
+  </g>
+</svg>

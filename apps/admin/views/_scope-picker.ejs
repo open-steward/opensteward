@@ -1,0 +1,49 @@
+<%#
+  Tenant + vertical picker (see src/core/scope-picker.ts). Locals:
+    picker   — { allowAll, restricted, tenantOptions, verticalOptions }
+    selected — { tenants: '*' | string[], verticals: string[] }
+  Posts `tenant_mode` (all | some), `tenants` (one per checked box) and
+  `verticals` (one per checked box; none = every vertical).
+-%>
+<%
+  const selTenants = selected && selected.tenants !== '*' ? selected.tenants : []
+  const allChecked = picker.allowAll && (!selected || selected.tenants === '*')
+  const selVerticals = (selected && selected.verticals) || []
+-%>
+<fieldset class="stack stack--sm" style="border: 0; padding: 0; margin: 0" data-scope-picker>
+  <legend class="field__label">Tenants</legend>
+  <% if (picker.restricted) { %>
+  <p class="muted" style="margin: 0; font-size: var(--text-sm)">Your access is limited to some tenants, so you can only grant those.</p>
+  <% } %>
+  <% if (picker.allowAll) { %>
+  <label class="row" style="gap: var(--space-2)">
+    <input type="radio" name="tenant_mode" value="all" <%= allChecked ? 'checked' : '' %>> Every tenant (including connections with no owner tenant)
+  </label>
+  <label class="row" style="gap: var(--space-2)">
+    <input type="radio" name="tenant_mode" value="some" <%= allChecked ? '' : 'checked' %>> Only these tenants:
+  </label>
+  <% } else { %>
+  <input type="hidden" name="tenant_mode" value="some">
+  <% } %>
+  <div class="row" style="gap: var(--space-3); flex-wrap: wrap; <%= picker.allowAll ? 'padding-left: var(--space-5)' : '' %>">
+    <% if (picker.tenantOptions.length === 0) { %>
+    <span class="muted">No tenants to choose from.</span>
+    <% } %>
+    <% for (const t of picker.tenantOptions) { %>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="tenants" value="<%= t.id %>" <%= selTenants.includes(t.id) ? 'checked' : '' %>>
+      <span><%= t.name %> <span class="muted mono" style="font-size: var(--text-xs)"><%= t.id %></span></span>
+    </label>
+    <% } %>
+  </div>
+</fieldset>
+<fieldset class="stack stack--sm" style="border: 0; padding: 0; margin: var(--space-3) 0 0">
+  <legend class="field__label">Verticals <span class="muted">(none checked = every vertical)</span></legend>
+  <div class="row" style="gap: var(--space-3); flex-wrap: wrap">
+    <% for (const v of picker.verticalOptions) { %>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="verticals" value="<%= v.id %>" <%= selVerticals.includes(v.id) ? 'checked' : '' %>> <%= v.label %>
+    </label>
+    <% } %>
+  </div>
+</fieldset>

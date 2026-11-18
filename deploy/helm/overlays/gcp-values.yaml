@@ -1,0 +1,75 @@
+# GCP / GKE overlay — layer on top of the base chart:
+#   helm install os deploy/helm/opensteward \
+#     -f deploy/helm/overlays/gcp-values.yaml -f my-secrets-and-hosts.yaml
+#
+# Prerequisites (see deploy/iac/gcp for reference Terraform):
+#   - GKE with Workload Identity enabled, ingress-nginx + cert-manager + External
+#     Secrets Operator installed
+#   - A Google service account Workload-Identity-bound to the chart ServiceAccount,
+#     with roles/secretmanager.secretAccessor
+#   - Cloud SQL for PostgreSQL reachable (private IP or the Auth Proxy sidecar)
+# Replace every <PLACEHOLDER>.
+#
+# NOTE: this overlay uses ingress-nginx (portable, pure-values). The GKE-native GCE
+# ingress needs container-native LB (NEG) annotations on each Service, which the base
+# chart does not template.
+
+database:
+  mode: postgres
+  external:
+    existingSecret: opensteward-db
+    secretKey: DATABASE_URL
+  persistence:
+    storageClass: premium-rwo # sqlite-mode trials only
+
+redis:
+  enabled: true
+  url: redis://<MEMORYSTORE_IP>:6379
+
+secrets:
+  source: externalSecrets
+  externalSecrets:
+    createStore: true
+    provider: gcp
+    gcp:
+      projectID: <PROJECT_ID>
+      clusterLocation: <REGION_OR_ZONE>
+      clusterName: <CLUSTER_NAME>
+    # A Secret Manager secret whose value is a JSON object with keys
+    # JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET).
+    remoteSecretName: opensteward-app-secrets
+
+serviceAccount:
+  annotations:
+    iam.gke.io/gcp-service-account: opensteward-eso@<PROJECT_ID>.iam.gserviceaccount.com
+
+ingress:
+  enabled: true
+  className: nginx
+  # cert-manager.io/cluster-issuer is added automatically from tls.certManager below.
+  tls:
+    enabled: true
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod
+  hosts:
+    - host: admin.example.com
+      service: admin
+    - host: api.example.com
+      service: integration-server
+
+publicUrls:
+  scheme: https
+  adminUi: https://admin.example.com
+  adminApi: https://admin-api.example.com
+  integrationServer: https://api.example.com
+
+podDisruptionBudget:
+  enabled: true
+services:
+  integration-server:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 75

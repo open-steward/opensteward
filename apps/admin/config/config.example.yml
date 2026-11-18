@@ -1,0 +1,15 @@
+server:
+  port: 3000
+  host: 0.0.0.0
+
+session:
+  secret: change-me-to-a-long-random-string-at-least-32-chars
+
+admin_api:
+  url: http://localhost:3001
+
+# Browser-facing admin-api base URL for "Sign in with <IdP>" links and the SSO
+# handoff round-trip. MUST be reachable from the user's browser (not a docker
+# service hostname). Env override: SSO_PUBLIC_BASE_URL.
+sso:
+  publicBaseUrl: http://localhost:3001

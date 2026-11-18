@@ -1,0 +1,135 @@
+<% layout('../layout', { title: 'Customers' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<% const isAdmin = user && user.role === 'admin' %>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">People</div>
+    <h1 class="page-header__title">Customers</h1>
+    <p class="page-header__desc">External end-users you've sent connect links to. PII is encrypted at rest and only revealed on demand.</p>
+    <% if (meta.total > 0) { %>
+    <p class="page-header__desc"><%= meta.total %> customer<%= meta.total === 1 ? '' : 's' %></p>
+    <% } %>
+  </div>
+  <div class="page-header__actions">
+    <% if (canAct) { %><a href="/customers/new" class="btn btn--primary btn--sm">Add customer</a><% } %>
+  </div>
+</header>
+
+<%
+  // The table (filter form + thead) renders unconditionally regardless of
+  // `customers.length` — the property every Tier B table shares (see
+  // /connections, /webhooks, /api-keys): hiding it whenever the current
+  // filter matches nothing would strand an operator with no visible Clear
+  // control and no way back short of hand-editing the URL.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (customers.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+          <% if (!hasFilters) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon"><i class="ph ph-users"></i></div>
+            <h3 class="empty-state__title">No customers yet</h3>
+            <p class="empty-state__body">Customers land here once you create one directly, or once a Connect Link they complete resolves to a new email. <% if (canAct) { %><a href="/customers/new">Add one</a> to get started.<% } %></p>
+          </div>
+          <% } else { %>
+          <%# Say which filter is responsible. "No customers match" on a
+              filtered list reads as an empty install, which is how an
+              operator ends up recreating customers that already exist under
+              another tenant. Only the two filters that predate this feature
+              (the combined `q` search and the Tenant select) get bespoke
+              wording — every other column falls through to the generic
+              message, same split /connections makes for its own new columns. -%>
+          <div class="empty-state empty-state--no-results">
+            <% if (tableState.filters.q && tableState.filters.tenantId) { %>
+            <h3 class="empty-state__title">No customers in tenant <span class="mono"><%= tableState.filters.tenantId %></span> match “<%= tableState.filters.q %>”</h3>
+            <% } else if (tableState.filters.tenantId) { %>
+            <h3 class="empty-state__title">No customers in tenant <span class="mono"><%= tableState.filters.tenantId %></span></h3>
+            <% } else if (tableState.filters.q) { %>
+            <h3 class="empty-state__title">No customers match “<%= tableState.filters.q %>”</h3>
+            <% } else { %>
+            <h3 class="empty-state__title">No customers match your filters</h3>
+            <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+            <% } %>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+            </div>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const c of customers) { %>
+      <tr>
+        <td>
+          <a href="/customers/<%= c.id %>" style="font-weight: 500"><%= c.email %></a>
+        </td>
+        <td class="muted"><%= c.displayName || '—' %></td>
+        <td class="muted mono" style="font-size: var(--text-xs)"><%= c.externalReference || '—' %></td>
+        <%# Name AND id: the name is what an operator recognises, the id is what
+            actually appears on API keys, Connect Links and tenant_id filters.
+            `tenants` is fetched non-fatally on this route, so `_tenant.ejs`
+            falls back to the bare id rather than an em-dash when it cannot be
+            resolved — the id still identifies the tenant. -%>
+        <td style="font-size: var(--text-xs)"><%- include('../_tenant', { tenantId: c.tenantId, tenants: (typeof tenants !== 'undefined' ? tenants : []) }) %></td>
+        <td class="muted"><%= new Date(c.createdAt).toLocaleDateString() %></td>
+        <%# Everything doable to this customer from here. A viewer sees the
+            column with only the read action, rather than an empty cell that
+            reads as "nothing applies to this row". %>
+        <td style="text-align: right; white-space: nowrap">
+          <a href="/customers/<%= c.id %>" class="btn btn--ghost btn--sm">Open</a>
+          <% if (canAct) { %>
+          <a href="/connect-links/new?customer=<%= c.id %>" class="btn btn--secondary btn--sm"
+             title="Send this customer a Connect Link">Connect link</a>
+          <% } %>
+          <%# Admin, not canAct: admin-api's DELETE /api/end-users/:id is
+              adminOnly, so offering this to an operator is offering something
+              that answers 403. %>
+          <% if (isAdmin) { %>
+          <%# The address is deliberately NOT interpolated into this string.
+              EJS escapes for HTML, but the browser HTML-decodes an attribute
+              before the JS engine parses it, so an apostrophe arrives as a real
+              quote and ends the literal. A customer with an apostrophe in their
+              address breaks the handler outright — it stops being a function,
+              and Delete then fires on the first click with no dialog at all.
+              Worse, addresses reach us from the unauthenticated self-register
+              endpoint, which stores whatever passes a loose regex. detail.ejs
+              words it without the address for the same reason. %>
+          <form method="POST" action="/customers/<%= c.id %>/delete" style="display: inline"
+                onsubmit="return confirm('Delete this customer? Their connect links stay for audit but are detached.')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn--ghost btn--sm">Delete</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<%- include('../_pagination', {
+  // `meta.page`, not `tableState.page`: admin-api is the one paginating this
+  // set, so its own echoed page number is the authoritative one — same
+  // reasoning as /connections.
+  page: meta.page,
+  pageLimit: meta.limit,
+  total: meta.total,
+  baseUrl: tableSpec.baseUrl,
+  filterQs: tableQs(tableState, tableSpec),
+}) %>

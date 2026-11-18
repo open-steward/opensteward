@@ -1,0 +1,180 @@
+<% layout('../layout', { title: 'Mint API key' }) -%>
+<%
+  const SCOPE_GROUPS = [
+    { eyebrow: 'Customers', items: [
+      { value: 'customers:read', label: 'Read', hint: 'GET /v1/customers, GET /v1/customers/:id' },
+      { value: 'customers:write', label: 'Write', hint: 'POST/PATCH/DELETE /v1/customers' },
+      { value: 'customers:read_pii', label: 'Reveal PII', hint: 'Allows ?include_pii=true on customer reads. Reveals encrypted PII (name, phone, address, personal ID). Audited via structured log line.' },
+    ]},
+    { eyebrow: 'Connect Links & Connections', items: [
+      { value: 'connect-links:write', label: 'Create connect link', hint: 'POST /v1/customers/:id/connect-links' },
+      { value: 'connections:read', label: 'Read connections', hint: 'GET /v1/customers/:id/connections, GET /v1/connections, GET /v1/connections/:id' },
+      { value: 'connections:write', label: 'Write connections', hint: 'PATCH /v1/connections/:id, DELETE /v1/connections/:id' },
+    ]},
+    { eyebrow: 'Outbound webhooks', items: [
+      { value: 'webhooks:read', label: 'Read subscriptions', hint: 'GET /v1/webhook-subscriptions and the per-subscription delivery log' },
+      { value: 'webhooks:write', label: 'Manage subscriptions', hint: 'Create/patch/delete/pause webhook subscriptions, rotate secrets, send test deliveries. Destinations are SSRF-guarded (public https only); at most 20 per tenant.' },
+    ]},
+    { eyebrow: 'Verticals — touch axis (which verticals can the key see?)', items: [
+      // One entry per known vertical, supplied by the route. Hand-listing these
+      // is what left four verticals unselectable after the platform grew to nine.
+      ...knownVerticals.map(v => ({ value: 'vertical:' + v.name, label: v.label, hint: 'Resource calls under /v1/' + v.name + '/* (read by default; writes require vertical:write)' })),
+      { value: 'vertical:read', label: 'Read all verticals', hint: 'Cross-vertical convenience — GETs on every /v1/{vertical}/* without per-vertical scopes.' },
+    ]},
+    { eyebrow: 'Verticals — verb axis (write gate)', items: [
+      { value: 'vertical:write', label: 'Write to verticals', hint: 'Required for POST/PATCH/PUT/DELETE on any /v1/{vertical}/*. Without it, the key is read-only across verticals — useful when the operator is liable for upstream mutations (accounting, CRM).' },
+    ]},
+    { eyebrow: 'AI agents (MCP)', items: [
+      { value: 'mcp:read', label: 'MCP agent (read-only)', hint: 'Mark this key as belonging to an AI agent attached via @opensteward/mcp-server. It is what makes the MCP protections apply at all: the auth layer refuses any non-GET method on this key, the deployment refuses an MCP client whose key lacks it, the features.mcp_enabled kill switch can reach it, and the rate-limit applies the mcp_tenant budget. Cannot coexist with any *:write scope on the same key — mint a separate key for write traffic. Combine with vertical:read + customers:read for a typical read-only agent.' },
+      { value: 'mcp:read_pii', label: 'MCP agent — reveal PII', hint: 'Optional companion to mcp:read for agents that legitimately need ?include_pii=true on customer reads. Every reveal is audit-logged. Most agents do not need this.' },
+    ]},
+  ]
+  const selectedSet = new Set(defaults.scopes || [])
+  // Same tenant control wizard step 6 mints with — see the field below for why
+  // this page cannot use a datalist. Offered only when there is a choice to
+  // make: a single-tenant deployment keeps the plain field.
+  const tenantChoices = (typeof tenants !== 'undefined' && tenants) || []
+  const pickTenant = tenantChoices.length > 1
+%>
+<div style="max-width: 720px">
+  <h1>Mint API key</h1>
+  <p class="muted" style="margin: var(--space-1) 0 var(--space-6)">
+    Issue a tenant-scoped key for the developer API. The plaintext is shown <strong>once</strong> on the next page — copy it before navigating away.
+  </p>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="/api-keys" class="card stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <%# A <select>, not an <input list="…"> bound to a datalist. Browsers filter
+        datalist suggestions against what is already in the box, and this field
+        ships pre-filled with the default tenant id — so every other tenant was
+        filtered out of the list before it was ever shown, the dropdown offered
+        only the value already there, and picking it did nothing. The one way
+        to reach a second tenant was to clear the field and type its id. A
+        select always lists every option, whatever the current value. %>
+    <% if (pickTenant) { %>
+    <div class="field">
+      <label class="field__label" for="tenantId">Tenant *</label>
+      <select class="select" name="tenantId" id="tenantId" required>
+        <% for (const t of tenantChoices) { %>
+        <option value="<%= t.id %>"<%= t.id === defaults.tenantId ? ' selected' : '' %>><%= t.name %> (<%= t.id %>)</option>
+        <% } %>
+      </select>
+      <span class="field__hint">Customers, connect-link sessions, and connections owned by this tenant become reachable through the key. Register another at <a href="/tenants">/tenants</a>.</span>
+    </div>
+    <% } else { %>
+    <%# Nothing to pick from — one registered tenant, or an admin-api that did
+        not answer. Stays typeable so a key can still be minted, and keeps the
+        `defaults.tenantId` echo the POST re-render relies on. %>
+    <div class="field">
+      <span class="field__label">Tenant id *</span>
+      <input class="input mono" name="tenantId" id="tenantId" required value="<%= defaults.tenantId %>" placeholder="default">
+      <span class="field__hint">Customers, connect-link sessions, and connections owned by this tenant become reachable through the key. Register more at <a href="/tenants">/tenants</a>.</span>
+    </div>
+    <% } %>
+
+    <div class="field">
+      <span class="field__label">Label *</span>
+      <input class="input" name="label" value="<%= defaults.label %>" placeholder="e.g. acme-prod-server" required>
+      <span class="field__hint">Names the key in the list. Required, because a key you cannot identify is one you cannot safely revoke.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Mode *</span>
+      <div class="stack stack--sm" style="margin-top: var(--space-2)">
+        <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+          <input type="radio" name="mode" value="live" <%= defaults.mode === 'live' ? 'checked' : '' %> required>
+          <strong>Live</strong>
+          <span class="muted" style="font-size: var(--text-xs)">— authenticates <span class="mono">/v1/*</span> against real connections and real platform data</span>
+        </label>
+        <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+          <input type="radio" name="mode" value="test" <%= defaults.mode === 'test' ? 'checked' : '' %>>
+          <strong>Test</strong>
+          <span class="muted" style="font-size: var(--text-xs)">— authenticates the <span class="mono">/test/v1/*</span> sandbox only. Synthetic data, no upstream calls, nothing to configure first.</span>
+        </label>
+      </div>
+      <span class="field__hint">Deliberately not preselected — a key minted in the wrong mode authenticates a surface you did not intend. Fixed at mint time; each mode is refused on the other's routes.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Expires</span>
+      <select class="select" name="expiryDays">
+        <option value="" selected>Never</option>
+        <option value="30">In 30 days</option>
+        <option value="90">In 90 days</option>
+        <option value="365">In 1 year</option>
+      </select>
+      <span class="field__hint">Past the expiry the key stops authenticating on its own — no revocation step to remember. Rotating a key before then issues a fresh replacement.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Scopes</span>
+      <div class="stack stack--sm" style="margin-top: var(--space-2)">
+        <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+          <input type="radio" name="scopeMode" value="safe-default" <%= defaults.scopeMode === 'safe-default' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+          <strong>Safe default</strong>
+          <span class="muted" style="font-size: var(--text-xs)">— recommended. Read access across all verticals + manage customers / connect-links / connections. <strong>Cannot write to vertical data</strong> until you opt in.</span>
+        </label>
+        <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+          <input type="radio" name="scopeMode" value="all" <%= defaults.scopeMode === 'all' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+          <strong>All access</strong>
+          <span class="muted" style="font-size: var(--text-xs)">— scope <span class="mono">*</span>, every endpoint, including vertical writes</span>
+        </label>
+        <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+          <input type="radio" name="scopeMode" value="custom" <%= defaults.scopeMode === 'custom' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+          <strong>Custom</strong>
+          <span class="muted" style="font-size: var(--text-xs)">— pick exactly which endpoints the key may call</span>
+        </label>
+      </div>
+      <div id="scope-grid" class="stack" style="margin-top: var(--space-4)">
+        <% for (const group of SCOPE_GROUPS) { %>
+        <div>
+          <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-wide); margin-bottom: var(--space-2)"><%= group.eyebrow %></div>
+          <div class="stack stack--sm">
+            <% for (const item of group.items) { %>
+            <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+              <input type="checkbox" name="scopes" value="<%= item.value %>" <%= selectedSet.has(item.value) ? 'checked' : '' %> style="margin-top: 4px">
+              <div>
+                <div><%= item.label %> <span class="mono muted" style="font-size: var(--text-xs)">(<%= item.value %>)</span></div>
+                <div class="muted" style="font-size: var(--text-xs)"><%= item.hint %></div>
+              </div>
+            </label>
+            <% } %>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary">Mint key</button>
+      <a href="/api-keys" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Serialised from the server's SAFE_DEFAULT_SCOPES — the preset shown must be
+  // the preset minted. Pre-checks boxes when the user lands on safe-default
+  // mode without a server round-trip.
+  var OST_SAFE_DEFAULT_SCOPES = new Set(<%- jsonForScript(safeDefaultScopes) %>);
+  function oiRefreshScopes() {
+    var mode = (document.querySelector('input[name="scopeMode"]:checked') || {}).value || 'safe-default';
+    var grid = document.getElementById('scope-grid');
+    var editable = mode === 'custom';
+    grid.style.opacity = editable ? '1' : '0.55';
+    grid.querySelectorAll('input[name="scopes"]').forEach(function (cb) {
+      cb.disabled = !editable;
+      if (mode === 'safe-default') {
+        cb.checked = OST_SAFE_DEFAULT_SCOPES.has(cb.value);
+      } else if (mode === 'all') {
+        cb.checked = true;
+      }
+    });
+  }
+  oiRefreshScopes();
+</script>

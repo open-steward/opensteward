@@ -1,0 +1,24 @@
+<%
+  // Cursor pagination control — for keyset-paginated lists where there is no
+  // page count to jump to. Inputs:
+  //   nav: { first, prev, next, pageNumber } — hrefs (or null) built by the route
+  //   shown: rows on this page; total: matching rows; totalCapped: total hit the cap
+-%>
+<nav class="row row--between" style="margin-top: var(--space-4); align-items: center" aria-label="Pagination">
+  <span class="muted" style="font-size: var(--text-sm)">
+    <% if (total > 0) { %>Page <%= nav.pageNumber %> · <%= shown %> shown of <%= totalCapped ? 'more than ' + (total - 1).toLocaleString() : total.toLocaleString() %><% } else { %>No results<% } %>
+  </span>
+  <span class="row" style="gap: var(--space-2); align-items: center">
+    <% if (nav.first) { %><a class="btn btn--ghost btn--sm" href="<%= nav.first %>">« First</a><% } %>
+    <% if (nav.prev) { %>
+    <a class="btn btn--ghost btn--sm" href="<%= nav.prev %>" rel="prev">← Prev</a>
+    <% } else { %>
+    <span class="btn btn--ghost btn--sm" aria-disabled="true" style="opacity: .4; pointer-events: none">← Prev</span>
+    <% } %>
+    <% if (nav.next) { %>
+    <a class="btn btn--ghost btn--sm" href="<%= nav.next %>" rel="next">Next →</a>
+    <% } else { %>
+    <span class="btn btn--ghost btn--sm" aria-disabled="true" style="opacity: .4; pointer-events: none">Next →</span>
+    <% } %>
+  </span>
+</nav>

@@ -1,0 +1,70 @@
+{
+  "name": "@opensteward/mcp-server",
+  "version": "1.0.0",
+  "description": "Read-only MCP server exposing OpenSteward customer data to AI agents (Claude Desktop, Cursor, Continue, Cline, gemini-cli, etc.)",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "homepage": "https://github.com/open-steward/opensteward",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-steward/opensteward.git",
+    "directory": "apps/mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/open-steward/opensteward/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "opensteward",
+    "ai-agent",
+    "claude",
+    "cursor"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "opensteward-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build",
+    "generate": "tsx scripts/generate-status-enums.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/core": "^2.4.0",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "axios": "^1.21.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^5.1.0"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-docsign"
+  },
+  "include": [
+    "src/verticals/docsign/**/*",
+    "src/types/**/*"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    }
+  ]
+}

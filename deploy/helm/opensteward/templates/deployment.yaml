@@ -1,0 +1,128 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+{{- $sqlite := eq $root.Values.database.mode "sqlite" -}}
+{{- $single := and $svc.stateful $sqlite -}}
+{{- /* A STORE_SECRET rotation quiesces the stateful writers to 0 via the same upgrade. */ -}}
+{{- $quiesce := and $svc.stateful $root.Values.rotation.enabled -}}
+{{- $hpa := and $svc.autoscaling.enabled (not $single) (not $quiesce) -}}
+{{- $maxReplicas := $svc.replicas -}}
+{{- if $quiesce }}{{- $maxReplicas = 0 -}}{{- else if $single }}{{- $maxReplicas = 1 -}}{{- else if $hpa }}{{- $maxReplicas = $svc.autoscaling.maxReplicas -}}{{- end }}
+{{- if and (eq $name "integration-server") (gt (int $maxReplicas) 1) (not $root.Values.redis.enabled) }}
+{{- fail "integration-server runs more than one replica but redis.enabled=false: two per-process subsystems need Redis to coordinate across replicas — the per-API-key rate-limit budget (each replica would grant the full quota) and the per-connection OAuth refresh lock (concurrent refreshes would race on rotating refresh tokens and wrongly expire connections). Set redis.enabled=true and redis.url, or pin integration-server to a single replica." }}
+{{- end }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "opensteward.fullname" $root }}-{{ $name }}
+  labels:
+    {{- include "opensteward.serviceLabels" (dict "root" $root "name" $name) | nindent 4 }}
+spec:
+  {{- if not $hpa }}
+  # A single-writer SQLite PVC must never run two replicas; Recreate guarantees
+  # the old pod is gone before the new one attaches. rotation.enabled pins the
+  # stateful writers to 0 for the maintenance window.
+  replicas: {{ if $quiesce }}0{{ else if $single }}1{{ else }}{{ $svc.replicas }}{{ end }}
+  {{- end }}
+  strategy:
+    type: {{ if $single }}Recreate{{ else }}RollingUpdate{{ end }}
+  selector:
+    matchLabels:
+      {{- include "opensteward.serviceSelector" (dict "root" $root "name" $name) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "opensteward.serviceLabels" (dict "root" $root "name" $name) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "opensteward.serviceAccountName" $root }}
+      {{- with $root.Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "opensteward.podSecurityContext" $root | nindent 8 }}
+      {{- if not $single }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    {{- include "opensteward.serviceSelector" (dict "root" $root "name" $name) | nindent 20 }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: {{ include "opensteward.image" (dict "root" $root "name" $name) }}
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          securityContext:
+            {{- include "opensteward.containerSecurityContext" $root | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ $svc.port }}
+          env:
+            {{- include "opensteward.serviceEnv" (dict "root" $root "name" $name) | nindent 12 }}
+          {{- if include "opensteward.needsSecret" (dict "name" $name) }}
+          envFrom:
+            - secretRef:
+                name: {{ include "opensteward.secretName" $root }}
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          startupProbe:
+            # Generous: a cold SQLite open + migrations on first boot.
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+            failureThreshold: 30
+          resources:
+            {{- toYaml $svc.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if $single }}
+            - name: data
+              mountPath: /app/apps/{{ $name }}/data
+            {{- end }}
+            {{- if and (eq $name "integration-server") (include "opensteward.licenseSecret" $root) }}
+            {{- /* A directory, never subPath: kubelet swaps a projected Secret through a ..data symlink, and a subPath mount pins the old file forever. */}}
+            - name: license
+              mountPath: /etc/opensteward/license
+              readOnly: true
+            {{- end }}
+      volumes:
+        # readOnlyRootFilesystem is on, so /tmp must be a writable mount.
+        - name: tmp
+          emptyDir: {}
+{{- if $single }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ include "opensteward.fullname" $root }}-{{ $name }}-data
+{{- end }}
+{{- if and (eq $name "integration-server") (include "opensteward.licenseSecret" $root) }}
+{{- /* Optional: a missing Secret or key never stops the pod; it starts in community mode and says so. 288 = 0440, readable by fsGroup 1000 (the node user); decimal on purpose, since 0440 parses differently in YAML 1.1 and 1.2. */}}
+        - name: license
+          secret:
+            secretName: {{ include "opensteward.licenseSecret" $root | quote }}
+            optional: true
+            defaultMode: 288
+            items:
+              - key: {{ include "opensteward.licenseSecretKey" $root | quote }}
+                path: license.key
+{{- end }}
+{{ end }}

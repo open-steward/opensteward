@@ -1,0 +1,124 @@
+<% layout('layout', { title: 'Runtime settings' }) -%>
+<%
+%>
+<div class="stack" style="max-width: 960px">
+  <header class="stack" style="gap: var(--space-2); margin-bottom: var(--space-4)">
+    <h1 style="margin: 0">Runtime settings</h1>
+    <p class="muted" style="margin: 0; max-width: 64ch">
+      Tunables that take effect without a redeploy. Services read from this
+      table on a 60-second TTL cache; .env values are the bootstrap defaults
+      and the fallback when the admin DB hasn't been seeded. Edits are
+      audit-logged.
+    </p>
+  </header>
+
+  <% for (const category of categoryOrder) { %>
+    <% const rows = byCategory[category] %>
+    <% if (!rows || rows.length === 0) continue %>
+    <section class="card" style="padding: var(--space-5) var(--space-6); margin-bottom: var(--space-4)">
+      <h2 style="margin: 0 0 var(--space-4); font-size: var(--text-lg)"><%= categoryLabels[category] || category %></h2>
+      <% if (category === 'openapi') { %>
+        <%- include('_openapi-editor', { rows, csrfToken }) %>
+      <% } else { %>
+      <table style="width: 100%; border-collapse: collapse; font-size: var(--text-sm)">
+        <thead>
+          <tr style="text-align: left; color: var(--fg-3); border-bottom: 1px solid var(--border-subtle)">
+            <th style="padding: var(--space-2) var(--space-2); font-weight: 500">Setting</th>
+            <th style="padding: var(--space-2) var(--space-2); font-weight: 500; width: 200px">Value</th>
+            <th style="padding: var(--space-2) var(--space-2); font-weight: 500; width: 80px">Source</th>
+            <th style="padding: var(--space-2) var(--space-2); font-weight: 500; width: 120px">Default</th>
+            <th style="padding: var(--space-2) var(--space-2); width: 80px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const row of rows) { %>
+          <tr style="border-bottom: 1px solid var(--border-subtle); vertical-align: top">
+            <td style="padding: var(--space-3) var(--space-2)">
+              <code class="mono" style="font-size: var(--text-xs); color: var(--fg-1)"><%= row.key %></code>
+              <div class="muted" style="font-size: var(--text-xs); margin-top: 4px; line-height: 1.4"><%= row.description %></div>
+            </td>
+            <td style="padding: var(--space-3) var(--space-2)">
+              <form method="POST" action="/settings/update" style="display: flex; gap: 4px"
+                    <% if (row.warning) { %>data-warning="<%= row.warning %>" data-warn-on="<%= row.warnOn || 'enable' %>"<% } %><% if (row.valueType === 'json') { %> data-json-value<% } %>>
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="key" value="<%= row.key %>">
+                <input type="hidden" name="valueType" value="<%= row.valueType %>">
+                <% if (row.valueType === 'boolean') { %>
+                  <select name="value" class="input" style="flex: 1; font-size: var(--text-xs)">
+                    <option value="true" <%= row.value === true ? 'selected' : '' %>>true</option>
+                    <option value="false" <%= row.value === false ? 'selected' : '' %>>false</option>
+                  </select>
+                <% } else if (row.valueType === 'number') { %>
+                  <input type="number" name="value" value="<%= row.value %>" class="input" style="flex: 1; font-size: var(--text-xs); font-family: var(--font-mono)">
+                <% } else if (row.valueType === 'string') { %>
+                  <input type="text" name="value" value="<%= row.value %>" class="input" style="flex: 1; font-size: var(--text-xs)">
+                <% } else { %>
+                  <textarea name="value" class="input" rows="3" spellcheck="false" style="flex: 1; font-size: var(--text-xs); font-family: var(--font-mono); resize: vertical"><%= JSON.stringify(row.value, null, 2) %></textarea>
+                <% } %>
+                <button type="submit" class="btn btn--sm btn--secondary" style="font-size: var(--text-xs)">Save</button>
+              </form>
+            </td>
+            <td style="padding: var(--space-3) var(--space-2)">
+              <% if (row.isDefault) { %>
+                <span class="badge badge--muted" style="font-size: var(--text-2xs, 11px)">default</span>
+              <% } else { %>
+                <span class="badge" style="font-size: var(--text-2xs, 11px)">admin</span>
+              <% } %>
+            </td>
+            <td style="padding: var(--space-3) var(--space-2)">
+              <code class="mono" style="font-size: var(--text-xs); color: var(--fg-3)"><%= JSON.stringify(row.defaultValue) %></code>
+            </td>
+            <td style="padding: var(--space-3) var(--space-2); text-align: right">
+              <% if (!row.isDefault) { %>
+                <form method="POST" action="/settings/<%= encodeURIComponent(row.key) %>/reset" style="display: inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn--sm btn--ghost" style="font-size: var(--text-xs)" title="Reset to seeded default">Reset</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      <% } %>
+    </section>
+  <% } %>
+</div>
+
+<script>
+  // Confirmation for settings whose consequence is not obvious. The text lives
+  // in a data- attribute rather than inside the handler: EJS escapes for HTML,
+  // but the browser HTML-decodes an attribute before the JS parser sees it, so
+  // an apostrophe in the string would end the literal and the form would submit
+  // with no dialog at all. See tests/unit/views/no-interpolation-in-inline-js.
+  document.querySelectorAll('form[data-warning]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      var select = form.querySelector('select[name="value"]');
+      // Each warning guards one direction of a boolean flip — data-warn-on
+      // says which. 'enable' confirms switching ON (the exposure direction:
+      // raw payloads, self-serve minting); 'disable' confirms switching OFF
+      // (kill switches: MCP, test mode, local login, API keys). The safe
+      // direction never nags.
+      var warnOn = form.getAttribute('data-warn-on') || 'enable';
+      var guarded = warnOn === 'disable' ? 'false' : 'true';
+      if (select && select.value !== guarded) return;
+      if (!window.confirm(form.getAttribute('data-warning'))) event.preventDefault();
+    });
+  });
+
+  // Client-side JSON check for the free-form textarea settings. The server
+  // validates too — this just turns a silent 400 round-trip into an
+  // immediate, position-aware message next to the field.
+  document.querySelectorAll('form[data-json-value]').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      var area = form.querySelector('textarea[name="value"]');
+      if (!area) return;
+      try {
+        JSON.parse(area.value);
+      } catch (err) {
+        event.preventDefault();
+        window.alert('Not valid JSON: ' + err.message);
+      }
+    });
+  });
+</script>

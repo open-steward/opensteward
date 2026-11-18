@@ -1,0 +1,37 @@
+import type { FastifyPluginAsync } from 'fastify'
+import { cachedList, cachedGet, parseListQuery, listPage, collectionIsComplete, sharedSingleResponse, assertSearchSupported } from '@opensteward/shared'
+import type { Project } from '../schema/project'
+
+const RESOURCE = 'projects'
+
+export function createProjectsRouter(): FastifyPluginAsync {
+  return async (fastify) => {
+    fastify.get('/projects', async (request, reply) => {
+      const { adapter, credentials } = request
+      if (!adapter.listProjects) {
+        return reply.status(501).send({ error: 'listProjects not implemented', code: 'NOT_IMPLEMENTED' })
+      }
+      const params = parseListQuery(request.query, adapter)
+      assertSearchSupported(adapter, params)
+      const data = await cachedList<Project>(request, {
+        resourceType: RESOURCE,
+        fetch: () => adapter.listProjects!(credentials, params),
+        isComplete: (rows) => collectionIsComplete(params, rows),
+      })
+      return reply.send(listPage(data, params, adapter.platform, request.log))
+    })
+
+    fastify.get<{ Params: { id: string } }>('/projects/:id', async (request, reply) => {
+      const { adapter, credentials } = request
+      if (!adapter.getProject) {
+        return reply.status(501).send({ error: 'getProject not implemented', code: 'NOT_IMPLEMENTED' })
+      }
+      const data = await cachedGet<Project>(request, {
+        resourceType: RESOURCE,
+        resourceId: request.params.id,
+        fetch: () => adapter.getProject!(credentials, request.params.id),
+      })
+      return reply.send(sharedSingleResponse(data, adapter.platform))
+    })
+  }
+}

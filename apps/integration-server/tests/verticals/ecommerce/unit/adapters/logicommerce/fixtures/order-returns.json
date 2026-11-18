@@ -1,0 +1,948 @@
+{
+ "returns": [
+  {
+   "ADDITIONALINFORMATION": [
+    {
+     "NAME": "IP",
+     "VALUE": "192.168.110.146"
+    },
+    {
+     "NAME": "Internal server",
+     "VALUE": "192.168.110.31"
+    },
+    {
+     "NAME": "Host",
+     "VALUE": "192.168.110.146"
+    },
+    {
+     "NAME": "User-agent",
+     "VALUE": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.94 Safari/537.36"
+    },
+    {
+     "NAME": "Device",
+     "VALUE": "1"
+    },
+    {
+     "NAME": "OS",
+     "VALUE": "1"
+    },
+    {
+     "NAME": "MobileVersion",
+     "VALUE": "0"
+    }
+   ],
+   "COMMENT": "Order comment",
+   "CURRENCIES": {
+    "DESTINATION": {
+     "ISO4217": {
+      "CODE": "EUR",
+      "NUMBER": "978"
+     },
+     "SYMBOL": "€",
+     "VALUE": 1
+    },
+    "SOURCE": {
+     "ISO4217": {
+      "CODE": "EUR",
+      "NUMBER": "978"
+     },
+     "SYMBOL": "€",
+     "VALUE": 1
+    }
+   },
+   "CUSTOMTAGS": [
+    {
+     "CUSTOMTAG": {
+      "ID": 379,
+      "PID": "abc"
+     },
+     "ID": 1336,
+     "NAME": "Name customTag",
+     "VALUE": {
+      "ID": 1,
+      "PID": "abc"
+     }
+    },
+    {
+     "CUSTOMTAG": {
+      "ID": 377,
+      "PID": "abc"
+     },
+     "ID": 1337,
+     "NAME": "Name customTag 2",
+     "VALUE": {
+      "ID": 2,
+      "PID": "def"
+     }
+    },
+    {
+     "CUSTOMTAG": {
+      "ID": 380,
+      "PID": "abc"
+     },
+     "ID": 1338,
+     "NAME": "Name customTag 3",
+     "VALUES": [
+      {
+       "ID": 1,
+       "PID": "abc"
+      },
+      {
+       "ID": 3,
+       "PID": "def"
+      }
+     ]
+    }
+   ],
+   "DATE": "2020-06-29T07:52:43+02:00",
+   "DELIVERY": {
+    "COUNTRY": "ES",
+    "ID": 123,
+    "LOCATIONID": 1072586310,
+    "MODE": 1,
+    "MULTISHIPMENT": 1,
+    "PHYSICALLOCATION": {
+     "ADDRESS": "Delivery address",
+     "CITY": "Igualada",
+     "COUNTRY": "ES",
+     "DOCUMENTDELIVERYID": 108,
+     "EMAIL": "mail@example.com",
+     "ID": 27,
+     "LATITUDE": 41.583182,
+     "LOCATIONID": 1234,
+     "LONGITUDE": 1.612641,
+     "NAME": "PRShop1",
+     "PHYSICALLOCATION": {
+      "ID": 545,
+      "PID": "PRShop1"
+     },
+     "POSTALCODE": "08700",
+     "STATE": "Barcelona"
+    },
+    "PRICE": 12.3,
+    "SHIPMENTS": [
+     {
+      "COUNTRY": "ES",
+      "DOCUMENTDELIVERYID": 108,
+      "DOCUMENTID": 123,
+      "EXPORTSTATUS": 1,
+      "ID": 108,
+      "INCOMINGDATE": "2020-06-29T07:52:43+02:00",
+      "LOCATIONID": 1234,
+      "MULTISHIPMENT": 1,
+      "OFFSETDAYS": 3,
+      "ORIGINWAREHOUSEGROUPID": 15,
+      "PHYSICALLOCATIONID": 1234,
+      "PID": "abc",
+      "ROWS": [
+       {
+        "DOCUMENTROWID": 123,
+        "DOCUMENTSHIPMENTID": 456,
+        "HASH": "hash",
+        "ID": 12,
+        "QUANTITY": 3,
+        "STOCKHASH": "stock_hash"
+       }
+      ],
+      "SHIPPING": {
+       "DISCOUNTS": [
+        {
+         "ACCUMULATEPRODUCTS": 1,
+         "AMOUNT": 10,
+         "AMOUNTTYPE": 1,
+         "APPLYTO": 2,
+         "BENEFITMODE": 2,
+         "DESCRIPTION": "Discount on the shipping",
+         "DISCOUNT": {
+          "ID": 123,
+          "PID": "abc"
+         },
+         "DISCOUNTCONDITION": 1,
+         "DISCOUNTID": 1,
+         "DISCOUNTTYPEVALUE": 40,
+         "DISCOUNTVALUE": 10,
+         "DOCUMENTSHIPPINGID": 1,
+         "ID": 4,
+         "MAXCONDITION": 100,
+         "MINCONDITION": 1,
+         "MULTIPLIER": 2,
+         "NAME": "Shipping discount",
+         "SUBTOTAL": 1,
+         "TICKETCODE": "ABCD",
+         "TOTAL": 100
+        }
+       ],
+       "DOCUMENTSHIPMENTID": 108,
+       "ID": 108,
+       "NAME": "Transporte 1",
+       "PACKAGES": 5,
+       "PLUGINID": "",
+       "PRICE": 5,
+       "PRICEWITHTAXES": 5.25,
+       "SHIPPERID": 2,
+       "SHIPPERPID": "Shipper 1",
+       "SHIPPINGCALCULATION": 1,
+       "SHIPPINGSECTIONID": 1,
+       "SHIPPINGTYPEID": 2,
+       "SHIPPINGTYPENAME": "ShippingType 1",
+       "SHIPPINGTYPEPID": "ShippingType1",
+       "TAXES": [
+        {
+         "BASE": 12.5,
+         "CUMULATIVEMODE": 1,
+         "NAME": "Iva normal",
+         "OPERATION": 1,
+         "PRIORITY": 1,
+         "RERATE": 0.5,
+         "TAX": {
+          "ID": 2,
+          "PID": "IVA21"
+         },
+         "TAXID": 2,
+         "TAXRATE": 21,
+         "TAXVALUE": 2.5,
+         "TYPE": 1
+        }
+       ],
+       "TRACKINGS": [
+        {
+         "LASTUPDATE": "September, 15 2021 11:42:27 +0200",
+         "PACKAGES": [
+          {
+           "ACTIVITY": [
+            {
+             "DATETIME": "February, 02 2020 00:00:00 +0100",
+             "DESCRIPTION": "desc",
+             "PROPERTIES": [
+              {
+               "NAME": "par1",
+               "VALUE": "par2"
+              }
+             ],
+             "STATUS": "1"
+            }
+           ],
+           "LASTUPDATE": "September, 15 2021 12:00:31 +0200",
+           "WEIGHT": 3,
+           "WEIGHTUNITS": "Kg"
+          }
+         ],
+         "PICKUPDATE": "February, 01 2020 00:00:00 +0100",
+         "PROPERTIES": [
+          {
+           "NAME": "name property",
+           "VALUE": "value property"
+          }
+         ]
+        }
+       ]
+      },
+      "SPLITBYDATES": 0,
+      "STATUS": 1,
+      "STATUSES": [
+       {
+        "ACTIONS": [
+         {
+          "ACTIONID": 1,
+          "ACTIONTYPE": 1,
+          "HISTORYACTIONSTATUS": 1,
+          "PARAMETERS": [
+           {
+            "ITEMID": 123,
+            "NAME": "aaa",
+            "VALUE": "223"
+           },
+           {
+            "ITEMID": 123,
+            "NAME": "bbb",
+            "VALUE": "333"
+           }
+          ],
+          "SETTINGORDERSTATUSACTIONID": 1
+         }
+        ],
+        "CURRENTDATETIME": "June, 29 2020 07:52:46 +0200",
+        "DOCUMENTSHIPMENTID": 108,
+        "FROMSTATUS": 0,
+        "FROMSUBSTATUSID": "",
+        "ID": 1,
+        "TOSTATUS": 1,
+        "TOSUBSTATUSID": ""
+       }
+      ],
+      "SUBSTATUSID": 3,
+      "TRACKINGNUMBER": "TRK-123",
+      "TYPE": 1
+     }
+    ],
+    "SPLITBYDATES": 0,
+    "TAXES": [
+     {
+      "CUMULATIVEMODE": 1,
+      "NAME": "Iva normal",
+      "PRIORITY": 1,
+      "RERATE": 0.5,
+      "TAX": {
+       "ID": 2,
+       "PID": "IVA10"
+      },
+      "TAXID": 2,
+      "TAXOPERATION": 1,
+      "TAXRATE": 21,
+      "TYPE": 1
+     }
+    ],
+    "TYPE": 1
+   },
+   "DELIVERYDATE": "2019-01-09T19:00:00+01:00",
+   "DISCOUNTS": [
+    {
+     "ACCUMULATEPRODUCTS": 0,
+     "AMOUNT": 5,
+     "AMOUNTTYPE": 1,
+     "APPLYOVERBASEPRICE": 0,
+     "APPLYTO": 0,
+     "BENEFITMODE": 2,
+     "CALCULATIONMODE": 0,
+     "DESCRIPTION": "discount description",
+     "DISCOUNT": {
+      "ID": 123,
+      "PID": "abc"
+     },
+     "DISCOUNTCONDITION": 5,
+     "DISCOUNTID": 11,
+     "DISCOUNTTYPEVALUE": 1,
+     "DISCOUNTVALUE": 5,
+     "DOCUMENTID": 123,
+     "ID": 1,
+     "MAXCONDITION": 12,
+     "MINCONDITION": 2,
+     "MULTIPLIER": 1,
+     "NAME": "Discoun aprod",
+     "SUBTOTAL": 23,
+     "TICKETCODE": "ABC",
+     "TOTAL": 23.5
+    }
+   ],
+   "DOCUMENTINFORMATION": {
+    "CHANNEL": {
+     "ID": 1,
+     "PID": "B2C"
+    },
+    "EDITABLE": 1
+   },
+   "DOCUMENTNUMBER": "1122",
+   "DOCUMENTTYPE": 1,
+   "EXPORTSTATUS": 0,
+   "HEADQUARTER": {
+    "ADDRESS": " C/ Banyoles, 6",
+    "CITY": " Vic",
+    "COUNTRY": "ES",
+    "EMAIL": "mail@hq.com",
+    "HEADQUARTER": {
+     "ID": 1,
+     "PID": "abc"
+    },
+    "ID": 1,
+    "LOCALE": "es_ES",
+    "LOGO": "logo.png",
+    "NAME": "Albet S.A",
+    "PHONE": "612345678",
+    "POSTALCODE": "08500",
+    "STATE": "Barcelona",
+    "TIMEZONE": "Europe/Madrid",
+    "VAT": " A08695389"
+   },
+   "ID": 108,
+   "LANGUAGE": "ES",
+   "LANGUAGEID": 1,
+   "MARKETPLACEORDERID": "order-123",
+   "PAID": 1,
+   "PAYMENTDATE": "2020-07-07T00:00:00+02:00",
+   "PAYMENTSYSTEMS": {
+    "ID": 107,
+    "INCREASEMIN": 0,
+    "INCREASETYPE": 1,
+    "INCREASEVALUE": 3.5,
+    "NAME": "Offline payment",
+    "PAYMENTSYSTEM": {
+     "ID": 3,
+     "PID": ""
+    },
+    "PAYMENTSYSTEMPLUGINID": 3,
+    "PAYMENTTYPE": 1,
+    "PRICE": 3,
+    "PROPERTY": "abc",
+    "TAXES": [
+     {
+      "CUMULATIVEMODE": 1,
+      "NAME": "Null VAT",
+      "PRIORITY": 1,
+      "RERATE": 0.5,
+      "TAX": {
+       "ID": 1,
+       "PID": "abc"
+      },
+      "TAXID": 4,
+      "TAXOPERATION": 1,
+      "TAXRATE": 5,
+      "TYPE": 1
+     }
+    ]
+   },
+   "PID": "Order1",
+   "PREFIX": "ORD-",
+   "REVERSECHARGEVAT": 0,
+   "REWARDPOINTS": [
+    {
+     "EARNED": {
+      "RULES": [
+       {
+        "EARNED": 1,
+        "FROM": 1,
+        "ID": 123,
+        "LANGUAGE": {
+         "DESCRIPTION": "Rule description",
+         "NAME": "Rule earn"
+        },
+        "TO": 2,
+        "TYPE": "BY_UNITS",
+        "VALUE": 5,
+        "VALUEMODE": "RANGE"
+       }
+      ]
+     },
+     "EXPIRATIONDATE": "December, 31 2070 00:00:00 +0000",
+     "EXPIRATIONDAYS": 90,
+     "ID": 123,
+     "LANGUAGE": {
+      "DESCRIPTION": "My points description",
+      "NAME": "My points"
+     },
+     "PID": "abc",
+     "REDEEMED": {
+      "RULES": [
+       {
+        "FROM": 3,
+        "ID": 123,
+        "LANGUAGE": {
+         "DESCRIPTION": "Rule description",
+         "NAME": "Rule redeem"
+        },
+        "REDEEMED": 1,
+        "TO": 4,
+        "VALUE": 5
+       }
+      ]
+     },
+     "SUMMARY": {
+      "TOTALBYAMOUNT": 10,
+      "TOTALBYUNITS": 20,
+      "TOTALEARNED": 20,
+      "TOTALREDEEMED": 20
+     },
+     "TYPE": "BY_DATE"
+    }
+   ],
+   "ROWS": [
+    {
+     "BACKORDER": 1,
+     "BRANDNAME": "brand",
+     "COMBINATION": {
+      "ID": 123,
+      "PID": "comb1"
+     },
+     "COMBINATIONID": 6436,
+     "CUSTOMTAGS": [
+      {
+       "CUSTOMTAG": {
+        "ID": 1,
+        "PID": "Tag123"
+       },
+       "ID": 123,
+       "NAME": "Tag name",
+       "VALUE": "Tag value"
+      }
+     ],
+     "DISCOUNTID": 108,
+     "DISCOUNTS": [
+      {
+       "ACCUMULATEPRODUCTS": 0,
+       "AMOUNT": 20,
+       "AMOUNTTYPE": 1,
+       "APPLYTO": 2,
+       "DESCRIPTION": "Discount description",
+       "DISCOUNT": {
+        "ID": 123,
+        "PID": "abc"
+       },
+       "DISCOUNTCONDITION": 2,
+       "DISCOUNTID": 123,
+       "DISCOUNTTYPEVALUE": 1,
+       "DISCOUNTVALUE": 20,
+       "ID": 2520,
+       "MAXCONDITION": 20,
+       "MINCONDITION": 10,
+       "MULTIPLIER": 1,
+       "NAME": "Discount AA",
+       "SUBTOTAL": 10.4,
+       "TICKETCODE": "ABC",
+       "TOTAL": 12
+      }
+     ],
+     "EAN": "5901234123457",
+     "FROMSHOPPINGLISTROW": 1,
+     "HASH": "86fa4a2ae6f728c905a78b50432153d6",
+     "ID": 115,
+     "IMAGE": "image.jpg",
+     "ISBN": "978-3-16-148410-0",
+     "ISSELECTABLEGIFT": 0,
+     "JAN": "4501234123457",
+     "LINK": "http://store.com/product",
+     "LINKEDPARENTID": "",
+     "MANUFACTURERSKU": "SKU123",
+     "NAME": "name",
+     "NORETURN": 1,
+     "ONREQUEST": 0,
+     "ONREQUESTDAYS": 0,
+     "OPTIONS": [
+      {
+       "ID": 229,
+       "NAME": "PresentaciÃ³n",
+       "OPTION": {
+        "ID": 3848,
+        "PID": "3308.PRE"
+       },
+       "PROMPT": "PresentaciÃ³n",
+       "VALUES": [
+        {
+         "ID": 229,
+         "PREVIOUSPRICE": 10.8,
+         "PRICE": 10.8,
+         "PRODUCTOPTIONVALUE": {
+          "ID": 7373,
+          "PID": "3308.PRE.880303"
+         },
+         "PRODUCTSOPTIONSVALUESEXTERNALID": 3308,
+         "VALUE": "GOURMET GOLD Mousse",
+         "WEIGHT": 12
+        }
+       ]
+      }
+     ],
+     "OPTIONSPRICE": 10.8,
+     "PREVIOUSPRICE": 20.8,
+     "PRICE": 19.8,
+     "PRODUCT": {
+      "ID": 123,
+      "PID": "prod1"
+     },
+     "PRODUCTPRICE": 9,
+     "QUANTITY": 1,
+     "REVERSECHARGEVAT": 0,
+     "RMAREASON": {
+      "COMMENT": "He abierto el producto y la cubierta está rajada.",
+      "DESCRIPTION": "The product is faulty or not working as intended.",
+      "ID": 545,
+      "RMAREASON": {
+       "ID": 2,
+       "PID": "RMAReasonDefective"
+      }
+     },
+     "ROWTYPE": 1,
+     "SALE": 1,
+     "SECTIONID": "",
+     "SKU": "C0424",
+     "STOCKMANAGEMENT": 1,
+     "STOCKS": [
+      {
+       "DOCUMENTROWID": 123,
+       "DOCUMENTSHIPMENTROWID": 12,
+       "HASH": "abc123",
+       "ID": 123,
+       "INCOMINGDATE": "2020-01-04T15:43:27+01:00",
+       "MISSINGSTOCKQUANTITY": 3,
+       "OFFSETDAYS": 10,
+       "PREVISIONTYPE": 0,
+       "PRIORITY": 1,
+       "QUANTITY": 2,
+       "SUBSTRACTED": [
+        {
+         "PREVISIONTYPE": 1,
+         "PRODUCTCOMBINATIONSTOCKID": 12,
+         "QUANTITY": 10
+        }
+       ],
+       "WAREHOUSE": {
+        "ID": 123,
+        "PID": "abc"
+       },
+       "WAREHOUSEGROUP": {
+        "ID": 123,
+        "PID": "abc"
+       }
+      }
+     ],
+     "TAXES": [
+      {
+       "CUMULATIVEMODE": 1,
+       "NAME": "IVA 10",
+       "PRIORITY": 1,
+       "RERATE": 0.3,
+       "TAX": {
+        "ID": 2,
+        "PID": "IVA10"
+       },
+       "TAXID": 4,
+       "TAXOPERATION": 1,
+       "TAXRATE": 5,
+       "TYPE": 1
+      }
+     ],
+     "TOTAL": 19.8,
+     "TOTALTAXES": 12,
+     "TYPE": 1,
+     "UPC": "036000291452",
+     "VOUCHERS": [
+      {
+       "DELIVERYDATE": "",
+       "EMAIL": "email@logicommerce.com",
+       "EXPIRATIONDAYS": 10,
+       "ID": 15,
+       "LANGUAGE": "EN",
+       "MESSAGE": "the message",
+       "VOUCHERCODE": "VALSA23W3Q1",
+       "VOUCHERID": "123"
+      }
+     ],
+     "WEIGHT": 12
+    },
+    {
+     "DOCUMENTID": 697,
+     "ID": 871,
+     "ITEMS": [
+      {
+       "BACKORDER": 1,
+       "BRANDNAME": "brand",
+       "COMBINATION": {
+        "ID": 123,
+        "PID": "comb1"
+       },
+       "COMBINATIONID": 6436,
+       "CUSTOMTAGS": [
+        {
+         "CUSTOMTAG": {
+          "ID": 1,
+          "PID": "Tag123"
+         },
+         "ID": 123,
+         "NAME": "Tag name",
+         "VALUE": "Tag value"
+        }
+       ],
+       "DISCOUNTID": 108,
+       "DISCOUNTS": [
+        {
+         "ACCUMULATEPRODUCTS": 0,
+         "AMOUNT": 20,
+         "AMOUNTTYPE": 1,
+         "APPLYTO": 2,
+         "DESCRIPTION": "Discount description",
+         "DISCOUNT": {
+          "ID": 123,
+          "PID": "abc"
+         },
+         "DISCOUNTCONDITION": 2,
+         "DISCOUNTID": 123,
+         "DISCOUNTTYPEVALUE": 1,
+         "DISCOUNTVALUE": 20,
+         "ID": 2520,
+         "MAXCONDITION": 20,
+         "MINCONDITION": 10,
+         "MULTIPLIER": 1,
+         "NAME": "Discount AA",
+         "SUBTOTAL": 10.4,
+         "TICKETCODE": "ABC",
+         "TOTAL": 12
+        }
+       ],
+       "EAN": "5901234123457",
+       "FROMSHOPPINGLISTROW": 1,
+       "HASH": "86fa4a2ae6f728c905a78b50432153d6",
+       "ID": 115,
+       "IMAGE": "image.jpg",
+       "ISBN": "978-3-16-148410-0",
+       "ISSELECTABLEGIFT": 0,
+       "JAN": "4501234123457",
+       "LINK": "http://store.com/product",
+       "LINKEDPARENTID": "",
+       "MANUFACTURERSKU": "SKU123",
+       "NAME": "name",
+       "NORETURN": 1,
+       "ONREQUEST": 0,
+       "ONREQUESTDAYS": 0,
+       "OPTIONS": [
+        {
+         "ID": 229,
+         "NAME": "PresentaciÃ³n",
+         "OPTION": {
+          "ID": 3848,
+          "PID": "3308.PRE"
+         },
+         "PROMPT": "PresentaciÃ³n",
+         "VALUES": [
+          {
+           "ID": 229,
+           "PREVIOUSPRICE": 10.8,
+           "PRICE": 10.8,
+           "PRODUCTOPTIONVALUE": {
+            "ID": 7373,
+            "PID": "3308.PRE.880303"
+           },
+           "PRODUCTSOPTIONSVALUESEXTERNALID": 3308,
+           "VALUE": "GOURMET GOLD Mousse",
+           "WEIGHT": 12
+          }
+         ]
+        }
+       ],
+       "OPTIONSPRICE": 10.8,
+       "PREVIOUSPRICE": 20.8,
+       "PRICE": 19.8,
+       "PRODUCT": {
+        "ID": 123,
+        "PID": "prod1"
+       },
+       "PRODUCTPRICE": 9,
+       "QUANTITY": 1,
+       "REVERSECHARGEVAT": 0,
+       "ROWTYPE": 1,
+       "SALE": 1,
+       "SECTIONID": "",
+       "SKU": "C0424",
+       "STOCKMANAGEMENT": 1,
+       "STOCKS": [
+        {
+         "DOCUMENTROWID": 123,
+         "DOCUMENTSHIPMENTROWID": 12,
+         "HASH": "abc123",
+         "ID": 123,
+         "INCOMINGDATE": "2020-01-04T15:43:27+01:00",
+         "MISSINGSTOCKQUANTITY": 3,
+         "OFFSETDAYS": 10,
+         "PREVISIONTYPE": 0,
+         "PRIORITY": 1,
+         "QUANTITY": 2,
+         "SUBSTRACTED": [
+          {
+           "PREVISIONTYPE": 1,
+           "PRODUCTCOMBINATIONSTOCKID": 12,
+           "QUANTITY": 10
+          }
+         ],
+         "WAREHOUSE": {
+          "ID": 123,
+          "PID": "abc"
+         },
+         "WAREHOUSEGROUP": {
+          "ID": 123,
+          "PID": "abc"
+         }
+        }
+       ],
+       "TAXES": [
+        {
+         "CUMULATIVEMODE": 1,
+         "NAME": "IVA 10",
+         "PRIORITY": 1,
+         "RERATE": 0.3,
+         "TAX": {
+          "ID": 2,
+          "PID": "IVA10"
+         },
+         "TAXID": 4,
+         "TAXOPERATION": 1,
+         "TAXRATE": 5,
+         "TYPE": 1
+        }
+       ],
+       "TOTAL": 19.8,
+       "TOTALTAXES": 12,
+       "TYPE": 1,
+       "UPC": "036000291452",
+       "VOUCHERS": [
+        {
+         "DELIVERYDATE": "",
+         "EMAIL": "email@logicommerce.com",
+         "EXPIRATIONDAYS": 10,
+         "ID": 15,
+         "LANGUAGE": "EN",
+         "MESSAGE": "the message",
+         "VOUCHERCODE": "VALSA23W3Q1",
+         "VOUCHERID": "123"
+        }
+       ],
+       "WEIGHT": 12
+      }
+     ],
+     "NAME": "Bundle products",
+     "QUANTITY": 1,
+     "TOTAL": 297.5,
+     "TYPE": 3
+    }
+   ],
+   "STATUS": 1,
+   "STATUSES": [
+    {
+     "ACTIONS": [
+      {
+       "ACTIONID": 1,
+       "ACTIONTYPE": 1,
+       "HISTORYACTIONSTATUS": 1,
+       "PARAMETERS": [
+        {
+         "ITEMID": 12,
+         "NAME": "aaa",
+         "VALUE": "223"
+        },
+        {
+         "ITEMID": 12,
+         "NAME": "bbb",
+         "VALUE": "333"
+        }
+       ],
+       "SETTINGORDERSTATUSACTIONID": 1
+      }
+     ],
+     "CURRENTDATETIME": "2020-06-29T07:52:43+02:00",
+     "DOCUMENTID": 108,
+     "FROMSTATUS": 0,
+     "FROMSUBSTATUSID": "",
+     "ID": 1,
+     "TOSTATUS": 1,
+     "TOSUBSTATUSID": ""
+    }
+   ],
+   "SUBSTATUSID": 3,
+   "SUFFIX": "-DOC",
+   "TAXES": [
+    {
+     "BASE": 10.3,
+     "BASEWITHOUTDISCOUNTS": 10.2,
+     "DISCOUNT": 5.6,
+     "DOCUMENTID": 108,
+     "ID": 1,
+     "MODALITY": "Null VAT",
+     "NAME": "Null VAT",
+     "REPRICE": 34.5,
+     "RERATE": 1,
+     "TAX": {
+      "ID": 1,
+      "PID": "abc"
+     },
+     "TAXID": 4,
+     "TAXPRICE": 3.4,
+     "TAXRATE": 5,
+     "TOTALPRICE": 3.3,
+     "TYPE": 1
+    }
+   ],
+   "TOTAL": 24.8,
+   "TOTALS": {
+    "SUBTOTAL": 24.8,
+    "SUBTOTALBASKETDISCOUNTS": 1,
+    "SUBTOTALDISCOUNTS": 1,
+    "SUBTOTALPAYMENTSYSTEM": 1,
+    "SUBTOTALPICKING": 5,
+    "SUBTOTALROWS": 19.8,
+    "SUBTOTALROWSDISCOUNTS": 1,
+    "SUBTOTALSHIPPINGDISCOUNTS": 1,
+    "SUBTOTALSHIPPINGS": 5,
+    "TOTAL": 24.8,
+    "TOTALBASKETDISCOUNTS": 1,
+    "TOTALDISCOUNTS": 1,
+    "TOTALPAYMENTSYSTEM": 1,
+    "TOTALPICKING": 5,
+    "TOTALROWS": 19.8,
+    "TOTALROWSDISCOUNTS": 1,
+    "TOTALSHIPPINGDISCOUNTS": 1,
+    "TOTALSHIPPINGS": 5,
+    "TOTALTAXES": 1,
+    "TOTALVOUCHERS": 1
+   },
+   "USER": {
+    "ADDRESSES": [
+     {
+      "ADDRESS": "Address 123 2n 1a",
+      "ADDRESSADDITIONALINFORMATION": "Additional",
+      "ALIAS": "Home",
+      "CITY": "Igualada",
+      "COMPANY": "Company Inc",
+      "COUNTRY": "ES",
+      "FAX": "123123",
+      "FIRSTNAME": "FirstName",
+      "ID": 107,
+      "LASTNAME": "LastName",
+      "LATITUDE": 41.583182,
+      "LOCATIONID": 665341,
+      "LONGITUDE": 1.612641,
+      "MOBILE": "123123",
+      "NIF": "123123 123 g",
+      "NUMBER": "42",
+      "PHONE": "123123",
+      "POSTALCODE": "08700",
+      "RE": 0,
+      "REVERSECHARGEVAT": 0,
+      "STATE": "Barcelona",
+      "TAX": 0,
+      "TYPE": 1,
+      "USERADDRESS": {
+       "ID": 12,
+       "PID": "abc"
+      },
+      "USERADDRESSBOOKID": 12,
+      "USERTYPE": 1,
+      "VAT": "123123",
+      "VIES": true,
+      "VIESLASTUPDATED": "2026-07-12T11:33:23Z"
+     }
+    ],
+    "CUSTOMTAGS": [
+     {
+      "CUSTOMTAG": {
+       "ID": 1,
+       "PID": "features"
+      },
+      "ID": 3,
+      "NAME": "User tag",
+      "VALUE": "user tag value"
+     }
+    ],
+    "EMAIL": "info@logicommerce.com",
+    "GENDER": 0,
+    "GROUP": {
+     "ID": 1,
+     "PID": "abc"
+    },
+    "ID": 107,
+    "LASTUSED": "2020-06-29T07:52:43+02:00",
+    "UNIQUEID": 0,
+    "USER": {
+     "ID": 2981,
+     "PID": ""
+    },
+    "USERPID": "abc"
+   },
+   "VOUCHERS": [
+    {
+     "AVAILABLEBALANCE": 3,
+     "BALANCEPROCESSED": 1,
+     "CODE": "324sdf",
+     "DOCUMENTID": 108,
+     "ID": 1,
+     "VOUCHERID": 1
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,562 @@
+# =============================================================================
+# OpenSteward — Google Cloud Marketplace schema (x-google-marketplace v2)
+# =============================================================================
+# This file maps the Marketplace deploy-form UI to the OpenSteward Helm chart
+# values (deploy/helm/opensteward). The deployer image (deployer/Dockerfile)
+# bundles this schema, the chart, and the GCP overlay; mpdev / Producer Portal
+# render the `properties` below as the deploy form and pass each one through to
+# Helm as `--set <x-google-marketplace.helm.valuePath>=<value>`.
+#
+# Every `helm.valuePath` here is a REAL chart value path — cross-checked against
+# deploy/helm/opensteward/values.schema.json. Defaults intentionally MIRROR the
+# GCP overlay (deploy/helm/overlays/gcp-values.yaml): Postgres mode, External
+# Secrets Operator → GCP Secret Manager, ingress-nginx + cert-manager.
+#
+# BYOL: this is a Bring-Your-Own-License listing. There is NO usage reporting,
+# NO marketplace entitlement check, and NO Cloud Commerce metering — the chart
+# contains no metering code, so the `reportingSecret` / usageMeter blocks are
+# deliberately OMITTED (they are only required for usage-based / metered
+# pricing). The OpenSteward license is a file the buyer supplies in a
+# Kubernetes Secret (license.* below), verified offline by the product.
+# =============================================================================
+
+x-google-marketplace:
+  schemaVersion: v2
+
+  # Must match the Marketplace product listing version. Tracks Chart.appVersion
+  # (the platform image version) — bump together with a coordinated image release.
+  publishedVersion: "0.1.0"
+
+  # ---------------------------------------------------------------------------
+  # Images. Marketplace v2 REQUIRES every container image be declared here so it
+  # can republish them into the listing's Artifact Registry repo and pin each by
+  # DIGEST at publish time (operators never type a digest). Each entry's key is
+  # the published image NAME — the AR repo segment Marketplace creates, i.e.
+  # "<shared-prefix>/<key>@<digest>". The shared "<registry>/<owner>" prefix is
+  # assigned at onboarding, not in this file. An image entry's `properties` are
+  # CHART value paths Marketplace fills for that image, and every such path MUST
+  # also appear under the top-level `properties:` block (v2 requirement).
+  #
+  # CHART CONSTRAINT (read before editing): OpenSteward's chart has a SINGLE
+  # image.registry string + a SINGLE image.tag/image.digest, and its helper forms
+  # "<image.registry>/<service>[:tag|@digest]" for ALL five services. Because the
+  # service segment is the chart's image KEY here, we name the five image entries
+  # after the services so Marketplace republishes "<prefix>/<service>" — exactly
+  # what the chart expects when image.registry == <prefix>. The five images thus
+  # SHARE one image.registry (set once to <prefix>; see the image.registry
+  # top-level property + README publish flow) and one image.tag, which we bind
+  # below as TAG so a coordinated release stamps all five together.
+  #
+  # IMPORTANT chart limitation: the chart's single image.digest field cannot hold
+  # five distinct per-service AR digests, so the rendered manifests reference the
+  # republished (digest-pinned in the listing) images by <prefix>/<service>:<tag>.
+  # The chart has no per-service image overrides, so true per-service @digest
+  # in-manifest pinning is not possible; image.digest is therefore not bound to
+  # any image here.
+  #
+  # The deployer image itself is NOT declared here — it is set separately in the
+  # Producer Portal (by digest), per the v2 deployer contract.
+  images:
+    admin:
+      properties:
+        image.tag: { type: TAG }
+    admin-api:
+      properties:
+        image.tag: { type: TAG }
+    docs-server:
+      properties:
+        image.tag: { type: TAG }
+    webhook-gateway:
+      properties:
+        image.tag: { type: TAG }
+    integration-server:
+      properties:
+        image.tag: { type: TAG }
+  publishedVersionMetadata:
+    releaseNote: >-
+      Initial Google Cloud Marketplace release of OpenSteward — self-hosted
+      unified integration platform (BYOL). Runs in Postgres/HA mode against
+      Cloud SQL, with secrets synced from Secret Manager via External Secrets.
+    releaseTypes:
+      - Feature
+    # Whether Marketplace flags this version as a RECOMMENDED/urgent update for
+    # existing installs (e.g. a security fix). false for an initial feature release.
+    recommended: false
+
+  # ---------------------------------------------------------------------------
+  # Cluster constraints surfaced to the operator before they deploy.
+  # ---------------------------------------------------------------------------
+  clusterConstraints:
+    k8sVersion: ">=1.25.0"  # mirrors Chart.yaml kubeVersion (>=1.25.0-0)
+    resources:
+      - replicas: 2
+        requests:
+          cpu: 250m
+          memory: 512Mi
+    # ingress-nginx is the supported ingress (see the GCP overlay note on
+    # GKE-native GCE ingress needing NEG annotations the chart doesn't template).
+    istio:
+      type: UNSUPPORTED
+
+  # ---------------------------------------------------------------------------
+  # Deployer + Application binding. The deployer image wraps the Helm chart;
+  # the generated Application object owns the rendered resources.
+  # ---------------------------------------------------------------------------
+  deployerServiceAccount:
+    description: >-
+      Service account the deployer Job runs as. Needs permission to create the
+      chart's namespaced resources (Deployments, Services, Ingress, the
+      Application CR, and — when secrets.source=externalSecrets — the
+      ExternalSecret / ClusterSecretStore CRs).
+    roles:
+      - type: ClusterRole          # External Secrets + Application CRDs are cluster-scoped
+        rulesType: CUSTOM
+        rules:
+          - apiGroups: ["external-secrets.io"]
+            resources: ["externalsecrets", "clustersecretstores", "secretstores"]
+            verbs: ["*"]
+          - apiGroups: ["app.k8s.io"]
+            resources: ["applications"]
+            verbs: ["*"]
+      - type: Role
+        rulesType: PREDEFINED
+        rulesFromRoleName: edit     # create the namespaced workloads/services/ingress
+
+properties:
+  # ---------------------------------------------------------------------------
+  # Standard Marketplace-injected properties (names are reserved by the platform).
+  # ---------------------------------------------------------------------------
+  name:
+    type: string
+    x-google-marketplace:
+      type: NAME
+    # Becomes the Helm release name; the chart prefixes all resources with it.
+
+  namespace:
+    type: string
+    x-google-marketplace:
+      type: NAMESPACE
+
+  # ---------------------------------------------------------------------------
+  # Image deploy-form fields.
+  #
+  # image.tag is referenced by the `x-google-marketplace.images:` block above as
+  # a TAG binding, so v2 requires it to ALSO be declared here under `properties:`.
+  # It is a PLAIN property (no x-google-marketplace.type) — Marketplace WRITES it
+  # from the image binding at publish, so the operator never types it.
+  #
+  # image.registry is the chart's single "<registry>/<owner>" prefix shared by all
+  # five services (the helper forms "<image.registry>/<service>:<tag>"). It is NOT
+  # part of an image binding (no marketplace image type cleanly expresses the
+  # shared prefix-minus-segment), so it is a STRING the operator/publish flow sets
+  # to the published Artifact Registry repo prefix (README step 1).
+  #
+  # image.digest is intentionally NOT exposed: the chart has a single digest field
+  # that cannot pin five distinct per-service AR digests, and the republished
+  # images are already digest-pinned in the listing (referenced here by tag).
+  # ---------------------------------------------------------------------------
+  image.registry:
+    type: string
+    title: Image registry / owner
+    description: >-
+      Registry + owner prefix shared by all five services; the chart helper forms
+      "<registry>/<service>:<tag>". Set to the published Artifact Registry repo
+      prefix, e.g. us-docker.pkg.dev/<PROJECT>/opensteward (README step 1).
+    default: ghcr.io/open-steward
+    x-google-marketplace:
+      type: STRING
+
+  image.tag:
+    type: string
+    title: Image tag
+    description: >-
+      Shared release tag for all five service images. Filled by Marketplace from
+      the image republish at publish; an operator deploying the published listing
+      does not edit it. Empty → Chart.appVersion.
+    default: "0.1.0"
+
+  # ---------------------------------------------------------------------------
+  # Database — chart database.* (mode=postgres for Marketplace/HA deploys).
+  # ---------------------------------------------------------------------------
+  database.mode:
+    type: string
+    title: Database mode
+    description: >-
+      sqlite → single-node trial (each stateful service gets a PVC).
+      postgres → HA; point database.external at a managed Cloud SQL instance.
+      Marketplace deploys default to postgres.
+    default: postgres
+    enum:
+      - sqlite
+      - postgres
+    x-google-marketplace:
+      type: STRING
+
+  database.external.existingSecret:
+    type: string
+    title: Database secret (DATABASE_URL)
+    description: >-
+      Name of an existing Kubernetes Secret holding the Cloud SQL connection
+      string under key DATABASE_URL. REQUIRED when database.mode=postgres.
+      Create it from the Terraform `database_url` output, e.g.
+      `kubectl create secret generic opensteward-db --from-literal=DATABASE_URL=...`.
+    default: opensteward-db
+    x-google-marketplace:
+      type: STRING
+
+  database.external.secretKey:
+    type: string
+    title: Database secret key
+    description: Key inside the database secret that holds the connection string.
+    default: DATABASE_URL
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # Redis — chart redis.* (required to scale integration-server past 1 replica).
+  # ---------------------------------------------------------------------------
+  redis.enabled:
+    type: boolean
+    title: Enable Redis (shared rate-limit budget)
+    description: >-
+      Required before scaling integration-server past 1 replica — it shares a
+      per-API-key rate-limit budget across replicas via Redis (Memorystore).
+    default: true
+    x-google-marketplace:
+      type: BOOLEAN
+
+  redis.url:
+    type: string
+    title: Redis URL
+    description: >-
+      redis:// (or rediss:// with TLS) URL of the Memorystore instance, e.g.
+      redis://10.0.0.3:6379. Leave empty if Redis is disabled.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # Secrets — chart secrets.* . Marketplace/GCP default is External Secrets
+  # Operator syncing from GCP Secret Manager (matches the GCP overlay).
+  # ---------------------------------------------------------------------------
+  secrets.source:
+    type: string
+    title: Secrets source
+    description: >-
+      How the JWT/SESSION/STORE (+ optional ADMIN) secrets reach the pods.
+      externalSecrets → ESO syncs them from GCP Secret Manager (recommended,
+      GCP default). existingSecret → reference an operator-managed Secret.
+      generate → a hook Job creates them (trial). plain → render from values
+      (DEV ONLY; lands in Helm release history).
+    default: externalSecrets
+    enum:
+      - externalSecrets
+      - existingSecret
+      - generate
+      - plain
+    x-google-marketplace:
+      type: STRING
+
+  secrets.existingSecret:
+    type: string
+    title: Existing app-secrets Secret
+    description: >-
+      Used when secrets.source=existingSecret — the name of an operator-managed
+      Kubernetes Secret carrying JWT_SECRET / SESSION_SECRET / STORE_SECRET.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  secrets.externalSecrets.provider:
+    type: string
+    title: External Secrets provider
+    description: >-
+      Cloud secret-store backend for External Secrets Operator. Fixed to gcp
+      for this listing (GCP Secret Manager).
+    default: gcp
+    enum:
+      - gcp
+      - aws
+      - azure
+    x-google-marketplace:
+      type: STRING
+
+  secrets.externalSecrets.createStore:
+    type: boolean
+    title: Let the chart create the SecretStore
+    description: >-
+      true → the chart renders a ClusterSecretStore pointed at GCP Secret
+      Manager using the chart ServiceAccount's Workload Identity. false →
+      reference an operator-managed (Cluster)SecretStore via
+      secrets.externalSecrets.secretStore.name.
+    default: true
+    x-google-marketplace:
+      type: BOOLEAN
+
+  secrets.externalSecrets.gcp.projectID:
+    type: string
+    title: GCP project ID (Secret Manager)
+    description: >-
+      Project that owns the Secret Manager secret. Maps to the Terraform
+      `project_id` output. Required when secrets.source=externalSecrets and
+      provider=gcp with createStore=true.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  secrets.externalSecrets.gcp.clusterLocation:
+    type: string
+    title: GKE cluster location
+    description: >-
+      Region (regional cluster) or zone of the GKE cluster, for the ESO GCP
+      auth workload-identity binding. Maps to Terraform `cluster_location`.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  secrets.externalSecrets.gcp.clusterName:
+    type: string
+    title: GKE cluster name
+    description: >-
+      Name of the GKE cluster for the ESO workload-identity binding. Maps to
+      Terraform `cluster_name`.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  secrets.externalSecrets.remoteSecretName:
+    type: string
+    title: Secret Manager secret name
+    description: >-
+      A Secret Manager secret whose VALUE is a JSON object with keys
+      JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET).
+      ESO syncs it into the Kubernetes Secret the pods read. Maps to Terraform
+      `app_secret_name`.
+    default: opensteward-app-secrets
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # Workload Identity — chart serviceAccount.annotations. ESO and the pods
+  # authenticate to GCP via the GKE service-account binding.
+  # ---------------------------------------------------------------------------
+  serviceAccount.annotations.iam\.gke\.io/gcp-service-account:
+    type: string
+    title: Workload Identity GSA email
+    description: >-
+      Google service account email bound to the chart's Kubernetes
+      ServiceAccount (roles/secretmanager.secretAccessor). Maps to Terraform
+      `eso_gsa_email`, e.g. opensteward-eso@<PROJECT_ID>.iam.gserviceaccount.com.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # Ingress — chart ingress.* . Defaults mirror the GCP overlay (ingress-nginx
+  # + cert-manager). admin-api is intentionally never exposed (ClusterIP only).
+  # ---------------------------------------------------------------------------
+  ingress.enabled:
+    type: boolean
+    title: Create Ingress
+    default: true
+    x-google-marketplace:
+      type: BOOLEAN
+
+  ingress.className:
+    type: string
+    title: Ingress class
+    description: >-
+      IngressClass name. nginx = ingress-nginx (the supported path on GKE; the
+      chart does not template GCE/NEG annotations).
+    default: nginx
+    x-google-marketplace:
+      type: STRING
+
+  ingress.hosts[0].host:
+    type: string
+    title: Admin UI host
+    description: Public hostname routed to the admin service (the operator console).
+    default: admin.example.com
+    x-google-marketplace:
+      type: STRING
+
+  ingress.hosts[0].service:
+    type: string
+    title: Admin UI target service
+    description: Exposed service for the first host. admin-api is never exposed.
+    default: admin
+    enum:
+      - admin
+      - docs-server
+      - webhook-gateway
+      - integration-server
+    x-google-marketplace:
+      type: STRING
+
+  ingress.hosts[1].host:
+    type: string
+    title: Integration API host
+    description: Public hostname routed to the integration-server (Connect-Link / API).
+    default: api.example.com
+    x-google-marketplace:
+      type: STRING
+
+  ingress.hosts[1].service:
+    type: string
+    title: Integration API target service
+    default: integration-server
+    enum:
+      - admin
+      - docs-server
+      - webhook-gateway
+      - integration-server
+    x-google-marketplace:
+      type: STRING
+
+  ingress.tls.enabled:
+    type: boolean
+    title: Enable TLS
+    default: true
+    x-google-marketplace:
+      type: BOOLEAN
+
+  ingress.tls.certManager.enabled:
+    type: boolean
+    title: Use cert-manager for TLS
+    description: cert-manager provisions a per-host certificate from the ClusterIssuer below.
+    default: true
+    x-google-marketplace:
+      type: BOOLEAN
+
+  ingress.tls.certManager.clusterIssuer:
+    type: string
+    title: cert-manager ClusterIssuer
+    default: letsencrypt-prod
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # Public URLs — chart publicUrls.* . Browser-facing base URLs for the SSO
+  # round-trip and cross-app links; must match the ingress hosts above.
+  # ---------------------------------------------------------------------------
+  publicUrls.scheme:
+    type: string
+    title: Public URL scheme
+    default: https
+    enum:
+      - https
+      - http
+    x-google-marketplace:
+      type: STRING
+
+  publicUrls.adminUi:
+    type: string
+    title: Admin UI public URL
+    description: ADMIN_UI_URL — where the post-login handoff lands.
+    default: https://admin.example.com
+    x-google-marketplace:
+      type: STRING
+
+  publicUrls.adminApi:
+    type: string
+    title: Admin API / SSO public URL
+    description: >-
+      SSO_PUBLIC_BASE_URL — where IdPs send SAML ACS / OIDC callbacks. The
+      admin-api itself is ClusterIP-only; this is the externally reachable URL
+      the browser is redirected through (typically fronted by the admin host).
+    default: https://admin-api.example.com
+    x-google-marketplace:
+      type: STRING
+
+  publicUrls.docsServer:
+    type: string
+    title: Docs server public URL
+    description: DOCS_SERVER_URL — cross-app guide links. Optional.
+    default: ""
+    x-google-marketplace:
+      type: STRING
+
+  publicUrls.integrationServer:
+    type: string
+    title: Integration server public URL
+    description: PUBLIC_BASE_URL — the canonical Connect-Link domain.
+    default: https://api.example.com
+    x-google-marketplace:
+      type: STRING
+
+  # ---------------------------------------------------------------------------
+  # License — chart license.* (docs/deployment/license.md). The Secret is
+  # mounted read-only, as a directory, on integration-server only, and the
+  # volume is optional. The deployer runs `helm template`, so there is no Helm
+  # release to upgrade later: this form is where a GCP install is licensed.
+  # ---------------------------------------------------------------------------
+  # The pattern is a Secret name (RFC 1123 subdomain, at most 253 characters,
+  # bounded in the regex because this format has no maxLength). It keeps a
+  # pasted license token out of the deploy: rendered as `secretName`, a token
+  # is refused by Kubernetes with an error that quotes it into the deployer
+  # log. The chart's schema refuses one too.
+  license.existingSecret:
+    type: string
+    title: License secret (optional)
+    description: >-
+      Name of a Kubernetes Secret holding your OpenSteward license file, e.g.
+      `kubectl create secret generic opensteward-license
+      --from-file=license.key=./license.key`. The Secret's name, not the
+      license itself. Empty → community mode (all current verticals, 1
+      connection, 1 tenant). The mount is optional, so you can name the Secret
+      now and create it later, then restart integration-server once.
+    default: ""
+    pattern: '^$|^[a-z0-9]([-a-z0-9.]{0,251}[a-z0-9])?$'
+    x-google-marketplace:
+      type: STRING
+
+  # Never empty: the chart's values.schema.json has minLength 1, so a cleared
+  # field would fail the deployer's `helm template` even with no license secret
+  # named. This schema format has `pattern` (no minLength, no conditional
+  # fields), so the pattern requires a Kubernetes Secret key name: at least
+  # one character, from the set a Secret key may use.
+  license.secretKey:
+    type: string
+    title: License secret key
+    description: >-
+      Key inside the license secret that holds the license file. Used only when
+      a license secret is named; keep license.key unless your secret tooling
+      names the key differently.
+    default: license.key
+    pattern: '^[-._a-zA-Z0-9]+$'
+    x-google-marketplace:
+      type: STRING
+
+# -----------------------------------------------------------------------------
+# Required deploy-form fields. The operator MUST supply these before deploy;
+# everything else has a working GCP-overlay default.
+# -----------------------------------------------------------------------------
+required:
+  - name
+  - namespace
+  - database.mode
+  - database.external.existingSecret
+  - secrets.source
+  - secrets.externalSecrets.gcp.projectID
+  - secrets.externalSecrets.gcp.clusterLocation
+  - secrets.externalSecrets.gcp.clusterName
+  - secrets.externalSecrets.remoteSecretName
+  - serviceAccount.annotations.iam\.gke\.io/gcp-service-account
+  - ingress.hosts[0].host
+  - publicUrls.integrationServer
+
+# -----------------------------------------------------------------------------
+# Application form metadata (Producer Portal "About" / partner overview).
+# -----------------------------------------------------------------------------
+form:
+  - widget: help
+    description: >-
+      <b>OpenSteward (BYOL)</b> — self-hosted unified integration platform.
+      This listing deploys the Helm chart in Postgres/HA mode and syncs app
+      secrets from <b>GCP Secret Manager</b> via External Secrets Operator.
+      <br/><br/>
+      <b>Cluster prerequisites</b> (NOT installed by this deployer): External
+      Secrets Operator, ingress-nginx, and cert-manager with a
+      <code>letsencrypt-prod</code> ClusterIssuer. A reachable Cloud SQL
+      instance and a Secret Manager secret holding the app secrets JSON. See
+      <code>deploy/iac/gcp</code> for reference Terraform.

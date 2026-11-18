@@ -1,0 +1,60 @@
+<%
+  // Dev-portal copy-to-clipboard helper used by the wizard's step 5 and the
+  // standalone /platforms/:vertical/:slug detail page. Caller passes:
+  //   slug                 — platform slug, surfaced in the heading
+  //   company              — companyInfo record (or null/empty)
+  //   derivedRedirectUri   — pre-built `/auth/{vertical}/{slug}/callback` URL
+%>
+<aside class="card" style="position: sticky; top: calc(56px + var(--space-6))">
+  <h2 class="card__title">Registering on <span class="mono"><%= slug %></span>'s portal?</h2>
+  <% if (!company || (!company.name && !company.website && !company.privacyPolicyUrl && !company.supportEmail && !company.baseUrl)) { %>
+  <p class="muted" style="font-size: var(--text-sm)">
+    Fill in <a href="/setup/wizard/company-info">step 2 — branding</a> first
+    and these fields will appear here, ready to copy.
+  </p>
+  <% } else { %>
+  <p class="muted" style="font-size: var(--text-sm); margin-bottom: var(--space-4)">Click any value to copy.</p>
+  <dl class="stack stack--sm">
+    <% if (company.name) { %>
+    <div>
+      <dt class="eyebrow">App / company name</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.name %>" class="copy-btn mono"><%= company.name %></button></dd>
+    </div>
+    <% } %>
+    <% if (company.description) { %>
+    <div>
+      <dt class="eyebrow">Description</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.description %>" class="copy-btn"><%= company.description %></button></dd>
+    </div>
+    <% } %>
+    <% if (company.website) { %>
+    <div>
+      <dt class="eyebrow">Website</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.website %>" class="copy-btn mono"><%= company.website %></button></dd>
+    </div>
+    <% } %>
+    <% if (company.privacyPolicyUrl) { %>
+    <div>
+      <dt class="eyebrow">Privacy policy</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.privacyPolicyUrl %>" class="copy-btn mono"><%= company.privacyPolicyUrl %></button></dd>
+    </div>
+    <% } %>
+    <% if (company.termsOfServiceUrl) { %>
+    <div>
+      <dt class="eyebrow">Terms of service</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.termsOfServiceUrl %>" class="copy-btn mono"><%= company.termsOfServiceUrl %></button></dd>
+    </div>
+    <% } %>
+    <% if (company.supportEmail) { %>
+    <div>
+      <dt class="eyebrow">Support email</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= company.supportEmail %>" class="copy-btn mono"><%= company.supportEmail %></button></dd>
+    </div>
+    <% } %>
+    <div>
+      <dt class="eyebrow">Redirect URI</dt>
+      <dd style="margin: 0"><button type="button" data-copy="<%= derivedRedirectUri %>" class="copy-btn mono"><%= derivedRedirectUri %></button></dd>
+    </div>
+  </dl>
+  <% } %>
+</aside>

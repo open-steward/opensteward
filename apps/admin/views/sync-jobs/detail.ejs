@@ -1,0 +1,145 @@
+<% layout('../layout', { title: 'Sync job' }) -%>
+<% if (!job) { %>
+<h1>Sync job not found</h1>
+<p class="muted" style="margin-top: var(--space-2)">No job with id <span class="mono"><%= jobId %></span>. Completed jobs are pruned once the data-store retention window passes, so an older link is expected to miss.</p>
+<p style="margin-top: var(--space-4)"><a href="/sync-jobs">Back to sync jobs</a></p>
+<% } else { %>
+<%
+  const canAct = user && (user.role === 'admin' || user.role === 'operator')
+  // How long the job took, or how long it has been going. The list shows only
+  // the created timestamp, which reads the same for a job that finished in a
+  // second and one that has been running for an hour.
+  function fmtDuration(fromIso, toIso) {
+    if (!fromIso) return null
+    const from = Date.parse(fromIso)
+    const to = toIso ? Date.parse(toIso) : Date.now()
+    if (!Number.isFinite(from) || !Number.isFinite(to) || to < from) return null
+    const s = Math.round((to - from) / 1000)
+    if (s < 60) return s + 's'
+    const m = Math.floor(s / 60)
+    if (m < 60) return s % 60 ? m + 'm ' + (s % 60) + 's' : m + 'm'
+    const h = Math.floor(m / 60)
+    return m % 60 ? h + 'h ' + (m % 60) + 'm' : h + 'h'
+  }
+  const duration = fmtDuration(job.startedAt, job.completedAt)
+  const progress = job.progress ? Object.entries(job.progress) : []
+  const syncedTotal = progress.reduce((acc, [, p]) => acc + (p.synced || 0), 0)
+%>
+<div class="row row--between">
+  <h1><%= job.platform %> sync</h1>
+  <%# data-modal-omit: inside the dialog the close button is already the way
+      back, so this would only compete with it. The page keeps it. %>
+  <a href="/sync-jobs" class="btn btn--ghost btn--sm" data-modal-omit>Back to sync jobs</a>
+</div>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="stack stack--sm">
+      <span class="eyebrow">Sync job ID</span>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm)"><%= job.id %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Status</span>
+      <p style="margin: 0"><%- statusPill(job.status) %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Vertical</span>
+      <p style="margin: 0; text-transform: capitalize"><%= job.vertical %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Platform</span>
+      <p style="margin: 0"><%= job.platform %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Connection</span>
+      <%# The job carries `vertical` as well as `connectionId`, which is both
+          halves of /connections/:vertical/:id — no second lookup needed. Inside
+          an open dialog the script leaves this link to navigate; on the page it
+          opens as one. %>
+      <p style="margin: 0"><a class="mono" style="font-size: var(--text-sm)" href="/connections/<%= job.vertical %>/<%= job.connectionId %>" data-modal><%= job.connectionId %></a></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Tenant</span>
+      <p style="margin: 0"><%= job.tenantId || '—' %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Created</span>
+      <p style="margin: 0"><%= new Date(job.createdAt).toLocaleString() %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Started</span>
+      <p style="margin: 0"><%= job.startedAt ? new Date(job.startedAt).toLocaleString() : 'Still queued' %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Finished</span>
+      <p style="margin: 0"><%= job.completedAt ? new Date(job.completedAt).toLocaleString() : '—' %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Duration</span>
+      <p style="margin: 0"><%= duration ? (job.completedAt ? duration : duration + ' so far') : '—' %></p>
+    </div>
+    <div class="stack stack--sm" style="grid-column: 1 / -1">
+      <span class="eyebrow">Callback URL</span>
+      <%# Deliberately not a link. This is the customer's endpoint, and the
+          worker is what calls it — an operator clicking through from the admin
+          would fire a request at it from their own browser. %>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm); word-break: break-all"><%= job.callbackUrl || 'None — nothing is notified when this job ends' %></p>
+    </div>
+  </div>
+
+  <% if (canAct && (job.status === 'pending' || job.status === 'running')) { %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-6); flex-wrap: wrap">
+    <form method="POST" action="/sync-jobs/<%= job.id %>/cancel" onsubmit="return confirm('Cancel this sync job?')" style="display: inline">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--danger btn--sm">Cancel sync</button>
+    </form>
+  </div>
+  <% } %>
+
+  <% if (job.error) { %>
+  <%# The list can only fit this in a `title` attribute, which nothing but a
+      hover reveals and no screen reader announces reliably. %>
+  <div class="alert alert--danger" style="margin-top: var(--space-6)">
+    <strong>Sync failed.</strong> <%= job.error %>
+  </div>
+  <% } %>
+</div>
+
+<% if (progress.length > 0) { %>
+<h2 style="margin-top: var(--space-8); font-size: var(--text-lg)">Progress by resource</h2>
+<p class="muted" style="margin-top: var(--space-1); font-size: var(--text-sm)"><%= syncedTotal.toLocaleString() %> row<%= syncedTotal === 1 ? '' : 's' %> across <%= progress.length %> resource<%= progress.length === 1 ? '' : 's' %>.</p>
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Resource</th>
+        <th>Rows synced</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const [resource, p] of progress) { %>
+      <tr>
+        <td class="mono"><%= resource %></td>
+        <td class="muted"><%= (p.synced || 0).toLocaleString() %></td>
+        <td>
+          <%- statusPill(p.status) %>
+          <%# Which resource failed and why. The list folds every resource into
+              one "n/m resources" count, so a single failing resource inside an
+              otherwise fine job would be invisible there; the detail page
+              shows it. %>
+          <% if (p.error) { %>
+          <div class="muted" style="margin-top: var(--space-1); font-size: var(--text-xs)"><%= p.error %></div>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<% } else { %>
+<p class="muted" style="margin-top: var(--space-6)">No per-resource progress recorded yet — the worker writes it as each resource finishes.</p>
+<% } %>
+<% } %>

@@ -1,0 +1,11 @@
+{
+  "kid": "dev1",
+  "comment": "NON-PRODUCTION license signing key, public on purpose so anyone can mint local dev licenses. Production builds never trust kid dev1. Never use it for anything else.",
+  "publicKey": "mc8QZuCpxdL_ICG3oKy-KY1NR_7DdETx-Pys5q3DVfQ",
+  "privateKeyJwk": {
+    "kty": "OKP",
+    "crv": "Ed25519",
+    "x": "mc8QZuCpxdL_ICG3oKy-KY1NR_7DdETx-Pys5q3DVfQ",
+    "d": "YF0chyQgSDIrazpU-OnYzefC36Q3xbCzn_Yym1F05bM"
+  }
+}

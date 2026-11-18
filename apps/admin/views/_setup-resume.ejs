@@ -1,0 +1,46 @@
+<%# The dashboard's "Finish setting up" card — the next wizard step, for an
+    admin, until nothing is outstanding or they skip it.
+
+    Derived from the same scan the wizard resumes with (see
+    loadWizardProgress in src/core/routes/wizard.ts), so "next: Credentials"
+    here and the rail's tick marks cannot disagree. Included from
+    dashboard.ejs with `setupResume`: null when there is nothing to show — a
+    non-admin, a finished deployment, a skipped step, or a scan that could not
+    run — otherwise the step's slug, label, 1-based index, the step count and
+    where "Continue setup" goes.
+
+    "Skip for now" is a clear, not a preference: it is stored under the step
+    it skipped, so the card returns by itself the moment the next step is a
+    different one. `setupSkipped` names a skip recent enough to undo — the
+    same 15-minute window as the panel's "Cleared recently" strip, through
+    the same route. `setupUnconfirmed` is the ?wizard=complete landing when
+    the scan could not run: the page owes an answer, and a blank is not one. -%>
+<% if (setupUnconfirmed) { %>
+<p class="setup-resume__note muted" style="margin-top: var(--space-6)"><i class="ph ph-warning" aria-hidden="true"></i> Couldn't confirm setup is finished — open the <a href="/setup/wizard">Setup wizard</a> to check.</p>
+<% } %>
+<% if (setupSkipped) { %>
+<div class="setup-resume__note muted" style="margin-top: var(--space-6)">
+  <span>Setup reminder hidden — next step is still <strong><%= setupSkipped.stepLabel %></strong>.</span>
+  <form method="POST" action="/dashboard/tasks/undismiss">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="key" value="<%= setupSkipped.key %>">
+    <button type="submit" class="btn btn--ghost btn--sm" aria-label="Undo: show the setup reminder again">Undo</button>
+  </form>
+</div>
+<% } %>
+<% if (setupResume) { %>
+<section class="card setup-resume" aria-labelledby="setup-resume-heading" style="margin-top: var(--space-6)">
+  <div class="setup-resume__main">
+    <h2 id="setup-resume-heading" class="card__title">Finish setting up</h2>
+    <p class="setup-resume__next">Setup is not finished — next: <strong><%= setupResume.stepLabel %></strong> (step <%= setupResume.stepIndex %> of <%= setupResume.stepCount %>)</p>
+  </div>
+  <div class="setup-resume__actions">
+    <a class="btn btn--primary btn--sm" href="<%= setupResume.href %>">Continue setup</a>
+    <form method="POST" action="/dashboard/setup/skip">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="step" value="<%= setupResume.step %>">
+      <button type="submit" class="btn btn--ghost btn--sm" title="Hide this until the next step changes">Skip for now</button>
+    </form>
+  </div>
+</section>
+<% } %>

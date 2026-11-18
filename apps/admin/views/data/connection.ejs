@@ -1,0 +1,177 @@
+<% layout('../layout', { title: (connection.label || connection.platform) + ' data' }) -%>
+<%
+  const cid = encodeURIComponent(connection.connectionId)
+  const basePath = '/data/connections/' + cid
+  const classBadge = { pii: ['PII', 'badge--warning'], financial: ['Financial', 'badge--info'], secret: ['Secret', 'badge--danger'] }
+  const filterEntries = Object.entries(filterValues || {})
+  const hasFilters = filterEntries.length > 0 || !!state.q
+  // Hidden inputs that carry the current view across a GET form.
+  const carry = (skip) => {
+    const out = []
+    if (type) out.push(['type', type])
+    if (!skip.includes('cols') && state.cols) out.push(['cols', state.cols])
+    if (!skip.includes('sort') && state.sort !== 'updated_at') out.push(['sort', state.sort])
+    if (!skip.includes('dir') && state.dir !== 'desc') out.push(['dir', state.dir])
+    if (!skip.includes('q') && state.q) out.push(['q', state.q])
+    if (!skip.includes('f')) for (const [k, v] of filterEntries) out.push(['f_' + k, v])
+    return out
+  }
+  const exportPairs = (typeof exportQs !== 'undefined' && exportQs) ? Array.from(new URLSearchParams(exportQs).entries()) : []
+%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/data">Data</a></div>
+    <h1 class="page-header__title"><%= connection.label || connection.platform %></h1>
+    <p class="page-header__desc">
+      <span style="text-transform: capitalize"><%= connection.vertical %></span> · <%= connection.platform %> ·
+      <a class="mono" href="/connections/<%= encodeURIComponent(connection.vertical) %>/<%= cid %>"><%= connection.connectionId %></a>
+    </p>
+  </div>
+</header>
+
+<% if (!type) { %>
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="empty-state">
+    <div class="empty-state__icon"><i class="ph ph-database"></i></div>
+    <h3 class="empty-state__title">No records stored yet</h3>
+    <p class="empty-state__body">This connection has not synced any resource type into the data store. Start a sync from the connection page.</p>
+    <div class="empty-state__actions">
+      <a class="btn btn--ghost" href="/connections/<%= encodeURIComponent(connection.vertical) %>/<%= cid %>">Connection →</a>
+    </div>
+  </div>
+</div>
+<% } else { %>
+
+<nav class="row" style="margin-top: var(--space-6); gap: var(--space-2); flex-wrap: wrap" aria-label="Resource types">
+  <% for (const t of types) { %>
+  <a class="btn btn--sm <%= t.resourceType === type ? 'btn--primary' : 'btn--ghost' %>" href="<%= basePath %>?type=<%= encodeURIComponent(t.resourceType) %>"<%- t.resourceType === type ? ' aria-current="page"' : '' %>><%= t.resourceType %> <span class="muted" style="font-size: var(--text-xs)"><%= t.count.toLocaleString() %></span></a>
+  <% } %>
+</nav>
+
+<% if (schema && !schema.classified) { %>
+<div class="alert alert--warning" style="margin-top: var(--space-4)">
+  <strong>Not classified yet.</strong> This resource type has no field classification, so values are masked by default until one is added.
+</div>
+<% } %>
+<% if (page && page.meta && page.meta.financialMasked) { %>
+<p class="muted" style="margin-top: var(--space-3); font-size: var(--text-sm)">Financial values are masked in this view.<% if (!canReadPii) { %> Revealing personal data needs the data:read_pii permission.<% } %></p>
+<% } %>
+
+<form method="GET" action="<%= basePath %>" class="card" style="margin-top: var(--space-4); padding: var(--space-4)" aria-label="Search and filter records">
+  <% for (const [k, v] of carry(['q', 'f', 'sort', 'dir'])) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } %>
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3)">
+    <div class="field">
+      <label class="field__label" for="data-q">Search</label>
+      <input class="input" id="data-q" type="search" name="q" value="<%= state.q %>" placeholder="Search this resource">
+    </div>
+    <% for (const f of filterFields) { %>
+    <div class="field">
+      <label class="field__label" for="data-f-<%= f.path %>"><%= f.path %></label>
+      <input class="input" id="data-f-<%= f.path %>" type="text" name="f_<%= f.path %>" value="<%= filterValues[f.path] || '' %>" placeholder="contains…">
+    </div>
+    <% } %>
+    <div class="field">
+      <label class="field__label" for="data-sort">Sort by</label>
+      <select class="input" id="data-sort" name="sort">
+        <option value="updated_at"<%- state.sort === 'updated_at' ? ' selected' : '' %>>Last updated</option>
+        <option value="resource_id"<%- state.sort === 'resource_id' ? ' selected' : '' %>>Record id</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field__label" for="data-dir">Order</label>
+      <select class="input" id="data-dir" name="dir">
+        <option value="desc"<%- state.dir === 'desc' ? ' selected' : '' %>>Newest / Z–A first</option>
+        <option value="asc"<%- state.dir === 'asc' ? ' selected' : '' %>>Oldest / A–Z first</option>
+      </select>
+    </div>
+  </div>
+  <div class="row" style="margin-top: var(--space-3); justify-content: flex-end; gap: var(--space-2)">
+    <% if (hasFilters) { %><a class="btn btn--ghost btn--sm" href="<%= basePath %>?type=<%= encodeURIComponent(type) %>">Clear</a><% } %>
+    <button class="btn btn--secondary btn--sm" type="submit">Search</button>
+  </div>
+</form>
+
+<div class="row row--between" style="margin-top: var(--space-4); gap: var(--space-3); flex-wrap: wrap; align-items: flex-start">
+  <details class="row-actions">
+    <summary class="btn btn--ghost btn--sm">Columns</summary>
+    <form method="GET" action="<%= basePath %>" class="card" style="margin-top: var(--space-2); padding: var(--space-3)">
+      <% for (const [k, v] of carry(['cols'])) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } %>
+      <% for (const f of candidates) { %>
+      <label style="display: block; font-size: var(--text-sm)">
+        <input class="checkbox" type="checkbox" name="colpick" value="<%= f.path %>"<%- columns.includes(f.path) ? ' checked' : '' %>>
+        <%= f.path %>
+      </label>
+      <% } %>
+      <button class="btn btn--secondary btn--sm" type="submit" style="margin-top: var(--space-2)">Show columns</button>
+    </form>
+  </details>
+
+  <% if (canExport) { %>
+  <form method="GET" action="<%= basePath %>/export" class="row" style="gap: var(--space-2); align-items: center; flex-wrap: wrap">
+    <% for (const [k, v] of exportPairs) { %><input type="hidden" name="<%= k %>" value="<%= v %>"><% } %>
+    <label class="field__label" for="data-export-format" style="margin: 0">Export</label>
+    <select class="input input--sm" id="data-export-format" name="format">
+      <option value="csv">CSV</option>
+      <option value="ndjson">NDJSON</option>
+    </select>
+    <% if (canReadPii) { %>
+    <label style="font-size: var(--text-sm)"><input class="checkbox" type="checkbox" name="include_pii" value="1"> Include personal data</label>
+    <% } %>
+    <button class="btn btn--secondary btn--sm" type="submit">Download</button>
+  </form>
+  <% } %>
+</div>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)">
+  <% if (error.code === 'FIELD_NOT_SEARCHABLE') { %><strong>That filter is not allowed.</strong> <% } else { %><strong>The records could not be listed.</strong> <% } %><%= error.message %>
+</div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-4); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>id</th>
+        <% for (const c of columns) { %>
+        <th><%= c %><% if (classOf[c] && classBadge[classOf[c]]) { %> <span class="badge <%= classBadge[classOf[c]][1] %>"><%= classBadge[classOf[c]][0] %></span><% } %></th>
+        <% } %>
+        <th>Updated</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (!page || page.data.length === 0) { %>
+      <tr>
+        <td colspan="<%= columns.length + 2 %>">
+          <div class="empty-state<%= hasFilters ? ' empty-state--no-results' : '' %>">
+            <div class="empty-state__icon"><i class="ph ph-<%= hasFilters ? 'magnifying-glass' : 'database' %>"></i></div>
+            <h3 class="empty-state__title"><%= hasFilters ? 'No records match' : 'No records' %></h3>
+            <p class="empty-state__body"><%= hasFilters ? 'Nothing stored matches this search. Loosen it or clear the filters.' : 'No ' + type + ' records are stored for this connection.' %></p>
+          </div>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const row of page.data) { %>
+      <tr>
+        <td><a class="mono" style="font-size: var(--text-sm)" href="<%= basePath %>/records/<%= encodeURIComponent(type) %>/<%= encodeURIComponent(row.id) %>" data-modal><%= row.id %></a></td>
+        <% for (const c of columns) { %>
+        <td class="muted"><%= cellText(row.data[c]) %></td>
+        <% } %>
+        <td class="muted"><%= row.updatedAt ? new Date(row.updatedAt).toLocaleString() : '—' %></td>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<% if (page && nav) { %>
+<%- include('../_cursor-pagination', { nav, shown: page.data.length, total: page.meta.total != null ? page.meta.total : page.data.length, totalCapped: !!page.meta.totalCapped }) %>
+<% } %>
+
+<%# Loaded here because the record page opens in a dialog from this table, and
+    scripts in a fetched page do not run there. %>
+<script src="/public/js/json-view.js" defer></script>
+<% } %>

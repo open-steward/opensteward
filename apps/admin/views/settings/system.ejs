@@ -1,0 +1,167 @@
+<% layout('layout', { title: 'System' }) -%>
+<%
+  /* What an operator who installs published releases needs: which release
+     is running, whether every service is up, and whether the last upgrade
+     finished (every service on one release). `system` is summarizeSystem()'s
+     verdict (src/core/version-info.ts); `versions` is the raw per-service
+     /version data, shown only under Technical details for bug reports.
+     `license` is describeLicense()'s card (src/core/license-view.ts) or null
+     when admin-api could not say; `licenseAlert` the alert. */
+  const upgradeGuide = (typeof docsServerUrl === 'string' && docsServerUrl ? docsServerUrl.replace(/\/+$/, '') : '') + '/guides/deployment/upgrading.md'
+  const licenseGuide = (typeof docsServerUrl === 'string' && docsServerUrl ? docsServerUrl.replace(/\/+$/, '') : '') + '/guides/deployment/license.md'
+  const lic = typeof license !== 'undefined' ? license : null
+  const licAlert = typeof licenseAlert !== 'undefined' ? licenseAlert : null
+  const licUnavailable = typeof licenseUnavailable !== 'undefined' ? licenseUnavailable : null
+  const headline = system.release ?? (system.mismatch ? system.releases.join(' / ') : 'unknown')
+-%>
+<div class="stack" style="max-width: 960px">
+  <header class="stack" style="gap: var(--space-2); margin-bottom: var(--space-4)">
+    <h1 style="margin: 0">System</h1>
+    <p class="muted" style="margin: 0; max-width: 64ch">
+      Which release this deployment runs, and whether every service is up.
+    </p>
+  </header>
+
+  <% for (const s of system.notResponding) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-3)">
+    <strong><%= s.name %> is not responding.</strong>
+    Check that its container or pod is running, then read its logs.
+  </div>
+  <% } %>
+  <% if (system.mismatch) { %>
+  <div class="alert alert--warning" style="margin-bottom: var(--space-3)">
+    <strong>Services are running different releases (<%= system.releases.join(', ') %>).</strong>
+    Finish the upgrade so every service runs the same release.
+    <a href="<%= upgradeGuide %>" style="text-decoration: underline">Upgrade guide</a>
+  </div>
+  <% } %>
+  <% if (licAlert) { %>
+  <div class="alert alert--<%= licAlert.tone %>" role="status" data-license-alert="<%= licAlert.state %>" style="margin-bottom: var(--space-3)">
+    <div>
+      <strong><%= licAlert.title %></strong>
+      <%= licAlert.detail %>
+      <a href="<%= licAlert.href %>" target="_blank" rel="noopener noreferrer" style="text-decoration: underline"><%= licAlert.linkText %></a>
+    </div>
+  </div>
+  <% } %>
+
+  <section class="card" style="padding: var(--space-5) var(--space-6); margin-bottom: var(--space-4)">
+    <div class="muted" style="font-size: var(--text-sm)">Release</div>
+    <div class="row" style="gap: var(--space-3); align-items: center; flex-wrap: wrap; margin: var(--space-1) 0 var(--space-3)">
+      <h2 style="margin: 0; font-size: var(--text-2xl)" data-release>OpenSteward <%= headline %></h2>
+      <% if (system.devBuild) { %>
+      <span class="badge badge--muted" title="Built from source, not a published release image">Development build</span>
+      <% } %>
+    </div>
+    <div class="row" style="gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-sm)">
+      <% if (system.release && system.release !== 'unknown' && !system.devBuild) { %>
+      <a href="<%= system.releaseNotesUrl %>" target="_blank" rel="noopener noreferrer">Release notes for <%= system.release %></a>
+      <% } else { %>
+      <a href="<%= system.releaseNotesUrl %>" target="_blank" rel="noopener noreferrer">Changelog</a>
+      <% } %>
+      <a href="<%= system.releasesUrl %>" target="_blank" rel="noopener noreferrer">All releases</a>
+      <a href="<%= upgradeGuide %>">How to upgrade</a>
+    </div>
+  </section>
+
+  <section class="card" data-license style="padding: var(--space-5) var(--space-6); margin-bottom: var(--space-4)">
+    <div class="row" style="gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-3)">
+      <h2 style="margin: 0; font-size: var(--text-lg)">License</h2>
+      <% if (lic) { %>
+      <span class="badge badge--<%= lic.tone %>" data-license-state="<%= lic.state %>"><span class="badge__dot"></span><%= lic.label %></span>
+      <% } %>
+    </div>
+    <% if (!lic) { %>
+    <p class="muted" style="margin: 0 0 var(--space-2)" data-license-unavailable>License status unavailable<%= licUnavailable ? ': ' + licUnavailable : '' %></p>
+    <p class="muted" style="margin: 0 0 var(--space-3); font-size: var(--text-sm)">The integration server keeps enforcing the license on its own; this page only reports it.</p>
+    <% } else { %>
+    <table class="table" style="margin-bottom: var(--space-3)">
+      <tbody>
+        <% for (const r of lic.rows) { %>
+        <tr><th scope="row"><%= r.label %></th><td><%= r.value %></td></tr>
+        <% } %>
+        <tr><th scope="row">Verticals</th><td><%= lic.verticals.length ? lic.verticals.join(', ') : 'None' %></td></tr>
+      </tbody>
+    </table>
+    <% for (const n of lic.notes) { %>
+    <p class="muted" style="margin: 0 0 var(--space-2)"><%= n %></p>
+    <% } %>
+    <% } %>
+    <div class="row" style="gap: var(--space-4); flex-wrap: wrap; font-size: var(--text-sm)">
+      <% if (lic) { %><a href="<%= lic.href %>" target="_blank" rel="noopener noreferrer" data-license-link><%= lic.linkText %></a><% } %>
+      <a href="<%= licenseGuide %>" data-license-guide>Installing and renewing your license</a>
+    </div>
+  </section>
+
+  <section class="card" style="padding: 0; overflow: hidden; margin-bottom: var(--space-4)">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Service</th>
+          <% if (system.mismatch) { %><th scope="col">Release</th><% } %>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const s of system.services) { %>
+        <tr data-service="<%= s.key %>">
+          <td><%= s.name %></td>
+          <% if (system.mismatch) { %><td class="mono"><%= s.release ?? '—' %></td><% } %>
+          <td>
+            <% if (s.running) { %>
+            <span class="badge badge--success"><span class="badge__dot"></span>Running</span>
+            <% } else { %>
+            <span class="badge badge--danger"><span class="badge__dot"></span>Not responding</span>
+            <% } %>
+          </td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </section>
+
+  <%# Developer detail, closed by default: what a bug report's Version field
+      asks for. The copy button uses shell.js's global data-copy handler, so
+      the page keeps its strict CSP. -%>
+  <details class="card" style="padding: var(--space-4) var(--space-6)" data-technical-details>
+    <summary style="cursor: pointer">Technical details</summary>
+    <div class="stack" style="gap: var(--space-3); margin-top: var(--space-4)">
+      <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+        For bug reports and OpenSteward's developers. Paste this into an issue's Version field.
+      </p>
+      <div>
+        <button type="button" class="btn btn--secondary btn--sm" data-copy="<%= system.bugReportText %>">Copy for a bug report</button>
+      </div>
+      <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Service</th>
+            <th scope="col">Package version</th>
+            <th scope="col">Git SHA</th>
+            <th scope="col">Build time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (const s of system.services) { const e = versions[s.key]; %>
+          <tr>
+            <td><code class="mono"><%= s.key %></code></td>
+            <% if (e) { %>
+            <td><code class="mono"><%= e.version %></code></td>
+            <td><code class="mono" style="font-size: var(--text-xs)"><%= e.gitSha %></code></td>
+            <td><code class="mono" style="font-size: var(--text-xs)"><%= e.buildTime %></code></td>
+            <% } else { %>
+            <td colspan="3" class="muted">not responding</td>
+            <% } %>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      </div>
+      <p class="muted" style="margin: 0; font-size: var(--text-xs)">
+        Database migrations apply when each service starts, and a service will not start if one fails.
+        Their history is at <code class="mono">GET /api/schema-status</code>.
+      </p>
+    </div>
+  </details>
+</div>

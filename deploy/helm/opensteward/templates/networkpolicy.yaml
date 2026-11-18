@@ -1,0 +1,116 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $root := . -}}
+{{- $full := include "opensteward.fullname" . -}}
+# Default-deny all ingress to OpenSteward pods. Egress is left unrestricted so
+# adapters can reach upstream SaaS APIs (443) and resolve DNS.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $full }}-default-deny
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "opensteward.commonSelectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+---
+# Allow all intra-app traffic (admin→admin-api, admin-api→integration-server,
+# integration-server→admin-api, etc.) between pods of this release.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $full }}-allow-internal
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "opensteward.commonSelectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              {{- include "opensteward.commonSelectorLabels" . | nindent 14 }}
+---
+# Allow external ingress (the ingress controller, typically in another
+# namespace) to reach ONLY the exposed services. admin-api is absent here, so
+# it can be reached only by the intra-app rule above — never from outside.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $full }}-allow-ingress
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "opensteward.commonSelectorLabels" . | nindent 6 }}
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          {{- range $name, $svc := .Values.services }}
+          {{- if $svc.exposed }}
+          - {{ $name }}
+          {{- end }}
+          {{- end }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - {}
+{{- if $root.Values.ingress.sso.enabled }}
+---
+# SSO/SCIM: admit ONLY the configured peers (the ingress controller) to
+# admin-api. The Ingress publishes just the SSO/SCIM paths; this keeps the pod
+# unreachable from anywhere else outside the release.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $full }}-allow-sso-ingress
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "opensteward.serviceSelector" (dict "root" $root "name" "admin-api") | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- toYaml $root.Values.ingress.sso.allowFrom | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: {{ (index $root.Values.services "admin-api").port }}
+{{- end }}
+{{- if $root.Values.superset.enabled }}
+---
+# Embedded Superset: browsers load dashboards from the Superset web pods
+# through the ingress controller. The default-deny above covers these pods
+# too (they carry this release's instance label), and admin-api / the
+# bootstrap job reach them via allow-internal; this admits ONLY the configured
+# peers from outside the release, on Superset's port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ $full }}-allow-superset-ingress
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: superset
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        {{- toYaml $root.Values.analytics.superset.networkPolicy.allowFrom | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 8088
+{{- end }}
+{{- end }}

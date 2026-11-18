@@ -1,0 +1,17 @@
+<% layout('../layout', { title: 'Superset sharing' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/dashboards">Dashboards</a> · <a href="/dashboards/superset/<%= encodeURIComponent(dashboard.id) %>"><%= dashboard.title %></a></div>
+    <h1 class="page-header__title">Who sees <%= dashboard.title %></h1>
+    <p class="page-header__desc">Superset dashboards are always shared: with people who have access to chosen tenants, or with everyone who can view dashboards. Pinning limits the charts to those tenants' data. Each viewer still sees only tenants in their own access.</p>
+  </div>
+</header>
+<% if (error) { %><div class="alert alert--danger" style="margin-top: var(--space-4)" role="alert"><%= error %></div><% } %>
+<form method="POST" action="/dashboards/superset/<%= encodeURIComponent(dashboard.id) %>/sharing" class="card stack" style="margin-top: var(--space-4)">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%- include('_sharing', { sharing, tenantChoices, canShareAll: true, allowPrivate: false }) %>
+  <div class="row" style="gap: var(--space-2)">
+    <button type="submit" class="btn btn--primary">Save</button>
+    <a class="btn btn--ghost" href="/dashboards/superset/<%= encodeURIComponent(dashboard.id) %>">Cancel</a>
+  </div>
+</form>

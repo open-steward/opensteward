@@ -1,0 +1,227 @@
+<% layout('../layout', { title: 'Webhooks' }) -%>
+<%
+  const isAdmin = user && user.role === 'admin'
+  const fmtDate = (n) => n ? new Date(n).toLocaleString() : '—'
+%>
+
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Configure</div>
+    <h1 class="page-header__title">Webhooks</h1>
+    <p class="page-header__desc">
+      Outbound HTTPS callbacks fired when customers and connect-link sessions change. Each delivery is HMAC-signed; receivers verify with the shared secret.
+    </p>
+  </div>
+  <% if (isAdmin) { %>
+  <div class="page-header__actions">
+    <a href="/webhooks/new" class="btn btn--primary btn--sm">Add subscription</a>
+  </div>
+  <% } %>
+</header>
+
+<% if (typeof created !== 'undefined' && created) { %>
+<%- include('_secret-once', {
+  heading: 'Webhook signing secret — save it now',
+  intro: 'The plaintext is shown once, on this page only.',
+  secret: created.secret,
+  sub: created,
+}) %>
+<% } %>
+
+<% if (typeof rotated !== 'undefined' && rotated) { %>
+<%# Same panel as a create. It names the subscription rather than only its id:
+    to an operator running a dozen of these, a live credential over a bare
+    UUID says nothing about which endpoint it signs for. `rotated` carries the
+    row the route looked up for exactly that. %>
+<%- include('_secret-once', {
+  heading: 'New webhook signing secret — save it now',
+  intro: 'The previous secret stopped working the moment this one was minted. The new plaintext is shown once, on this page only.',
+  secret: rotated.secret,
+  sub: rotated,
+}) %>
+<% } %>
+
+<% if (typeof tested !== 'undefined' && tested) { %>
+<div class="alert alert--success" style="margin-top: var(--space-6)"><%= tested %></div>
+<% } %>
+
+<% if (typeof saved !== 'undefined' && saved) { %>
+<div class="alert alert--success" style="margin-top: var(--space-6)">Delivery settings saved.</div>
+<% } %>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-6)"><%= error %></div>
+<% } %>
+
+<%
+  // Which filter, if any, produced the current (possibly empty) view — used
+  // below both to pick the right empty-row message and to decide whether the
+  // rich first-run empty state (icon, CTA buttons) is warranted at all. The
+  // table itself (filter form + thead) renders unconditionally regardless —
+  // fix-round-1, Critical 2: hiding it whenever `subs` is empty stranded an
+  // operator whose filter matched nothing with no visible Clear control, and
+  // no way to change what they'd typed short of hand-editing the URL.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<div class="card" style="margin-top: var(--space-3); padding: 0">
+<div class="table-scroll">
+<table class="table">
+  <%- include('../_table-head', { tableSpec, tableState }) %>
+  <tbody>
+    <% if (subs.length === 0) { %>
+    <tr>
+      <%# `hidden` columns (the search alias) take no cell of their own, so
+          the colspan only counts columns _table-head.ejs actually rendered. %>
+      <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+        <% if (!hasFilters) { %>
+        <div class="empty-state">
+          <div class="empty-state__icon"><i class="ph ph-webhooks-logo"></i></div>
+          <h3 class="empty-state__title">No webhooks configured</h3>
+          <p class="empty-state__body">Webhooks fan out connection and resource events to your backend in real time. Each delivery is HMAC-signed.</p>
+          <% if (isAdmin) { %>
+          <div class="empty-state__actions">
+            <a class="btn btn--primary" href="/webhooks/new">Add subscription</a>
+            <a class="btn btn--ghost" href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/unified-api#tag/Webhooks" target="_blank" rel="noopener">Event types →</a>
+          </div>
+          <% } %>
+        </div>
+        <% } else { %>
+        <div class="empty-state empty-state--no-results">
+          <% if (tableState.filters.search) { %>
+          <h3 class="empty-state__title">No webhook matches “<%= tableState.filters.search %>”</h3>
+          <p class="empty-state__body">Search covers the label and the endpoint URL.</p>
+          <% } else if (tableState.filters.label) { %>
+          <h3 class="empty-state__title">No webhook matches “<%= tableState.filters.label %>”</h3>
+          <p class="empty-state__body">Search covers the label.</p>
+          <% } else if (tableState.filters.tenant) { %>
+          <h3 class="empty-state__title">No webhooks for tenant <span class="mono"><%= tableState.filters.tenant %></span></h3>
+          <p class="empty-state__body">Either no subscriptions exist for this tenant, or they've all been deleted.</p>
+          <% } else { %>
+          <h3 class="empty-state__title">No webhooks match your filters</h3>
+          <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+          <% } %>
+          <div class="empty-state__actions">
+            <a class="btn btn--ghost" href="/webhooks">Clear filter</a>
+          </div>
+        </div>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const s of subs) { %>
+    <tr>
+      <td style="font-size: var(--text-xs)">
+        <% if (s.label) { %><strong><%= s.label %></strong><% } else { %><span class="muted">Unnamed</span><% } %>
+      </td>
+      <td class="mono" style="font-size: var(--text-xs)">
+        <%= s.tenantId %>
+        <% if (s.paused) { %><br><span class="badge badge--danger">Paused</span><% } %>
+      </td>
+      <td class="mono webhooks-url" style="font-size: var(--text-xs)">
+        <%# `overflow: hidden; text-overflow: ellipsis` used to sit here with no
+            `white-space: nowrap` — ellipsis only paints on a nowrap line, so it
+            never rendered and the hidden overflow just chopped the URL off
+            mid-character with no "…" to say so. `.webhooks-url` (style.css)
+            wraps instead, so the whole URL stays on screen; `data-copy` gets it
+            onto the clipboard for pasting into a receiver's config without
+            re-typing a HMAC-signed endpoint by hand. See layout.ejs's global
+            [data-copy] handler and webhooks/_secret-once.ejs for the same
+            idiom this page already uses for the signing secret. %>
+        <%= s.url %><br>
+        <button type="button" class="btn btn--ghost btn--sm" style="margin-top: var(--space-1)"
+          data-copy="<%= s.url %>" title="Copy webhook URL" aria-label="Copy webhook URL">Copy</button>
+      </td>
+      <td style="font-size: var(--text-xs)">
+        <% const evts = s.events && s.events.length ? s.events : ['*'] %>
+        <% if (evts.length === 1 && evts[0] === '*') { %>
+        <span class="badge">All events</span>
+        <% } else { %>
+        <% evts.forEach((e, i) => { %><% if (i > 0) { %><br><% } %><span class="mono"><%= e %></span><% }) %>
+        <% } %>
+      </td>
+      <td style="font-size: var(--text-xs)">
+        <%# `formatLabel` is hoisted onto every row in routes/webhooks.ts's
+            withFormatLabel(), from the same FORMAT_LABELS map this cell used
+            to recompute locally — the Delivery column's sort accessor reads
+            that same hoisted field, so the two can never drift apart. %>
+        <span class="badge"><%= s.formatLabel %></span>
+        <% const hdrs = s.headerNames || [] %>
+        <% if (hdrs.length) { %>
+        <div class="muted" style="margin-top: var(--space-1)">
+          <% hdrs.forEach((h, i) => { %><% if (i > 0) { %><br><% } %><span class="mono"><%= h %></span>: ••••<% }) %>
+        </div>
+        <% } %>
+      </td>
+      <td style="font-size: var(--text-xs)">
+        <% if (s.lastFiredAt) { %>
+        <%= fmtDate(s.lastFiredAt) %>
+        <% if (s.lastStatus) { %>
+        <br>
+        <% if (s.lastStatus >= 200 && s.lastStatus < 300) { %>
+        <span class="badge badge--success">HTTP <%= s.lastStatus %></span>
+        <% } else { %>
+        <span class="badge badge--danger">HTTP <%= s.lastStatus %></span>
+        <% } %>
+        <% } else if (s.lastError) { %>
+        <br><span class="badge badge--danger" title="<%= s.lastError %>">Failed</span>
+        <% } %>
+        <% } else { %>
+        <span class="muted">never</span>
+        <% } %>
+      </td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= fmtDate(s.createdAt) %></td>
+      <td>
+        <a href="/webhooks/<%= s.id %>/deliveries" class="btn btn--ghost btn--sm">Deliveries</a>
+        <% if (isAdmin) { %>
+        <%# Pause/resume, rotate-secret, delete and send-test used to be four
+            always-visible POST forms stacked in this cell — each a working
+            action with its own `_csrf`, none dropped here, just moved behind
+            one disclosure so the row is one line by default. See
+            `.row-actions` in style.css for why this is an in-flow <details>
+            and not a floating menu. %>
+        <details class="row-actions">
+          <summary class="btn btn--ghost btn--sm">Actions</summary>
+          <div class="row-actions__menu">
+            <form method="POST" action="/webhooks/<%= s.id %>/pause">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="paused" value="<%= s.paused ? 'false' : 'true' %>">
+              <button type="submit" class="btn btn--ghost btn--sm"><%= s.paused ? 'Resume' : 'Pause' %></button>
+            </form>
+            <form method="POST" action="/webhooks/<%= s.id %>/rotate-secret"
+              onsubmit="return confirm('Rotate the signing secret? The current secret stops working immediately and the new one is shown once.')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--secondary btn--sm">Rotate secret</button>
+            </form>
+            <form method="POST" action="/webhooks/<%= s.id %>/delete"
+              onsubmit="return confirm('Delete this subscription? Future events will not be delivered to this URL.')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+            </form>
+            <form method="POST" action="/webhooks/<%= s.id %>/test">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--ghost btn--sm" title="Send one synthetic event to this endpoint">Send test</button>
+            </form>
+            <%# The editor is its own page now — a form squeezed into a table cell
+                had nowhere to put the copy explaining what saving replaces.
+                data-modal opens it in a dialog when JS is available; the href is
+                what happens otherwise, and both are the same admin-only route as
+                the POST. See public/js/resource-modal.js. %>
+            <a href="/webhooks/<%= s.id %>/settings" class="btn btn--ghost btn--sm" data-modal>Delivery settings</a>
+          </div>
+        </details>
+        <% } %>
+      </td>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>

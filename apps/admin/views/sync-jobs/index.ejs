@@ -1,0 +1,199 @@
+<% layout('../layout', { title: 'Sync jobs' }) -%>
+<%
+  // Derived from the spec the route already decided, not re-derived from
+  // `user.role` here — sync-jobs.ts's syncJobsTable() is the one place that
+  // decides whether Actions exists, and reading it back off `tableSpec` is
+  // what keeps this row's cell count from ever disagreeing with
+  // _table-head.ejs's header/filter rows, which read the same spec.
+  const canAct = tableSpec.columns.some((c) => c.key === 'actions')
+  const hasFilters = Object.keys(tableState.filters).length > 0
+  const bodyColumns = tableSpec.columns.filter((c) => !c.hidden).length
+%>
+<%
+  function fmtAge(ms) {
+    if (ms == null) return '—'
+    const s = Math.floor(ms / 1000)
+    if (s < 60) return s + 's'
+    const m = Math.floor(s / 60)
+    if (m < 60) return m + 'm'
+    const h = Math.floor(m / 60)
+    if (h < 24) return h + 'h'
+    return Math.floor(h / 24) + 'd'
+  }
+%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Activity</div>
+    <h1 class="page-header__title">Sync jobs</h1>
+    <p class="page-header__desc">Background full-sync jobs across every vertical. Operators can cancel pending or running jobs.</p>
+    <%# `meta.total` is now a real count of the rows matching the filter, not
+        the size of the window admin-api happened to fetch. %>
+    <% const _total = (typeof meta !== 'undefined') ? meta.total : jobs.length %>
+    <% if (_total > 0) { %>
+    <p class="page-header__desc"><%= _total %> job<%= _total === 1 ? '' : 's' %></p>
+    <% } %>
+  </div>
+</header>
+
+<% if (metrics) { %>
+<div class="card" style="margin-top: var(--space-6); padding: var(--space-4); display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))">
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">Mode</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.mode %></div>
+  </div>
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">Cached rows</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.rows.total.toLocaleString() %></div>
+  </div>
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">DB size</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.db_size_mb != null ? metrics.db_size_mb + ' MB' : '—' %></div>
+  </div>
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">Pending</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.sync_jobs.pending %></div>
+  </div>
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">Running</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.sync_jobs.running %></div>
+  </div>
+  <div>
+    <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: 0.05em">Oldest cache row</div>
+    <div style="font-weight: 600; margin-top: var(--space-1)"><%= fmtAge(metrics.rows.oldest_age_ms) %></div>
+  </div>
+</div>
+<% } %>
+
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <%# The table renders unconditionally, even with zero rows — the property
+          every converted table shares. Hiding it whenever the current filter
+          matches nothing would strand an operator with no visible Clear
+          control and no way back short of hand-editing the URL. %>
+      <% if (jobs.length === 0) { %>
+      <tr>
+        <td colspan="<%= bodyColumns %>">
+          <% if (!hasFilters) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon"><i class="ph ph-cloud-arrow-down"></i></div>
+            <h3 class="empty-state__title">No sync jobs yet</h3>
+            <p class="empty-state__body">Sync jobs pull data from external platforms in the background. Trigger one via <code class="mono">POST /v1/{vertical}/sync</code> from a Bearer-key client, or wait for the auto-sync that fires after each new connection lands.</p>
+          </div>
+          <% } else { %>
+          <div class="empty-state empty-state--no-results">
+            <%# Name the needle back, per filter — the Connection branch first,
+                because it is the one whose control does NOT match what the
+                cell shows in full: the cell is truncated to eight characters,
+                so that is the shortest prefix that can match what is on
+                screen, and an operator who pasted a full id needs telling. %>
+            <% if (tableState.filters.connection) { %>
+            <h3 class="empty-state__title">No sync job matches “<%= tableState.filters.connection %>”</h3>
+            <p class="empty-state__body">Connection matches a substring of the full connection id, case-insensitively. The cell shows only the first eight characters, so that prefix is enough.</p>
+            <% } else if (tableState.filters.id) { %>
+            <h3 class="empty-state__title">No sync job matches “<%= tableState.filters.id %>”</h3>
+            <p class="empty-state__body">Sync id matches a substring, case-insensitively — an id prefix is enough.</p>
+            <% } else if (tableState.filters.platform) { %>
+            <h3 class="empty-state__title">No sync job matches “<%= tableState.filters.platform %>”</h3>
+            <p class="empty-state__body">Platform matches a substring of the platform slug, case-insensitively.</p>
+            <% } else { %>
+            <h3 class="empty-state__title">No sync jobs match this filter</h3>
+            <p class="empty-state__body">Try widening or clearing what you've selected above.</p>
+            <% } %>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+            </div>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const j of jobs) { %>
+      <tr>
+        <td>
+          <%# Same treatment /connections gives its connection id: the full
+              value, monospace, with a copy button beside it. The id is what
+              `GET /api/sync-jobs/{id}` and a cancel both address, so truncating
+              it for tidiness would mean retyping it from the screen.
+              The id is also this row's link — there is no label to hang it on.
+              data-modal opens the detail page in a dialog when JS is available;
+              the href is what happens otherwise. See public/js/resource-modal.js. %>
+          <span class="row" style="gap: var(--space-2); align-items: center">
+            <a href="/sync-jobs/<%= j.id %>" data-modal><code class="mono" style="font-size: var(--text-xs)"><%= j.id %></code></a>
+            <button type="button" class="btn btn--ghost btn--sm" data-id="<%= j.id %>"
+              title="Copy sync job id" aria-label="Copy sync job id"
+              onclick="(function(b){navigator.clipboard.writeText(b.dataset.id)})(this)">Copy</button>
+          </span>
+        </td>
+        <td style="font-weight: 500"><%= j.vertical %></td>
+        <td class="mono"><%= j.platform %></td>
+        <%# The job carries the vertical as well as the connection id, which is
+            both halves of /connections/:vertical/:id — the link needs no extra
+            lookup. Truncated text because the column is narrow and the full id
+            is one click away on the connection itself. %>
+        <td class="mono muted"><a href="/connections/<%= j.vertical %>/<%= j.connectionId %>" data-modal title="<%= j.connectionId %>"><%= j.connectionId.slice(0, 8) %></a></td>
+        <%# Whose data this job pulled — the connection's owning tenant, carried
+            on the job so a multi-tenant deployment can read the list without
+            opening every connection. %>
+        <td style="font-size: var(--text-xs)"><%- include('../_tenant', { tenantId: j.tenantId, tenants: (typeof tenants !== 'undefined' ? tenants : []) }) %></td>
+        <td<% if (j.status === 'failed' && j.error) { %> title="<%= j.error %>"<% } %>>
+          <%- statusPill(j.status) %>
+        </td>
+        <td class="muted">
+          <% if (j.progress) {
+            const entries = Object.entries(j.progress)
+            const synced = entries.reduce((acc, [, p]) => acc + (p.synced || 0), 0)
+            const completed = entries.filter(([, p]) => p.status === 'completed').length
+            const total = entries.length
+          %>
+            <%= synced.toLocaleString() %> rows · <%= completed %>/<%= total %> resources
+          <% } else { %>
+            —
+          <% } %>
+        </td>
+        <%# Why the job ran — scheduled, Sync now, the API, right after a Connect
+            Link, or on boot. Older jobs carry none. Under the time rather than a
+            column of its own, so the table spec (and its sort/filter keys) is
+            unchanged. The wording is `originLabel` (core/views/sync-schedule.ts),
+            passed in by the route. %>
+        <td class="muted"><%= new Date(j.createdAt).toLocaleString() %><% if (j.origin) { %><br><span style="font-size: var(--text-xs)" data-origin="<%= j.origin %>"><%= originLabel(j.origin) %></span><% } %></td>
+        <% if (canAct) { %>
+        <td>
+          <% if (j.status === 'pending' || j.status === 'running') { %>
+          <form method="POST" action="/sync-jobs/<%= j.id %>/cancel" onsubmit="return confirm('Cancel this sync job?')" style="display: inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn--danger btn--sm">Cancel</button>
+          </form>
+          <% } else { %>
+            <span class="muted">—</span>
+          <% } %>
+        </td>
+        <% } %>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<%- include('../_pagination', {
+  // `meta.page`, not `tableState.page`: admin-api is the one paginating this
+  // set, so its own echoed page number is the authoritative one, exactly as
+  // the pre-conversion view read `_meta.page` here.
+  page: meta.page,
+  pageLimit: meta.limit,
+  total: meta.total,
+  baseUrl: tableSpec.baseUrl,
+  filterQs: tableQs(tableState, tableSpec),
+}) %>

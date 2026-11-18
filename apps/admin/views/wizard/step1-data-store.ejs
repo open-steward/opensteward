@@ -1,0 +1,131 @@
+<% layout('../layout', { title: 'Setup — step 1' }) -%>
+<%
+  const mode = (metrics && metrics.mode) || 'database'
+  function selected(m) { return mode === m ? ' card--selected' : '' }
+  function activeBadge(m) {
+    return mode === m
+      ? '<span class="badge badge--success"><span class="badge__dot"></span>Active</span>'
+      : ''
+  }
+%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'data-store', dsMode: mode }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 1 of 8</div>
+      <h1>Choose your data-store strategy</h1>
+      <p class="wizard-subtitle">
+        The integration-server can cache canonical resources locally, pass every read live to upstream, or do both plus fan out signed events to your own DB. This is the foundational choice — start here.
+      </p>
+    </header>
+
+    <div class="wizard-body">
+      <p class="muted" style="font-size: var(--text-sm)">
+        Active mode is <strong class="mono"><%= mode %></strong>. To switch, set
+        <code class="mono">DATA_STORE_MODE</code> in your <code class="mono">.env</code> (or
+        <code class="mono">docker-compose.yml</code>) and restart the integration-server. See
+        <a href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/guides/architecture/persistence.md" target="_blank" rel="noopener">the persistence guide</a>.
+      </p>
+
+      <div class="stack stack--lg">
+        <div class="card<%- selected('database') %>">
+          <h2 class="card__title row" style="gap: var(--space-2); flex-wrap: wrap">
+            <span class="mono">database</span>
+            <span class="muted" style="font-weight: 400; font-size: var(--text-sm)">recommended default</span>
+            <%- activeBadge('database') %>
+          </h2>
+          <p class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3)">
+            Local SQLite read-through cache. Reads serve from disk; writes go upstream first then update cache.
+            <code class="mono">?is_live=true</code> bypasses cache for any GET.
+            <code class="mono">POST /v1/{vertical}/sync</code> bulk-populates per connection.
+          </p>
+          <details>
+            <summary class="muted" style="font-size: var(--text-sm); cursor: pointer">When this fits</summary>
+            <ul class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 0; padding-left: var(--space-4); line-height: 1.7">
+              <li>Your app reads frequently and tolerates occasional staleness</li>
+              <li>Disk-backed; survives restarts</li>
+              <li>Single-writer SQLite — safe on a local volume, unsafe on NFS</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="card<%- selected('passthrough') %>">
+          <h2 class="card__title row" style="gap: var(--space-2); flex-wrap: wrap">
+            <span class="mono">passthrough</span>
+            <span class="muted" style="font-weight: 400; font-size: var(--text-sm)">opt-out</span>
+            <%- activeBadge('passthrough') %>
+          </h2>
+          <p class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3)">
+            Every request live to upstream. Nothing cached. <code class="mono">?is_live</code> is a no-op;
+            <code class="mono">/sync</code> routes 404. Equivalent to the pre-data-store behaviour.
+          </p>
+          <details>
+            <summary class="muted" style="font-size: var(--text-sm); cursor: pointer">When this fits</summary>
+            <ul class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 0; padding-left: var(--space-4); line-height: 1.7">
+              <li>Your app already has its own persistence layer</li>
+              <li>Multi-replica deployments without a shared DB (no SQLite contention)</li>
+              <li>Every read costs an upstream round-trip</li>
+            </ul>
+          </details>
+        </div>
+
+        <div class="card<%- selected('external') %>">
+          <h2 class="card__title row" style="gap: var(--space-2); flex-wrap: wrap">
+            <span class="mono">external</span>
+            <span class="muted" style="font-weight: 400; font-size: var(--text-sm)">cache + outbound events</span>
+            <%- activeBadge('external') %>
+          </h2>
+          <p class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 var(--space-3)">
+            Local cache (same as <code class="mono">database</code>) <strong>plus</strong> signed
+            <code class="mono">resource.synced</code> / <code class="mono">resource.updated</code> /
+            <code class="mono">resource.deleted</code> webhooks so your own DB / Kafka / warehouse
+            can mirror state. Reuses the existing webhook delivery system (HMAC, retries, dead-letter, replay).
+          </p>
+          <details>
+            <summary class="muted" style="font-size: var(--text-sm); cursor: pointer">When this fits</summary>
+            <ul class="muted" style="font-size: var(--text-sm); margin: var(--space-2) 0 0; padding-left: var(--space-4); line-height: 1.7">
+              <li>You want fast cached reads <strong>and</strong> persistence in your own DB</li>
+              <li>You'll subscribe to <code class="mono">resource.*</code> events at the end of this wizard</li>
+              <li>Set <code class="mono">DATA_STORE_EXTERNAL_BATCH_EVENTS=true</code> for large initial syncs</li>
+            </ul>
+          </details>
+        </div>
+      </div>
+
+      <% if (metrics && (mode === 'database' || mode === 'external')) { %>
+      <div class="card" style="display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))">
+        <div>
+          <div class="eyebrow">Cached rows</div>
+          <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.rows.total.toLocaleString() %></div>
+        </div>
+        <div>
+          <div class="eyebrow">DB size</div>
+          <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.db_size_mb != null ? metrics.db_size_mb + ' MB' : '—' %></div>
+        </div>
+        <div>
+          <div class="eyebrow">Sync pending</div>
+          <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.sync_jobs.pending %></div>
+        </div>
+        <div>
+          <div class="eyebrow">Sync running</div>
+          <div style="font-weight: 600; margin-top: var(--space-1)"><%= metrics.sync_jobs.running %></div>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <footer class="wizard-footer">
+      <span></span>
+      <div class="wizard-footer__primary">
+        <a href="/setup/wizard/company-info" class="btn btn--primary">
+          Continue with <span class="mono" style="margin-left: var(--space-1)"><%= mode %></span>
+        </a>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<style>
+  .card--selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+</style>

@@ -1,0 +1,82 @@
+OpenSteward {{ .Chart.AppVersion }} installed as release "{{ .Release.Name }}".
+
+Database mode: {{ .Values.database.mode }}
+{{- if eq .Values.database.mode "sqlite" }}
+  SQLite on PersistentVolumes — admin-api, webhook-gateway and integration-server
+  each run a SINGLE replica (one SQLite writer). Upgrades have a brief blip; use
+  database.mode=postgres for zero-downtime + horizontal scale.
+{{- else }}
+  Postgres ({{ .Values.database.external.existingSecret }} / {{ .Values.database.external.secretKey }}).
+  All services are stateless and can scale.
+  {{- if not .Values.redis.enabled }}
+  NOTE: integration-server > 1 replica needs redis.enabled=true (shared
+  per-API-key rate-limit budget).
+  {{- end }}
+{{- end }}
+
+Secrets: source={{ .Values.secrets.source }}
+{{- if eq .Values.secrets.source "plain" }}
+  WARNING: secrets.source=plain renders the secrets into the release history.
+  Use existingSecret / externalSecrets for production.
+{{- else if eq .Values.secrets.source "generate" }}
+  A hook Job generated/maintained {{ include "opensteward.secretName" . }}. It is
+  NOT Helm-owned, so `helm uninstall` leaves it in place (keeping STORE_SECRET, the
+  key that decrypts your data). Delete it by hand only if you mean to wipe access.
+{{- if .Values.secrets.generate.bootstrapToken }}
+
+  First-run setup is GATED by a generated BOOTSTRAP_TOKEN — the setup wizard will
+  ask for it. Read it back with:
+    kubectl -n {{ .Release.Namespace }} get secret {{ include "opensteward.secretName" . }} -o jsonpath='{.data.BOOTSTRAP_TOKEN}' | base64 -d ; echo
+  (Disable with --set secrets.generate.bootstrapToken=false for an ungated trial.)
+{{- end }}
+{{- else if eq .Values.secrets.source "externalSecrets" }}
+  External Secrets Operator syncs {{ include "opensteward.secretName" . }} from your
+  cloud secret store. If pods CrashLoop on first boot, the ExternalSecret has not
+  synced yet — check:  kubectl get externalsecret {{ include "opensteward.secretName" . }}
+{{- end }}
+  Pods run with NODE_ENV=production, so a weak/missing JWT_SECRET / SESSION_SECRET
+  / STORE_SECRET will CrashLoop the pod (assertSecret fail-closed) — that is the
+  intended behaviour, not a bug.
+{{- $licenseSecret := include "opensteward.licenseSecret" . }}
+{{- if $licenseSecret }}
+
+License: Secret {{ $licenseSecret }} (key {{ include "opensteward.licenseSecretKey" . }}) is mounted on
+  integration-server at /etc/opensteward/license. Renew by updating that Secret; no restart
+  needed. If you created the Secret after installing, restart integration-server once:
+    kubectl -n {{ .Release.Namespace }} rollout restart deploy/{{ include "opensteward.fullname" . }}-integration-server
+{{- else }}
+
+License: none configured, so OpenSteward runs in community mode (all current verticals,
+  1 connection, 1 tenant). Get a free license at https://opensteward.dev/license, then set
+  license.existingSecret (docs/deployment/license.md).
+{{- end }}
+{{- if .Values.rotation.enabled }}
+
+STORE_SECRET ROTATION IS ARMED (rotation.enabled=true, target={{ .Values.rotation.target }}).
+  Scale the stateful Deployments to 0 BEFORE the rotate Job runs — it refuses to
+  start otherwise. After it completes: update STORE_SECRET in the env Secret, scale
+  back up, and re-issue developer_api_keys / end_user_tokens. See the README runbook.
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+{{- if .Values.ingress.hosts }}
+
+Reach the admin UI at:
+{{- range .Values.ingress.hosts }}
+{{- if eq .service "admin" }}
+  http{{ if $.Values.ingress.tls.enabled }}s{{ end }}://{{ .host }}
+{{- end }}
+{{- end }}
+  (admin-api is ClusterIP-only and never exposed.)
+{{- else }}
+Ingress is enabled but no hosts are set — add ingress.hosts to expose the UI.
+{{- end }}
+{{- end }}
+
+Verify everything is up:
+  helm test {{ .Release.Name }}
+
+Verify an image signature (published by the images workflow):
+  cosign verify {{ .Values.image.registry }}/integration-server:{{ .Chart.AppVersion }} \
+    --certificate-identity-regexp 'https://github.com/open-steward/.*' \
+    --certificate-oidc-issuer https://token.actions.githubusercontent.com

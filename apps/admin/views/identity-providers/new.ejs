@@ -1,0 +1,83 @@
+<% layout('../layout', { title: 'Add identity provider' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/identity-providers">SSO &amp; identity</a></div>
+    <h1 class="page-header__title">Add identity provider</h1>
+  </div>
+</header>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 720px">
+  <form method="POST" action="/identity-providers" class="stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field__label" for="name">Display name</label>
+      <input class="input" type="text" name="name" id="name" required placeholder="Okta Production">
+    </div>
+    <div class="field">
+      <label class="field__label" for="slug">Slug</label>
+      <input class="input" type="text" name="slug" id="slug" required pattern="[a-z0-9-]+" placeholder="okta-prod">
+      <p class="muted" style="font-size: var(--text-xs)">Used in callback URLs. Lowercase letters, digits, hyphens.</p>
+    </div>
+    <div class="field">
+      <label class="field__label" for="protocol">Protocol</label>
+      <select class="input" name="protocol" id="protocol" onchange="oiProto(this.value)">
+        <option value="oidc">OIDC / OAuth2</option>
+        <option value="saml">SAML 2.0</option>
+        <option value="ldap">LDAP / Active Directory</option>
+      </select>
+    </div>
+
+    <fieldset id="cfg-oidc" class="stack">
+      <div class="field"><label class="field__label">Issuer URL</label><input class="input" name="issuer" placeholder="https://example.okta.com"></div>
+      <div class="field"><label class="field__label">Client ID</label><input class="input" name="clientId"></div>
+      <div class="field"><label class="field__label">Client secret</label><input class="input" type="password" name="clientSecret" autocomplete="new-password"></div>
+      <div class="field"><label class="field__label">Scopes</label><input class="input" name="scopes" value="openid profile email"></div>
+      <div class="field"><label class="field__label">Groups claim</label><input class="input" name="groupsClaim" value="groups"></div>
+    </fieldset>
+
+    <fieldset id="cfg-saml" class="stack" style="display:none">
+      <div class="field"><label class="field__label">IdP SSO URL (entryPoint)</label><input class="input" name="entryPoint"></div>
+      <div class="field"><label class="field__label">IdP issuer / entityID</label><input class="input" name="idpIssuer"></div>
+      <div class="field"><label class="field__label">SP entityID (audience)</label><input class="input" name="spEntityId"></div>
+      <div class="field"><label class="field__label">IdP signing certificate (PEM)</label><textarea class="input" name="idpCert" rows="4" placeholder="-----BEGIN CERTIFICATE-----"></textarea></div>
+      <div class="field"><label class="field__label">Groups attribute</label><input class="input" name="groupsAttribute" value="groups"></div>
+      <div class="field"><label class="field__label">Email attribute</label><input class="input" name="emailAttribute" value="email"></div>
+      <div class="field"><label class="field__label">Picture attribute <span class="muted" style="font-weight: 400">(optional)</span></label><input class="input" name="pictureAttribute" placeholder="picture, photo, photoUrl or avatar"><span class="field__hint">An https URL of the user's picture. Left empty, the common names are tried.</span></div>
+    </fieldset>
+
+    <fieldset id="cfg-ldap" class="stack" style="display:none">
+      <div class="field"><label class="field__label">LDAP URL</label><input class="input" name="url" placeholder="ldaps://ad.example.com:636"></div>
+      <div class="field"><label class="field__label">Bind DN (service account)</label><input class="input" name="bindDn"></div>
+      <div class="field"><label class="field__label">Bind password</label><input class="input" type="password" name="ldapBindPassword" autocomplete="new-password"></div>
+      <div class="field"><label class="field__label">Search base</label><input class="input" name="searchBase" placeholder="ou=people,dc=example,dc=com"></div>
+      <div class="field"><label class="field__label">Search filter</label><input class="input" name="searchFilter" value="(uid={{username}})"></div>
+      <div class="field"><label class="field__label">Groups attribute</label><input class="input" name="groupsAttribute" value="memberOf"></div>
+      <div class="field"><label class="field__label">Email attribute</label><input class="input" name="emailAttribute" value="mail"></div>
+      <div class="field"><label class="field__label">Display-name attribute</label><input class="input" name="displayNameAttribute" value="cn"></div>
+    </fieldset>
+
+    <div class="field">
+      <label class="field__label" for="defaultRole">Default role</label>
+      <select class="input" name="defaultRole" id="defaultRole">
+        <option value="viewer">viewer</option>
+        <option value="operator">operator</option>
+        <option value="admin">admin</option>
+      </select>
+    </div>
+    <label><input type="checkbox" name="jitEnabled" checked> Auto-create users on first login (JIT)</label>
+    <label><input type="checkbox" name="enabled"> Enable immediately</label>
+    <button type="submit" class="btn btn--primary">Create provider</button>
+  </form>
+</div>
+
+<script>
+  function oiProto(v) {
+    for (const p of ['oidc', 'saml', 'ldap']) {
+      document.getElementById('cfg-' + p).style.display = (p === v) ? '' : 'none'
+    }
+  }
+</script>

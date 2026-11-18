@@ -1,0 +1,117 @@
+<% layout('../layout', { title: 'Webhook deliveries' }) -%>
+<%
+  const fmtDate = (n) => n ? new Date(n).toLocaleString() : '—'
+  // Derived from the spec the route already decided, not re-derived from
+  // `user.role` here — routes/webhooks.ts's deliveriesTable() is the one
+  // place that decides whether the trailing Replay column exists, and
+  // reading it back off `tableSpec` is what keeps this row's cell count from
+  // ever disagreeing with `_table-head.ejs`'s header/filter row, which reads
+  // the same spec. Same pattern as connections/index.ejs's `canAct`.
+  const canAct = tableSpec.columns.some((c) => c.key === 'actions')
+%>
+
+<div class="row row--between" style="align-items: center">
+  <div>
+    <h1 style="margin: 0">Deliveries</h1>
+    <p class="muted" style="margin: var(--space-1) 0 0">
+      Most recent attempts for subscription <span class="mono"><%= subscriptionId %></span>. Failed deliveries retry with exponential backoff and dead-letter after 8 attempts; dead rows can be replayed manually.
+    </p>
+  </div>
+  <a href="/webhooks" class="btn btn--ghost btn--sm">Back to webhooks</a>
+</div>
+
+<%
+  // The table (filter form + thead) renders unconditionally regardless of
+  // `deliveries.length` — the property every Tier B table shares (see
+  // /connections, /customers, /webhooks): hiding it whenever the current
+  // filter matches nothing would strand an operator with no visible Clear
+  // control and no way back short of hand-editing the URL. Before this, the
+  // page's empty state was a flat "No deliveries match." whether filtered or
+  // not, with no Clear control at all.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-6); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+<div class="table-scroll">
+<table class="table">
+  <%- include('../_table-head', { tableSpec, tableState }) %>
+  <tbody>
+    <% if (deliveries.length === 0) { %>
+    <tr>
+      <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+        <% if (!hasFilters) { %>
+        <div class="empty-state">
+          <div class="empty-state__icon"><i class="ph ph-paper-plane-tilt"></i></div>
+          <h3 class="empty-state__title">No deliveries yet</h3>
+          <p class="empty-state__body">Deliveries land here once an event this subscription listens for fires. Send a test from the <a href="/webhooks">webhooks list</a> to see one without waiting for real data.</p>
+        </div>
+        <% } else { %>
+        <div class="empty-state empty-state--no-results">
+          <% if (tableState.filters.eventType) { %>
+          <h3 class="empty-state__title">No delivery matches “<%= tableState.filters.eventType %>”</h3>
+          <p class="empty-state__body">Event matches a substring, case-insensitively.</p>
+          <% } else if (tableState.filters.eventId) { %>
+          <h3 class="empty-state__title">No delivery matches “<%= tableState.filters.eventId %>”</h3>
+          <p class="empty-state__body">Event id matches a substring, case-insensitively.</p>
+          <% } else if (tableState.filters.status) { %>
+          <h3 class="empty-state__title">No deliveries with status “<%= tableState.filters.status %>”</h3>
+          <% } else { %>
+          <h3 class="empty-state__title">No deliveries match your filters</h3>
+          <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+          <% } %>
+          <div class="empty-state__actions">
+            <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+          </div>
+        </div>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const d of deliveries) { %>
+    <tr>
+      <td class="mono" style="font-size: var(--text-xs)"><%= d.eventType %></td>
+      <td class="mono" style="font-size: var(--text-xs)"><%= d.eventId %></td>
+      <td<% if (d.status === 'dead' && d.lastError) { %> title="<%= d.lastError %>"<% } %>>
+        <%- statusPill(d.status) %>
+        <% if (d.status === 'delivered' && d.lastStatus) { %>
+        <span class="muted" style="font-size: var(--text-xs); margin-left: 4px">HTTP <%= d.lastStatus %></span>
+        <% } %>
+      </td>
+      <td><%= d.attempts %></td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= fmtDate(d.deliveredAt) %><% if (d.lastError) { %><br><span title="<%= d.lastError %>"><%= d.lastError.slice(0, 60) %></span><% } %></td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= d.status === 'pending' ? fmtDate(d.nextAttemptAt) : '—' %></td>
+      <% if (canAct) { %>
+      <td>
+        <% if (d.status === 'dead') { %>
+        <form method="POST" action="/webhooks/<%= subscriptionId %>/deliveries/<%= d.id %>/replay" style="display: inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--secondary btn--sm">Replay</button>
+        </form>
+        <% } %>
+      </td>
+      <% } %>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>
+
+<%- include('../_pagination', {
+  // `meta.page`, not `tableState.page`: admin-api is the one paginating this
+  // set, so its own echoed page number is the authoritative one — same
+  // reasoning as /connections and /customers.
+  page: meta.page,
+  pageLimit: meta.limit,
+  total: meta.total,
+  baseUrl: tableSpec.baseUrl,
+  filterQs: tableQs(tableState, tableSpec),
+}) %>

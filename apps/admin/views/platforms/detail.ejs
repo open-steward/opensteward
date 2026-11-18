@@ -1,0 +1,144 @@
+<% layout('../layout', { title: 'Platform — ' + slug }) -%>
+<%
+  const company = (typeof companyInfo !== 'undefined' && companyInfo) ? companyInfo : null
+  const callbackPath = '/auth/' + vertical + '/' + slug + '/callback'
+  const derivedRedirectUri = company && company.baseUrl
+    ? company.baseUrl.replace(/\/$/, '') + callbackPath
+    : 'http://localhost:3010' + callbackPath
+-%>
+<div style="max-width: 1100px; margin: 0 auto">
+  <div class="row" style="gap: var(--space-2); font-size: var(--text-sm); margin-bottom: var(--space-3)">
+    <a href="/platforms" class="muted" style="text-decoration: none">Platforms</a>
+    <span class="muted">/</span>
+    <span class="muted" style="text-transform: capitalize"><%= vertical %></span>
+    <span class="muted">/</span>
+    <span class="mono" style="font-weight: 500"><%= slug %></span>
+  </div>
+
+  <header class="row row--between" style="align-items: flex-end; margin-bottom: var(--space-6); flex-wrap: wrap; gap: var(--space-3)">
+    <div>
+      <h1 style="margin: 0; font-family: var(--font-mono, monospace); font-size: var(--text-2xl)"><%= slug %></h1>
+      <div class="row" style="gap: var(--space-2); margin-top: var(--space-2)">
+        <span class="badge" style="text-transform: capitalize"><%= vertical %></span>
+        <% if (platform.enabled) { %>
+        <span class="badge badge--success"><span class="badge__dot"></span>Enabled</span>
+        <% } else { %>
+        <span class="badge"><span class="badge__dot"></span>Disabled</span>
+        <% } %>
+        <% if (platform.hasConfig) { %>
+        <span class="badge badge--info"><span class="badge__dot"></span>Configured</span>
+        <% } %>
+        <% if (platform.unsupported) { %>
+        <span class="badge badge--warning"><span class="badge__dot"></span>Unsupported</span>
+        <% } %>
+      </div>
+    </div>
+    <% if (platform.enabled) { %>
+    <form method="POST" action="/platforms/<%= vertical %>/<%= slug %>/disable" onsubmit="return confirm('Disable this platform? Existing config is kept; new connections cannot be created until re-enabled.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--ghost btn--sm" style="color: var(--danger-fg)">
+        <i class="ph ph-power"></i> Disable platform
+      </button>
+    </form>
+    <% } %>
+  </header>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <% if (platform.unsupported) { %>
+  <div class="alert alert--warning" style="margin-bottom: var(--space-6)">
+    <i class="ph ph-warning-circle" aria-hidden="true"></i>
+    <div>
+      <strong>This platform is not supported — it cannot be enabled or connected.</strong>
+      <div style="margin-top: var(--space-1)"><%= platform.unsupported.reason %></div>
+      <% if (platform.unsupported.issueUrl) { %>
+      <div style="margin-top: var(--space-2)">
+        <a href="<%= platform.unsupported.issueUrl %>" target="_blank" rel="noreferrer noopener">Tracking issue &rarr;</a>
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <div class="row">
+    <a href="/platforms" class="btn btn--ghost">&larr; Back to platforms</a>
+  </div>
+  <% } else { %>
+  <form method="POST" action="/platforms/<%= vertical %>/<%= slug %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <%- include('_credentials-form', {
+      vertical: vertical,
+      slug: slug,
+      derivedRedirectUri: derivedRedirectUri,
+      company: company,
+      prefill: prefill,
+      scopeGroups: typeof scopeGroups !== 'undefined' ? scopeGroups : [],
+    }) %>
+
+    <div class="row" style="margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--border-subtle); justify-content: space-between">
+      <a href="/platforms" class="btn btn--ghost">&larr; Back to platforms</a>
+      <button type="submit" class="btn btn--primary">Save changes</button>
+    </div>
+  </form>
+  <% } %>
+
+  <% if (connections && connections.length > 0) { %>
+  <div class="card" style="margin-top: var(--space-8)">
+    <h2 class="card__title">Active connections (<%= connections.length %>)</h2>
+    <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+      Existing OAuth connections backed by this platform. Disabling won't remove them.
+    </p>
+    <div class="stack stack--sm">
+      <% for (const c of connections.slice(0, 8)) { %>
+      <%# The detail route is /connections/:vertical/:id — a link without the
+          vertical segment 404s. Fall back to the page's own vertical if a row
+          somehow arrives without one. %>
+      <a href="/connections/<%= c.vertical || vertical %>/<%= c.id %>" class="row row--between card card--list" style="text-decoration: none">
+        <span class="mono" style="font-size: var(--text-sm)"><%= c.id ? c.id.slice(0, 8) : '—' %><% if (c.label) { %> · <%= c.label %><% } %></span>
+        <%# statusPill() is the shared vocabulary every other view uses. This
+            panel hardcoded badge--success, so an expired connection read as
+            healthy. %>
+        <%- statusPill(c.status) %>
+      </a>
+      <% } %>
+      <% if (connections.length > 8) { %>
+      <a href="/connections?vertical=<%= vertical %>&platform=<%= slug %>" class="muted" style="font-size: var(--text-sm)">View all <%= connections.length %> connections &rarr;</a>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<style>
+  .copy-btn {
+    background: transparent;
+    border: 0;
+    color: var(--fg-1);
+    text-align: left;
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    margin: 0 calc(-1 * var(--space-2));
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    word-break: break-all;
+    font-family: inherit;
+  }
+  .copy-btn:hover { background: var(--surface-1); }
+</style>
+
+<script>
+  document.querySelectorAll('button[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var value = btn.getAttribute('data-copy') || ''
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value).then(function () {
+          var orig = btn.textContent
+          btn.textContent = 'Copied'
+          setTimeout(function () { btn.textContent = orig }, 1000)
+        })
+      }
+    })
+  })
+</script>

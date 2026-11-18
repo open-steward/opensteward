@@ -1,0 +1,84 @@
+# Production hardening overlay — merge with the base compose file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.hardening.yml up -d
+#
+# Adds:
+#   - read-only root filesystem (writes only to data volumes and tmpfs /tmp)
+#   - dropped Linux capabilities (cap_drop: ALL)
+#   - no-new-privileges (blocks setuid escalation)
+#   - admin-api's public port (3001) is removed, so the JSON API is only
+#     reachable from the `admin` service over the internal Docker network.
+#     The internal-only network is declared but admin-api still joins the
+#     default network too so `admin` (which talks to it by DNS name) keeps
+#     working.
+#
+# Dev compose (without this overlay) is unchanged so `docker compose up`
+# still works on localhost without any extra config.
+
+services:
+  admin:
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  admin-api:
+    # Drop the public 3001 port mapping — admin-api is reached only via
+    # the internal Docker network from `admin`. This is the single biggest
+    # mitigation against the public attack surface.
+    ports: !reset []
+    networks:
+      - internal
+      - default
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  integration-server:
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  webhook-gateway:
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  docs-server:
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+  redis:
+    read_only: true
+    # Redis needs a writable working dir for its AOF/RDB files — give it a
+    # tmpfs unless you've added a persistent volume in the base compose.
+    tmpfs:
+      - /data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+networks:
+  internal:
+    internal: true

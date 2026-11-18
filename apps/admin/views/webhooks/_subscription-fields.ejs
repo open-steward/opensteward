@@ -1,0 +1,160 @@
+<%#
+  The fields that describe an outbound webhook subscription, shared verbatim by
+  /webhooks/new and wizard step 8.
+
+  Same arrangement as platforms/_logo-settings.ejs: one implementation, two
+  surfaces, and the caller owns the <form> around it — its action, its CSRF
+  token, its tenant field (a visible input on /webhooks, a hidden one in the
+  wizard) and its buttons, which is everything that genuinely differs.
+
+  One implementation for both surfaces — separate copies would drift (event
+  lists, payload-format and header fields), and a gap on the wizard path hits
+  exactly the newest operators.
+
+  Locals:
+    defaults  { label, url, eventMode, events[], format, headers }
+    variant   'full'   — every hint expanded, delivery settings always visible
+              'wizard' — event descriptions dropped and the delivery settings
+                         folded into a <details>, because the wizard's job is
+                         to get one working subscription, not to teach the
+                         whole surface. Nothing is removed, only collapsed.
+-%>
+<%
+  const isWizard = variant === 'wizard'
+  const EVENT_GROUPS = [
+    { eyebrow: 'Customers', items: [
+      { value: 'customer.created', label: 'customer.created', desc: 'A customer record was created.' },
+      { value: 'customer.updated', label: 'customer.updated', desc: 'A customer record changed.' },
+      { value: 'customer.deleted', label: 'customer.deleted', desc: 'A customer record was deleted.' },
+    ]},
+    { eyebrow: 'Connect Links', items: [
+      { value: 'connect_link.created', label: 'connect_link.created', desc: 'A Connect Link session was minted.' },
+      { value: 'connect_link.consumed', label: 'connect_link.consumed', desc: 'A customer completed a Connect Link (connection authorized).' },
+      { value: 'connect_link.disposed', label: 'connect_link.disposed', desc: 'A one-time Connect Link finished its sync and the connection was auto-deleted.' },
+    ]},
+    { eyebrow: 'Connections', items: [
+      { value: 'connection.authorization_expired', label: 'connection.authorization_expired', desc: 'Token refresh failed (invalid_grant) — the customer must re-authorize.' },
+      { value: 'connection.platform_credentials_invalid', label: 'connection.platform_credentials_invalid', desc: 'Refresh failed (invalid_client) — the operator must fix the OAuth client credentials.' },
+    ]},
+    { eyebrow: 'Resources (data store)', items: [
+      { value: 'resource.synced', label: 'resource.synced', desc: 'A bulk sync upserted resources into the cache.' },
+      { value: 'resource.updated', label: 'resource.updated', desc: 'A cached resource was created or updated.' },
+      { value: 'resource.deleted', label: 'resource.deleted', desc: 'A cached resource was deleted.' },
+    ]},
+    { eyebrow: 'Platform events (inbound)', items: [
+      { value: 'platform.event', label: 'platform.event', desc: 'A verified webhook arrived FROM a connected platform (Stripe, Shopify…), routed to its connection.' },
+    ]},
+  ]
+  const FORMAT_OPTIONS = [
+    { value: 'opensteward', label: 'OpenSteward envelope (default)' },
+    { value: 'slack', label: 'Slack' },
+    { value: 'teams', label: 'Microsoft Teams' },
+    { value: 'flat', label: 'Flat JSON' },
+  ]
+  const selectedSet = new Set(defaults.events || [])
+  const selectedFormat = defaults.format || 'opensteward'
+%>
+
+<div class="field">
+  <label class="field__label" for="wh-label">Label</label>
+  <input class="input" type="text" name="label" id="wh-label" maxlength="200"
+         value="<%= defaults.label || '' %>" placeholder="Billing service">
+  <span class="field__hint">
+    Optional, but it is what the <a href="/webhooks">Webhooks</a> list shows and searches —
+    a URL and a UUID are not what you will be looking for six months from now.
+  </span>
+</div>
+
+<div class="field">
+  <label class="field__label" for="wh-url">Endpoint URL *</label>
+  <input class="input mono" type="url" name="url" id="wh-url" required
+         value="<%= defaults.url || '' %>" placeholder="https://your-app.example.com/webhooks/oi">
+  <span class="field__hint">
+    HTTPS required — <span class="mono">http://localhost</span> and
+    <span class="mono">http://127.0.0.1</span> are allowed for local development.
+    The endpoint should respond 2xx within 5 seconds.
+  </span>
+</div>
+
+<div class="field">
+  <span class="field__label">Events</span>
+  <div class="stack stack--sm" style="margin-top: var(--space-2)">
+    <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+      <input type="radio" name="eventMode" value="all" <%= defaults.eventMode !== 'custom' ? 'checked' : '' %> onchange="oiRefreshEvents()">
+      <strong>All events</strong>
+      <span class="muted" style="font-size: var(--text-xs)">— receive every event (customer.*, connect_link.*, connection.*, resource.*, platform.event)</span>
+    </label>
+    <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+      <input type="radio" name="eventMode" value="custom" <%= defaults.eventMode === 'custom' ? 'checked' : '' %> onchange="oiRefreshEvents()">
+      <strong>Custom</strong>
+      <span class="muted" style="font-size: var(--text-xs)">— pick which events to receive</span>
+    </label>
+  </div>
+  <div id="event-grid" class="stack" style="margin-top: var(--space-4)">
+    <% for (const group of EVENT_GROUPS) { %>
+    <div>
+      <div class="muted" style="font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-wide); margin-bottom: var(--space-2)"><%= group.eyebrow %></div>
+      <div class="stack stack--sm">
+        <% for (const item of group.items) { %>
+        <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+          <input type="checkbox" name="events" value="<%= item.value %>" <%= selectedSet.has(item.value) ? 'checked' : '' %> style="margin-top: 3px">
+          <span>
+            <span class="mono"><%= item.label %></span>
+            <% if (!isWizard && item.desc) { %><br><span class="muted" style="font-size: var(--text-xs)"><%= item.desc %></span><% } %>
+          </span>
+        </label>
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (isWizard) { %>
+<details<% if (selectedFormat !== 'opensteward' || (defaults.headers || '').trim()) { %> open<% } %>>
+  <summary class="field__label" style="cursor: pointer">Delivery format and custom headers</summary>
+  <p class="muted" style="font-size: var(--text-xs); margin: var(--space-2) 0 var(--space-4)">
+    Leave these alone to send the signed OpenSteward envelope to your own endpoint.
+    Open them to point the subscription at Slack or Teams instead, or to add a header
+    your receiver authenticates with.
+  </p>
+<% } %>
+
+  <div class="field">
+    <label class="field__label" for="wh-format">Payload format</label>
+    <select class="input" name="format" id="wh-format">
+      <% for (const opt of FORMAT_OPTIONS) { %>
+      <option value="<%= opt.value %>" <%= selectedFormat === opt.value ? 'selected' : '' %>><%= opt.label %></option>
+      <% } %>
+    </select>
+    <span class="field__hint">
+      The OpenSteward envelope is the signed event JSON — use it for an endpoint you control.
+      Slack expects a Slack incoming-webhook URL, Teams a Workflows (Power Automate) URL, and
+      Flat JSON is one level of dotted keys for tools that only map top-level fields.
+    </span>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="wh-headers">Custom headers</label>
+    <textarea class="input mono" name="headers" id="wh-headers" rows="3" placeholder="X-Api-Key: your-key"><%= defaults.headers || '' %></textarea>
+    <span class="field__hint">
+      Optional, one <span class="mono">Name: value</span> per line — for a receiver that authenticates
+      by header. Slack and Teams need none: their URL is the credential. Values are stored encrypted
+      and never shown again.
+    </span>
+  </div>
+
+<% if (isWizard) { %>
+</details>
+<% } %>
+
+<script>
+  function oiRefreshEvents() {
+    var mode = (document.querySelector('input[name="eventMode"]:checked') || {}).value || 'all'
+    var grid = document.getElementById('event-grid')
+    if (!grid) return
+    grid.style.opacity = mode === 'custom' ? '1' : '0.4'
+    grid.querySelectorAll('input[name="events"]').forEach(function (cb) { cb.disabled = mode !== 'custom' })
+  }
+  oiRefreshEvents()
+</script>

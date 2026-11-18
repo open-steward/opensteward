@@ -1,0 +1,84 @@
+<% layout('../layout', { title: 'Setup — step 3' }) -%>
+<%#
+  Deliberately not named `step3-*.ejs`. The numbers in these filenames were
+  never the source of ordering — `_rail.ejs` says it is — and renaming the five
+  files after this one would mean five renames plus seven reply.view() string
+  updates, where a missed one is a runtime ENOENT no type-checker catches, on a
+  page only reachable mid-wizard.
+-%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'logos' }) %>
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 3 of 8 · optional</div>
+      <h1>Platform logos</h1>
+      <p class="wizard-subtitle">
+        OpenSteward ships no platform logos — the catalog renders brand-tinted monogram
+        tiles out of the box. This step is entirely cosmetic, and skipping it is a
+        perfectly good answer. You can change it later from
+        <a href="/platforms?tab=logos">Platforms → Logos</a>.
+      </p>
+    </header>
+
+    <div class="wizard-body stack stack--lg">
+      <% if (!user || user.role !== 'admin') { %>
+      <div class="alert alert--info">
+        Changing logo settings needs the admin role. You are signed in as
+        <%= user ? user.role : 'a viewer' %> — the current setting is shown below.
+        Continue when ready.
+      </div>
+      <% } %>
+
+      <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert--danger"><%= error %></div>
+      <% } %>
+      <% if (logoSettingsUnavailable) { %>
+      <div class="alert alert--warning">
+        Could not read the logo settings from the Admin API. The catalog will show
+        monogram tiles.
+      </div>
+      <% } %>
+      <% if (logo && logo.degraded) { %>
+      <div class="alert alert--warning">
+        <div>
+          <strong>Showing monogram tiles.</strong>
+          <% if (logo.degradeReason === 'cdn-missing-client-id') { %>
+            The saved mode is <span class="mono">cdn</span>, but no Brandfetch client ID
+            is set.
+          <% } else { %>
+            <span class="mono"><%= logo.requestedSource %></span> is not a recognised mode.
+          <% } %>
+        </div>
+      </div>
+      <% } %>
+
+      <%# Same two partials the Platforms → Logos tab renders. One
+          implementation, two surfaces. %>
+      <%- include('../platforms/_logo-settings', {
+        logo, csrfToken, logoModes,
+        action: '/setup/wizard/logos',
+        readOnly: !user || user.role !== 'admin',
+      }) %>
+      <%- include('../platforms/_logo-fetch', {
+        logo, logoJob, logoStatus, csrfToken, verticals,
+        actionBase: '/setup/wizard/logos',
+        readOnly: !user || user.role !== 'admin',
+      }) %>
+    </div>
+
+    <footer class="wizard-footer">
+      <a href="/setup/wizard/company-info" class="btn btn--ghost">&larr; Back</a>
+      <div class="wizard-footer__primary">
+        <%# A plain link, never a form submit — the whole point of skipping is
+            that passing through changes nothing. %>
+        <a href="/setup/wizard/platforms" class="btn btn--secondary"
+           title="Keep monogram tiles — change this any time from Platforms → Logos">Skip for now</a>
+        <% if (user && user.role === 'admin') { %>
+        <button type="submit" form="logoSettingsForm" class="btn btn--primary">Save and continue</button>
+        <% } else { %>
+        <a href="/setup/wizard/platforms" class="btn btn--primary">Continue &rarr;</a>
+        <% } %>
+      </div>
+    </footer>
+  </div>
+</div>

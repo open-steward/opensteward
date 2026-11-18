@@ -1,0 +1,46 @@
+# OpenSteward on Postgres, with read-only SQL access and embedded Apache
+# Superset. An overlay for docker-compose.yml's `analytics` profile:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.analytics.example.yml \
+#     --profile analytics up -d
+#
+# Copy it (or merge it into docker-compose.override.yml) and adjust. It moves
+# integration-server and admin-api onto the profile's Postgres. Starting it
+# by hand gives them a fresh, empty database; to carry an existing SQLite
+# deployment's data across, run `scripts/switch-db.sh postgres --copy`
+# instead (docs/operations/switching-databases.md).
+#
+# Set in .env (scripts/generate-secrets.sh mints the Superset ones):
+#   POSTGRES_PASSWORD, SUPERSET_DB_PASSWORD   URL-safe: `openssl rand -hex 32`
+#   SUPERSET_SECRET_KEY, SUPERSET_SERVICE_PASSWORD
+#   ADMIN_SECRET, SERVICE_SECRET              the bootstrap job needs both
+#
+# Browsers load dashboards from http://localhost:8088, framed by the admin UI
+# at http://localhost:3000. Over plain HTTP that only works on localhost (same
+# site); anything else needs HTTPS on both and SUPERSET_SESSION_COOKIE_SECURE
+# =true. See docs/deployment/superset.md.
+
+services:
+  integration-server:
+    environment:
+      - DATABASE_URL=postgres://opensteward:${POSTGRES_PASSWORD:-change-me-postgres-password}@postgres:5432/opensteward
+      # Managed provisioning of the analytics views and SQL logins. The
+      # profile's `opensteward` role is the database superuser, so it has
+      # CREATEROLE; use a dedicated role in production
+      # (docs/deployment/postgres-analytics.md).
+      - ANALYTICS_ADMIN_DATABASE_URL=postgres://opensteward:${POSTGRES_PASSWORD:-change-me-postgres-password}@postgres:5432/opensteward
+      # What BI tools on this machine should use (the loopback port mapping).
+      - ANALYTICS_READ_HOST=${ANALYTICS_READ_HOST:-localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  admin-api:
+    environment:
+      - DATABASE_URL=postgres://opensteward:${POSTGRES_PASSWORD:-change-me-postgres-password}@postgres:5432/opensteward
+      - SUPERSET_URL=http://superset:8088
+      - SUPERSET_PUBLIC_URL=${SUPERSET_PUBLIC_URL:-http://localhost:8088}
+      - SUPERSET_SERVICE_USERNAME=${SUPERSET_SERVICE_USERNAME:-opensteward-service}
+    depends_on:
+      postgres:
+        condition: service_healthy

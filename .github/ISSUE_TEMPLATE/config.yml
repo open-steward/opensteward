@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/open-steward/opensteward/security/advisories/new
+    about: Report it privately through GitHub Security Advisories. Never in a public issue.
+  - name: Commercial licensing and trademarks
+    url: https://github.com/open-steward/opensteward/blob/main/SUPPORT.md#commercial-licensing-and-trademarks
+    about: Private conversations, by email to support@opensteward.dev.

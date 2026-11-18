@@ -1,0 +1,38 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    },
+    {
+      "path": "./tsconfig.accounting.json"
+    },
+    {
+      "path": "./tsconfig.crm.json"
+    },
+    {
+      "path": "./tsconfig.customer-support.json"
+    },
+    {
+      "path": "./tsconfig.docsign.json"
+    },
+    {
+      "path": "./tsconfig.ecommerce.json"
+    },
+    {
+      "path": "./tsconfig.inventory.json"
+    },
+    {
+      "path": "./tsconfig.logistics.json"
+    },
+    {
+      "path": "./tsconfig.payments.json"
+    },
+    {
+      "path": "./tsconfig.projects.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}

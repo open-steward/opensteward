@@ -1,0 +1,32 @@
+{
+  "name": "@open-steward/placeholder",
+  "version": "0.0.1",
+  "description": "Reserved-scope placeholder. The OpenSteward project publishes under @opensteward (no separator). The hyphenated @open-steward scope is held defensively to prevent typo-squatting.",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "homepage": "https://opensteward.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-steward/opensteward.git"
+  },
+  "keywords": [
+    "opensteward",
+    "placeholder",
+    "reserved"
+  ],
+  "files": [
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

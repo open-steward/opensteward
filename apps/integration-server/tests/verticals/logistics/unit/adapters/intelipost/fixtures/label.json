@@ -1,0 +1,18 @@
+{
+  "status": "OK",
+  "messages": [
+    {
+      "type": "SUCCESS",
+      "text": "Operação realizada com sucesso.",
+      "key": "success.message"
+    }
+  ],
+  "content": {
+    "order_number": "PEDIDO0004",
+    "shipment_order_volume_number": "1",
+    "label_url": "http://.../api/v1/label/get/228796/230703/a2357eb8a64b4d3f4000f6fa8fc25bc3f02157f6c61bd957b4412131dd96499d/PEDIDO0004_sedex_12.pdf"
+  },
+  "time": "14.2 ms",
+  "timezone": "America/Sao_Paulo",
+  "locale": "pt_BR"
+}

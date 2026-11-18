@@ -1,0 +1,87 @@
+import axios, { type AxiosInstance } from 'axios'
+import { ENVIA_API_BASE, ENVIA_QUERIES_BASE } from './constants'
+import { authHeader } from './auth'
+import type { Credentials } from '../../adapter/interface'
+import { withRetry as withRetryBase } from '@opensteward/shared'
+
+const withRetry = <T>(fn: () => Promise<T>, retries = 3) => withRetryBase(fn, retries)
+
+/**
+ * HTTP client for the Envia Shipping API (api.envia.com).
+ * All shipping operations (rates, labels, tracking, manifests, pickups)
+ * use this base URL.
+ */
+export class EnviaClient {
+  private http: AxiosInstance
+
+  constructor(credentials: Credentials) {
+    this.http = axios.create({
+      baseURL: ENVIA_API_BASE,
+      headers: {
+        Authorization: authHeader(credentials.accessToken),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+  }
+
+  async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.get<T>(path, { params })
+      return data
+    })
+  }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.post<T>(path, body)
+      return data
+    })
+  }
+
+  async put<T>(path: string, body: unknown): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.put<T>(path, body)
+      return data
+    })
+  }
+
+  async delete(path: string): Promise<void> {
+    return withRetry(async () => {
+      await this.http.delete(path)
+    })
+  }
+}
+
+/**
+ * HTTP client for the Envia Queries API (queries.envia.com).
+ * Read-only operations: carrier discovery, address validation, shipment history.
+ */
+export class EnviaQueriesClient {
+  private http: AxiosInstance
+
+  constructor(credentials: Credentials) {
+    this.http = axios.create({
+      baseURL: ENVIA_QUERIES_BASE,
+      headers: {
+        Authorization: authHeader(credentials.accessToken),
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+  }
+
+  async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.get<T>(path, { params })
+      return data
+    })
+  }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.post<T>(path, body)
+      return data
+    })
+  }
+}

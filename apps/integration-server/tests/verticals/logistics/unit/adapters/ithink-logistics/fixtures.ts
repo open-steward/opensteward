@@ -1,0 +1,167 @@
+/**
+ * Fixtures copied from the documented example responses of the iThink
+ * Logistics v3 API (fetched 2026-09-24).
+ */
+
+/** https://docs.ithinklogistics.com/doc-order-details/3, "Success Response", data["4289479049381"]. */
+export function docOrderRow(): Record<string, unknown> {
+  return {
+    awb_no: '12345678984394',
+    order: '9999_85155972',
+    sub_order: '',
+    order_date: '2022-04-10 08:57:27',
+    awb_created_date: '2022-04-11 10:50:27',
+    total_amount: '90.00',
+    customer_name: 'Anjulika N',
+    company_name: 'iThink test1',
+    customer_address: 'gurugram palace, mumbai,',
+    customer_address1: 'gurugram palace, mumbai,',
+    customer_address2: 'Maharashtra',
+    customer_address3: '',
+    customer_pincode: '100039',
+    customer_city: 'Mumbai',
+    customer_state: 'Maharashtra',
+    customer_country: 'India',
+    customer_phone: '',
+    customer_email: 'anas@gmail.com',
+    is_billing_same_as_shipping: 'Yes',
+    billing_name: '',
+    billing_company_name: '',
+    billing_add: 'gaurav palace, mumbai',
+    billing_add1: 'gaurav palace, mumbai',
+    billing_add2: 'gaurav palace, mumbai',
+    billing_add3: '',
+    billing_pincode: '100093',
+    billing_city: 'Mumbai',
+    billing_state: 'Maharashtra',
+    billing_country: 'India',
+    billing_phone: '9001100985',
+    billing_alt_phone: '',
+    billing_email: 'anja@gmail.com',
+    seller_email_id: 'xylifedemo@gmail.com',
+    products: [
+      {
+        product_name: 'Testing Product',
+        product_sku: 'DHF',
+        product_quantity: '1',
+        product_price: '100.00',
+        product_total: '100',
+        product_tax_rate: '12.20',
+        product_hsn_code: '',
+        product_discount: '20.00',
+      },
+      {
+        product_name: 'Baby Body Butter',
+        product_sku: 'BODY_BTR-150G',
+        product_quantity: '1',
+        product_price: '100.00',
+        product_total: '100',
+        product_tax_rate: '12.20',
+        product_hsn_code: '',
+        product_discount: '20.00',
+      },
+    ],
+    shipment_length: '0',
+    shipment_width: '0',
+    shipment_height: '0',
+    weight: '500',
+    remittance_amount: '106.970',
+    payment_mode: 'pending',
+    return_address_id: '21542',
+    pickup_address_id: '20542',
+    ofd_count: '1',
+    expected_delivery_date: '2022-04-18',
+    promise_delivery_date: '0000-00-00',
+    logistic: 'Xpressbees',
+    last_scan_datetime: '2022-04-14 11:06:00',
+    latest_courier_status: 'delivered',
+  }
+}
+
+/** https://docs.ithinklogistics.com/doc-get-warehouse/3, "Success Response", data[0]. */
+export function docWarehouseRow(): Record<string, unknown> {
+  return {
+    id: '2474',
+    company_name: 'ITL',
+    mobile: '+91 9876543210',
+    address1: '104, Shreeji Sharan',
+    address2: 'Kandivali West',
+    pincode: 'Kandivali West',
+    city_name: 'Mumbai',
+    state_name: 'Maharashtra',
+    country_name: 'India',
+    status: 'approved',
+  }
+}
+
+/** https://docs.ithinklogistics.com/doc-track-order/3, "Success Response", data["1369010033902"]. */
+export function docTrackRow(): Record<string, unknown> {
+  return {
+    message: 'success',
+    awb_no: '1369010033902',
+    logistic: 'Delhivery',
+    order_type: 'forward',
+    cancel_status: 'Approved',
+    current_status: 'In Transit',
+    current_status_code: 'UD',
+    ofd_count: '0',
+    return_tracking_no: '',
+    expected_delivery_date: '2017-06-07',
+    promise_delivery_date: '2017-06-07',
+    last_scan_details: {
+      status: 'Undelivered',
+      status_code: 'UD',
+      status_date_time: '2017-06-07 18:11:26',
+      scan_location: 'Surat_Pandesra_Gateway (Gujarat)',
+      remark: 'CONSIGNEE NOT AVAILABLE',
+      reason: 'customer not available at the time of delivery',
+    },
+    order_details: {
+      order_type: 'COD',
+      order_number: '11812',
+      sub_order_number: '11812',
+      order_sub_order_number: '11812-11812',
+      phy_weight: '200.00',
+      net_payment: '775.00',
+      ship_length: '10.00',
+      ship_width: '10.00',
+      ship_height: '10.00',
+    },
+    customer_details: {
+      customer_name: 'John Doe',
+      customer_address1: '60/40 st shenoy nagar',
+      customer_city: 'Chennai',
+      customer_state: 'Tamil Nadu',
+      customer_country: 'India',
+      customer_pincode: '600030',
+      customer_mobile: '9876543210',
+      customer_phone: '2156789098',
+    },
+    scan_details: [
+      {
+        status: 'Manifested',
+        status_code: 'UD',
+        scan_location: 'HQ (Haryana)',
+        remark: 'Consignment Manifested',
+        scan_date_time: '2017-06-07 14:05:57',
+        status_reason: '',
+      },
+      {
+        status: 'In Transit',
+        status_code: 'UD',
+        scan_location: 'Surat_Pandesra_Gateway (Gujarat)',
+        remark: 'Shipment Picked Up from Client Location',
+        scan_date_time: '2017-06-07 18:11:26',
+        status_reason: '',
+      },
+      {
+        status: 'Undelivered',
+        status_code: 'UD',
+        scan_location: 'Surat_Pandesra_Gateway (Gujarat)',
+        remark: 'CONSIGNEE NOT AVAILABLE',
+        scan_date_time: '2017-06-07 18:11:26',
+        status_reason: 'customer not available at the time of delivery',
+      },
+    ],
+  }
+}

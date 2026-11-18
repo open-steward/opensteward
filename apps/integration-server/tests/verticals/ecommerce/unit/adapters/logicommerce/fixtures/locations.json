@@ -1,0 +1,43 @@
+{
+ "CURSORS": {
+  "NEXT": "http://api-sync.logicommerce.cloud/v1/physicalLocations?page=2&perPage=100",
+  "PREVIOUS": "http://api-sync.logicommerce.cloud/v1/physicalLocations?page=1&perPage=100"
+ },
+ "ITEMS": 1000,
+ "PAGERPARAMETERS": {
+  "PAGE": 1,
+  "PERPAGE": 100
+ },
+ "PHYSICALLOCATIONS": [
+  {
+   "ACTIVE": true,
+   "ADDRESS": "Bisbe Torres i Bages, 3",
+   "CITY": "Igualada",
+   "COUNTRYCODE": "ES",
+   "EMAIL": "mail@example.com",
+   "ID": 1,
+   "LANGUAGES": [
+    {
+     "INFORMATION": "location information",
+     "LANGUAGECODE": "ES"
+    },
+    {
+     "INFORMATION": "location information",
+     "LANGUAGECODE": "EN"
+    }
+   ],
+   "LATITUDE": 41.583182,
+   "LOCATIONID": 15916328,
+   "LONGITUDE": 1.612641,
+   "NAME": "TLG Commerce",
+   "NOTIFICATIONEMAIL": "notify@example.com",
+   "PHONE": "123456789",
+   "PID": "TLG",
+   "POSTALCODE": "08700",
+   "SECTIONSWITHTAXINCLUDED": 1,
+   "STATE": "Barcelona",
+   "TAXFIXEDVALUE": 0,
+   "VISIBLEONMAP": true
+  }
+ ]
+}

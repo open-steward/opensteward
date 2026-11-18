@@ -1,0 +1,69 @@
+{
+  "name": "@opensteward/cli",
+  "version": "0.1.0",
+  "description": "Generated `os` CLI for OpenSteward operators and developers",
+  "license": "Apache-2.0",
+  "private": true,
+  "bugs": {
+    "url": "https://github.com/open-steward/opensteward/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "os": "./dist/index.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./auth": {
+      "import": "./dist/auth.js",
+      "types": "./dist/auth.d.ts"
+    },
+    "./client": {
+      "import": "./dist/client.js",
+      "types": "./dist/client.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "generate": "tsx scripts/generate-commands.ts",
+    "build": "pnpm run generate && tsc && chmod +x dist/index.js",
+    "typecheck": "pnpm run generate && tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@opensteward/shared": "workspace:*",
+    "cli-table3": "^0.6.5",
+    "commander": "^15.1.0",
+    "jsonpath-plus": "^11.3.0",
+    "openapi-fetch": "^0.17.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "openapi-typescript": "^7.10.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

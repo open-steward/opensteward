@@ -1,0 +1,45 @@
+{
+  "name": "@opensteward/design-system",
+  "version": "0.1.0",
+  "description": "Design tokens, fonts, logo, and component styles for OpenSteward",
+  "license": "Elastic-2.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsx scripts/sync-vendor.ts && tsc && node ../../scripts/build-stamp.mts",
+    "typecheck": "tsc --noEmit",
+    "sync-vendor": "tsx scripts/sync-vendor.ts"
+  },
+  "files": [
+    "tokens.css",
+    "base.css",
+    "components.css",
+    "swagger-theme.css",
+    "vendor/",
+    "fonts/",
+    "logo/",
+    "icons/",
+    "dist/"
+  ],
+  "devDependencies": {
+    "@phosphor-icons/web": "2.1.2",
+    "@types/node": "^26.6.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "lunr": "2.3.9",
+    "mermaid": "12",
+    "svg-pan-zoom": "3.6.2",
+    "swagger-ui-dist": "5",
+    "tsx": "^4.23.15",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

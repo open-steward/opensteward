@@ -1,0 +1,337 @@
+<% layout('../layout', { title: mode === 'create' ? 'New scope group' : 'Edit scope group' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+
+<%
+  const isEdit = mode === 'edit'
+  const action = isEdit && group ? `/scope-groups/${group.id}` : '/scope-groups'
+%>
+
+<div class="row" style="align-items: center; gap: var(--space-3); margin-bottom: var(--space-4)">
+  <a href="/scope-groups" class="btn btn--ghost btn--sm">&larr; Scope groups</a>
+  <h1 style="margin: 0"><%= isEdit ? 'Edit scope group' : 'New scope group' %></h1>
+</div>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+<% } %>
+
+<% if (canAct) { %><form method="POST" action="<%= action %>" class="card stack">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="field">
+      <label class="field__label" for="vertical">Vertical</label>
+      <% if (isEdit) { %>
+      <input type="hidden" name="vertical" value="<%= defaults.vertical %>">
+      <input type="text" class="input" value="<%= defaults.vertical %>" disabled>
+      <% } else { %>
+      <select class="select" name="vertical" id="vertical" required>
+        <option value="">Pick a vertical…</option>
+        <% for (const v of verticals) { %>
+        <option value="<%= v %>" <%= defaults.vertical === v ? 'selected' : '' %>><%= v %></option>
+        <% } %>
+      </select>
+      <% } %>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="platform">Adapter</label>
+      <% if (isEdit) { %>
+      <input type="hidden" name="platform" value="<%= defaults.platform %>">
+      <input type="text" class="input mono" value="<%= defaults.platform %>" disabled>
+      <% } else { %>
+      <select class="select" name="platform" id="platform" required <%= defaults.vertical ? '' : 'disabled' %>>
+        <option value="">Pick an adapter…</option>
+      </select>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="field">
+      <label class="field__label" for="name-preset">Preset</label>
+      <select class="select" id="name-preset">
+        <option value="read-only">Read-only (recommended)</option>
+        <option value="read-write">Read-write</option>
+        <option value="custom">Custom…</option>
+      </select>
+      <p class="field__hint">Read-only ticks the platform's read scopes; Read-write ticks all recommended scopes. Pick Custom to choose your own.</p>
+    </div>
+    <div class="field">
+      <label class="field__label" for="name">Group name</label>
+      <input type="text" class="input" name="name" id="name" value="<%= defaults.name %>" placeholder="e.g. Read-only bundle" required>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="field__label">Scopes</label>
+    <p class="field__hint" id="scope-hint-pick" style="margin-bottom: var(--space-2); display: none">
+      Tick the scopes this group should grant. Hover the name for the canonical docs.
+    </p>
+    <p class="field__hint" id="scope-hint-empty" style="margin-bottom: var(--space-2); display: none">
+      No catalogued scopes for this adapter yet. Add any required scopes manually below.
+    </p>
+    <p class="field__hint" id="scope-hint-needs-adapter" style="margin-bottom: var(--space-2)">
+      Pick a vertical and adapter above to see the available scopes.
+    </p>
+    <%# Shown when Read-only is chosen for an adapter with no catalogued read
+        scopes. The selection is deliberately empty then — there is no
+        read-only set to tick — and without saying so the blank boxes read as
+        a choice the operator never made. %>
+    <p class="field__hint" id="scope-hint-no-read" style="margin-bottom: var(--space-2); color: var(--warning-fg); display: none">
+      This adapter has no catalogued read-only scopes, so nothing is pre-ticked. Tick the read scopes by hand, or choose Read-write.
+    </p>
+
+    <div id="scope-options" class="stack" style="gap: var(--space-1); margin-bottom: var(--space-3); display: none">
+      <!-- populated by JS from recommendedScopes -->
+    </div>
+
+    <details id="scope-custom-details" style="margin-bottom: var(--space-3); display: none">
+      <summary class="muted" style="cursor: pointer; font-size: var(--text-sm)">Add a custom scope</summary>
+      <div class="row" style="gap: var(--space-2); margin-top: var(--space-2); align-items: stretch">
+        <input type="text" id="scope-custom-input" class="input mono" placeholder="e.g. crm.objects.contacts.read" style="flex: 1">
+        <button type="button" id="scope-custom-add" class="btn btn--secondary btn--sm">Add</button>
+      </div>
+      <p class="field__hint" style="margin-top: var(--space-2)">
+        Comma- or whitespace-separated values are split on add. Adapter docs:
+        <a href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/unified-api" target="_blank" rel="noopener">Unified API ↗</a>
+      </p>
+      <p id="scope-custom-warning" class="field__hint" style="margin-top: var(--space-2); color: var(--warning-fg); display: none"></p>
+    </details>
+
+    <!-- Hidden canonical scope string. Backend still parses comma/whitespace-separated. -->
+    <textarea name="scopes" id="scopes" hidden><%= defaults.scopes %></textarea>
+  </div>
+
+  <%# Not deferred: the inline script below calls into it. %>
+  <script src="/public/js/scope-group-presets.js"></script>
+  <script>
+    (function () {
+      const PROVIDERS = <%- jsonForScript(typeof providers !== 'undefined' ? providers : []) %>;
+      const PRESET_PLATFORM = <%- jsonForScript(defaults.platform) %>;
+      const PRESET_VERTICAL = <%- jsonForScript(defaults.vertical) %>;
+      const IS_EDIT = <%- jsonForScript(isEdit) %>;
+      const verticalEl = document.getElementById('vertical');
+      const platformEl = document.getElementById('platform');
+      const optionsEl = document.getElementById('scope-options');
+      const hintPickEl = document.getElementById('scope-hint-pick');
+      const hintEmptyEl = document.getElementById('scope-hint-empty');
+      const hintNeedsAdapterEl = document.getElementById('scope-hint-needs-adapter');
+      const hintNoReadEl = document.getElementById('scope-hint-no-read');
+      const customDetailsEl = document.getElementById('scope-custom-details');
+      const customInputEl = document.getElementById('scope-custom-input');
+      const customAddBtn = document.getElementById('scope-custom-add');
+      const customWarnEl = document.getElementById('scope-custom-warning');
+      const presetEl = document.getElementById('name-preset');
+      const nameEl = document.getElementById('name');
+      const hiddenEl = document.getElementById('scopes');
+
+      // Last-fetched catalog for the selected platform, used by presets + validation.
+      let currentRecommended = [];
+      let currentRead = [];
+
+      // Seed: parse the pre-existing comma/whitespace-separated string into a Set.
+      function parseScopes(raw) {
+        return new Set((raw || '').split(/[\s,]+/).map(s => s.trim()).filter(Boolean));
+      }
+      const selected = parseScopes(hiddenEl.value);
+
+      function syncHidden() {
+        hiddenEl.value = Array.from(selected).join(', ');
+      }
+
+      function renderOptions(recommendedScopes, readScopes) {
+        optionsEl.innerHTML = '';
+        const readSet = new Set(readScopes || []);
+        // Union of recommended + read-only + currently-selected (so edit mode
+        // shows existing custom scopes as checkboxes too).
+        const union = new Set([...(recommendedScopes || []), ...(readScopes || []), ...selected]);
+        if (union.size === 0) {
+          optionsEl.style.display = 'none';
+          hintPickEl.style.display = 'none';
+          hintEmptyEl.style.display = 'block';
+          customDetailsEl.style.display = 'block';
+          customDetailsEl.open = true;
+          return;
+        }
+        optionsEl.style.display = 'grid';
+        optionsEl.style.gridTemplateColumns = 'repeat(auto-fill, minmax(280px, 1fr))';
+        optionsEl.style.gap = 'var(--space-1) var(--space-3)';
+        hintPickEl.style.display = 'block';
+        hintEmptyEl.style.display = 'none';
+        customDetailsEl.style.display = 'block';
+
+        const isRecommended = new Set(recommendedScopes || []);
+        Array.from(union).sort().forEach((scope) => {
+          const row = document.createElement('label');
+          row.className = 'row';
+          row.style.cssText = 'gap: var(--space-2); align-items: center; cursor: pointer; padding: 2px 4px; border-radius: var(--radius-sm)';
+          const badge = readSet.has(scope)
+            ? '<span class="badge badge--success" style="font-size: var(--text-2xs); margin-left: auto">read-only</span>'
+            : isRecommended.has(scope)
+              ? ''
+              : '<span class="badge" style="font-size: var(--text-2xs); margin-left: auto">custom</span>';
+          row.innerHTML =
+            '<input type="checkbox" value="' + escapeHtml(scope) + '"' + (selected.has(scope) ? ' checked' : '') + '>' +
+            '<span class="mono" style="font-size: var(--text-sm)">' + escapeHtml(scope) + '</span>' +
+            badge;
+          const input = row.querySelector('input');
+          input.addEventListener('change', () => {
+            if (input.checked) selected.add(scope); else selected.delete(scope);
+            syncHidden();
+          });
+          optionsEl.appendChild(row);
+        });
+      }
+
+      function showWaitingForAdapter() {
+        optionsEl.style.display = 'none';
+        hintPickEl.style.display = 'none';
+        hintEmptyEl.style.display = 'none';
+        hintNeedsAdapterEl.style.display = 'block';
+        customDetailsEl.style.display = 'none';
+      }
+
+      function hideWaitingHint() {
+        hintNeedsAdapterEl.style.display = 'none';
+      }
+
+      async function fetchAndRender(v, p) {
+        if (!v || !p) { showWaitingForAdapter(); return; }
+        hideWaitingHint();
+        try {
+          const res = await fetch('/connect-links/platform-meta/' + encodeURIComponent(v) + '/' + encodeURIComponent(p));
+          if (res.ok) {
+            const body = await res.json();
+            currentRecommended = (body.data && body.data.recommendedScopes) || [];
+            currentRead = (body.data && body.data.readScopes) || [];
+            applyPreset(presetEl.value, { silent: true });
+            renderOptions(currentRecommended, currentRead);
+            return;
+          }
+        } catch (e) { /* fallthrough */ }
+        // Endpoint failed — still show whatever's already selected + the custom add UI.
+        currentRecommended = [];
+        currentRead = [];
+        renderOptions([], []);
+      }
+
+      // Apply a name/scope preset. 'read-only' → tick the platform's read
+      // scopes; 'read-write' → tick all recommended; 'custom' → leave as-is.
+      // `silent` avoids clobbering an operator-typed name on platform refetch.
+      //
+      // The selection is REPLACED even when the preset has nothing to tick.
+      // This used to return early on an empty list, so on an adapter with no
+      // catalogued read scopes (most of them) Read-only after Read-write kept
+      // every write scope ticked under a group now named "Read-only". Logic in
+      // /public/js/scope-group-presets.js, where it is tested.
+      function applyPreset(preset, opts) {
+        opts = opts || {};
+        const result = window.__scopeGroupPresets.applyPresetTo(selected, preset, {
+          readScopes: currentRead,
+          recommendedScopes: currentRecommended,
+        });
+        if (!result.applied) return;
+        syncHidden();
+        if (!opts.silent || !nameEl.value) {
+          nameEl.value = preset === 'read-only' ? 'Read-only' : 'Read-write';
+        }
+        // Say why the boxes are blank when Read-only has no set to tick; the
+        // "no catalogued scopes" hint already covers an adapter with none at all.
+        hintNoReadEl.style.display =
+          preset === 'read-only' && !result.catalogued && currentRecommended.length > 0 ? 'block' : 'none';
+      }
+
+      function refreshAdapters() {
+        const v = verticalEl.value;
+        platformEl.innerHTML = '<option value="">Pick an adapter…</option>';
+        if (!v) {
+          platformEl.disabled = true;
+          showWaitingForAdapter();
+          return;
+        }
+        platformEl.disabled = false;
+        PROVIDERS.filter((p) => p.vertical === v)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .forEach((p) => {
+            const opt = document.createElement('option');
+            opt.value = p.slug;
+            opt.textContent = p.name + ' (' + (p.authType || 'oauth2') + ')';
+            if (p.slug === PRESET_PLATFORM) opt.selected = true;
+            platformEl.appendChild(opt);
+          });
+        // Auto-fetch if the platform got pre-selected from PRESET_PLATFORM.
+        if (platformEl.value) fetchAndRender(v, platformEl.value);
+        else showWaitingForAdapter();
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      customAddBtn.addEventListener('click', () => {
+        const raw = customInputEl.value;
+        const fresh = (raw || '').split(/[\s,]+/).map(s => s.trim()).filter(Boolean);
+        if (fresh.length === 0) return;
+        // Validate against the platform catalog — warn (don't block) on scopes
+        // that aren't in recommended/read sets, since catalogs are incomplete.
+        const known = new Set([...currentRecommended, ...currentRead]);
+        const unknown = fresh.filter((s) => !known.has(s));
+        if (unknown.length > 0 && known.size > 0) {
+          customWarnEl.textContent =
+            'Not in this platform’s known scopes: ' + unknown.join(', ') +
+            '. Added anyway — double-check the spelling against the adapter docs.';
+          customWarnEl.style.display = 'block';
+        } else {
+          customWarnEl.style.display = 'none';
+        }
+        fresh.forEach(s => selected.add(s));
+        // Adding a custom scope means the operator is hand-picking → Custom.
+        presetEl.value = 'custom';
+        syncHidden();
+        customInputEl.value = '';
+        renderOptions(currentRecommended, currentRead);
+      });
+      customInputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); customAddBtn.click(); }
+      });
+
+      // Ticking/unticking a catalog box is also customization → Custom preset,
+      // and the operator is now choosing by hand, so the read-only hint is moot.
+      optionsEl.addEventListener('change', () => {
+        presetEl.value = 'custom';
+        hintNoReadEl.style.display = 'none';
+      });
+
+      presetEl.addEventListener('change', () => {
+        applyPreset(presetEl.value);
+        renderOptions(currentRecommended, currentRead);
+      });
+
+      // Default preset: edit mode keeps the saved name/scopes (Custom);
+      // create mode defaults to Read-only so the read scopes auto-tick once a
+      // platform is picked.
+      presetEl.value = IS_EDIT ? 'custom' : 'read-only';
+
+      // Bootstrap: in edit mode the vertical/platform inputs are hidden,
+      // so just fetch directly. In create mode, wire the select listeners.
+      if (IS_EDIT) {
+        fetchAndRender(PRESET_VERTICAL, PRESET_PLATFORM);
+      } else {
+        verticalEl.addEventListener('change', refreshAdapters);
+        platformEl.addEventListener('change', () => {
+          fetchAndRender(verticalEl.value, platformEl.value);
+        });
+        refreshAdapters();
+      }
+    })();
+  </script>
+
+  <div class="row" style="justify-content: flex-end; gap: var(--space-2)">
+    <a href="/scope-groups" class="btn btn--ghost">Cancel</a>
+    <button type="submit" class="btn btn--primary"><%= isEdit ? 'Save changes' : 'Create group' %></button>
+  </div>
+</form><% } %>
+<% if (!canAct) { %>
+<p class="muted" style="margin-top: var(--space-3); font-size: var(--text-xs)">Read-only — changing this needs the operator role.</p>
+<% } %>

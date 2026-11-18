@@ -1,0 +1,53 @@
+{{- if .Values.ingress.enabled }}
+{{- $root := . -}}
+{{- $full := include "opensteward.fullname" . -}}
+{{- $tls := .Values.ingress.tls -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $full }}
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+  {{- if or .Values.ingress.annotations $tls.certManager.enabled }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if $tls.certManager.enabled }}
+    cert-manager.io/cluster-issuer: {{ required "ingress.tls.certManager.clusterIssuer is required" $tls.certManager.clusterIssuer | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls.enabled }}
+  tls:
+    {{- range $h := .Values.ingress.hosts }}
+    - hosts:
+        - {{ $h.host | quote }}
+      secretName: {{ default (printf "%s-%s-tls" $full ($h.host | replace "." "-")) $tls.existingSecret }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $h := .Values.ingress.hosts }}
+    {{- if eq $h.service "admin-api" }}
+    {{- fail "ingress: admin-api must never be exposed (it is ClusterIP-only — reached in-cluster by `admin`). Remove the admin-api host." }}
+    {{- end }}
+    {{- if not (hasKey $root.Values.services $h.service) }}
+    {{- fail (printf "ingress: unknown service %q" $h.service) }}
+    {{- end }}
+    - host: {{ $h.host | quote }}
+      http:
+        paths:
+          {{- range (default (list (dict "path" "/" "pathType" "Prefix")) $h.paths) }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ $full }}-{{ $h.service }}
+                port:
+                  number: {{ (index $root.Values.services $h.service).port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

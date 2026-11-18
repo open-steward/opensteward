@@ -1,0 +1,17 @@
+# Renders the admin SSO/SCIM Ingress on top of the sqlite CI values.
+ingress:
+  enabled: true
+  hosts:
+    - host: app.example.com
+      service: admin
+  sso:
+    enabled: true
+    host: sso.example.com
+    slugs: [okta, entra]
+    scim: true
+    allowFrom:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: ingress-nginx
+publicUrls:
+  adminApi: https://sso.example.com

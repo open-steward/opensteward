@@ -1,0 +1,86 @@
+<% layout('../layout', { title: 'Setup — step 4' }) -%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'platforms' }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 4 of 8</div>
+      <h1>Pick platforms</h1>
+      <p class="wizard-subtitle">
+        Choose which integration platforms to enable for each vertical. You can enable more later from the
+        <a href="/platforms">Platforms</a> page anytime to add more.
+      </p>
+    </header>
+
+    <% if (verticals.length > 1) { %>
+    <div class="row" style="gap: var(--space-2); border-bottom: 1px solid var(--border-subtle)">
+      <% for (const v of verticals) { %>
+      <%
+        const isActive = selected === v.name
+        const tabStyle = isActive
+          ? 'padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 500; color: var(--accent); border-bottom: 2px solid var(--accent); margin-bottom: -1px; text-decoration: none; text-transform: capitalize'
+          : 'padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 500; color: var(--fg-3); text-decoration: none; text-transform: capitalize'
+      -%>
+      <a href="/setup/wizard/platforms?vertical=<%= v.name %>" style="<%= tabStyle %>"><%= v.name %></a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% if (!selected) { %>
+    <div class="alert alert--warning">No verticals available. Start them first.</div>
+    <div class="wizard-footer">
+      <a href="/setup/wizard/logos" class="btn btn--ghost">&larr; Back</a>
+    </div>
+    <% } else if (adapters.length === 0) { %>
+    <div class="alert alert--warning">
+      No platforms discovered for <strong><%= selected %></strong>. The vertical may be unreachable or not yet started.
+    </div>
+    <div class="wizard-footer">
+      <a href="/setup/wizard/logos" class="btn btn--ghost">&larr; Back</a>
+    </div>
+    <% } else { %>
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert--danger"><%= error %></div>
+    <% } %>
+    <form method="POST" action="/setup/wizard/platforms" class="wizard-body">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="vertical" value="<%= selected %>">
+
+      <p class="muted" style="font-size: var(--text-sm)">
+        Selected platforms become discoverable for connections. <%= adapters.filter(a => a.enabled).length %> of <%= adapters.length %> currently enabled.
+      </p>
+
+      <div class="card" style="padding: 0; max-height: 420px; overflow-y: auto">
+        <% for (const a of adapters) { %>
+        <label class="row row--between" style="padding: var(--space-3) var(--space-4); cursor: <%= a.unsupported ? 'not-allowed' : 'pointer' %>; <%= a.unsupported ? 'opacity: 0.7;' : 'border-bottom: 1px solid var(--border-subtle);' %>">
+          <span class="row" style="gap: var(--space-3)">
+            <input type="checkbox" name="enabled" value="<%= a.slug %>" <%= a.enabled ? 'checked' : '' %> <%= a.unsupported ? 'disabled' : '' %>>
+            <span class="mono" style="font-size: var(--text-sm)"><%= a.slug %></span>
+          </span>
+          <span class="row" style="gap: var(--space-2)">
+            <% if (a.unsupported) { %>
+            <span class="badge badge--warning"><span class="badge__dot"></span>Unsupported</span>
+            <% } %>
+            <% if (a.hasConfig) { %>
+            <span class="badge badge--info">configured</span>
+            <% } %>
+          </span>
+        </label>
+        <% if (a.unsupported) { %>
+        <div class="muted" style="padding: 0 var(--space-4) var(--space-3) var(--space-4); font-size: var(--text-xs); border-bottom: 1px solid var(--border-subtle)">
+          <%= a.unsupported.reason %><% if (a.unsupported.issueUrl) { %> — <a href="<%= a.unsupported.issueUrl %>" target="_blank" rel="noreferrer noopener">Tracking issue</a><% } %>
+        </div>
+        <% } %>
+        <% } %>
+      </div>
+
+      <footer class="wizard-footer">
+        <a href="/setup/wizard/logos" class="btn btn--ghost">&larr; Back</a>
+        <div class="wizard-footer__primary">
+          <button type="submit" class="btn btn--primary">Save and configure credentials</button>
+        </div>
+      </footer>
+    </form>
+    <% } %>
+  </div>
+</div>

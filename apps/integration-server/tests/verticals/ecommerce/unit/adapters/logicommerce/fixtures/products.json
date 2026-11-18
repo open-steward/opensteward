@@ -1,0 +1,516 @@
+{
+ "CURSORS": {
+  "NEXT": "http://api-sync.logicommerce.cloud/v1/products?page=3&perPage=100",
+  "PREVIOUS": "http://api-sync.logicommerce.cloud/v1/products?page=1&perPage=100"
+ },
+ "ITEMS": 1000,
+ "PAGERPARAMETERS": {
+  "PAGE": 2,
+  "PERPAGE": 100
+ },
+ "PRODUCTS": [
+  {
+   "ACTIVITYLIMITS": [
+    {
+     "ACTIVATIONDATE": "2021-10-21T20:00:00+02:00",
+     "EXPIRATIONDATE": "2024-12-31T23:00:00+02:00",
+     "ID": 23535
+    }
+   ],
+   "ADDITIONALIMAGES": [
+    {
+     "ID": 375356,
+     "LANGUAGES": [
+      {
+       "ALT": "Image 1",
+       "LANGUAGE": "ES"
+      }
+     ],
+     "LARGEIMAGE": "large.jpg",
+     "PRIORITY": 1,
+     "SMALLIMAGE": "small.jpg"
+    }
+   ],
+   "BRAND": {
+    "ID": 1,
+    "PID": "abc"
+   },
+   "CATEGORIES": [
+    {
+     "ID": 464,
+     "PID": "abc",
+     "PRIORITY": 1
+    }
+   ],
+   "COMBINATIONS": [
+    {
+     "EAN": "5901234123457",
+     "ID": 123,
+     "ISBN": "978-3-16-148410-0",
+     "JAN": "4501234123457",
+     "OPTIONSVALUES": [
+      {
+       "ID": 1
+      },
+      {
+       "ID": 2
+      }
+     ],
+     "PID": "abc",
+     "SKU": "C0424",
+     "UPC": "036000291452"
+    }
+   ],
+   "CUSTOMTAGS": {
+    "GENERAL": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUE": "123"
+     }
+    ],
+    "LANGUAGES": [
+     {
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "LANGUAGES": [
+       {
+        "ACTIVE": true,
+        "ID": 123,
+        "LANGUAGE": "ES",
+        "LANGUAGEID": 2,
+        "VALUE": "123"
+       }
+      ]
+     }
+    ],
+    "MULTISELECTABLE": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUES": [
+       {
+        "ID": 1,
+        "PID": "abc"
+       },
+       {
+        "ID": 3,
+        "PID": "def"
+       }
+      ]
+     }
+    ],
+    "SELECTABLE": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUE": {
+       "ID": 123,
+       "PID": "abc"
+      }
+     }
+    ]
+   },
+   "DEFINITIONS": [
+    {
+     "DEFINITION": {
+      "ID": 1,
+      "PID": "abc"
+     },
+     "PRICES": [
+      {
+       "BASEPRICE": 14,
+       "CURRENCIES": [
+        {
+         "BASEPRICE": 30,
+         "CURRENCY": "EUR",
+         "ID": 1,
+         "RETAILPRICE": 10
+        }
+       ],
+       "ID": 843,
+       "OPTIONVALUE": {
+        "ID": 1657
+       },
+       "RETAILPRICE": 12
+      }
+     ],
+     "PROPERTIES": {
+      "ACTIVE": true,
+      "AVAILABILITY": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "AVAILABLEDATE": "2014-04-08T02:00:00+02:00",
+      "BACKORDER": 1,
+      "COSTPRICE": 10,
+      "ENDHIGHLIGHTDATE": "2014-04-08T02:00:00+02:00",
+      "ENDOFFERDATE": "2014-04-18T02:00:00+02:00",
+      "EXCLUSIVELINKED": false,
+      "GROUPQUANTITYBYOPTIONS": false,
+      "HIGHLIGHT": false,
+      "MAXORDERQUANTITY": 1000,
+      "MINORDERQUANTITY": 5,
+      "MULTIPLEACTSOVER": 10,
+      "MULTIPLEORDERQUANTITY": 10,
+      "NORETURN": false,
+      "ONREQUEST": true,
+      "ONREQUESTDAYS": 3,
+      "PERCENTPRICE": 10,
+      "PERCENTPRICEOVERRIDECUSTOMPRICES": false,
+      "PRIORITY": 3,
+      "SALE": true,
+      "SHOWBASEPRICE": false,
+      "SHOWDISCOUNTS": true,
+      "SHOWORDERBOX": true,
+      "SHOWPRICE": true,
+      "STARTOFFERDATE": "2014-04-16T02:00:00+02:00",
+      "STOCKMANAGEMENT": true,
+      "USERRETAILPRICE": false
+     }
+    }
+   ],
+   "EAN": "Code EAN",
+   "ID": 1,
+   "ISBN": "CODE ISBN",
+   "JAN": "CODE JAN",
+   "LANGUAGES": [
+    {
+     "LANGUAGE": "ES",
+     "LARGETITLEIMAGE": "/large.jpg",
+     "LONGDESCRIPTION": "Product long description",
+     "NAME": "Product name",
+     "SHORTDESCRIPTION": "Product short description",
+     "SMALLTITLEIMAGE": "/small.jpg"
+    }
+   ],
+   "MAINCATEGORY": {
+    "ID": 123,
+    "PID": "abc"
+   },
+   "MAINIMAGE": {
+    "LARGEIMAGE": "/large.jpg",
+    "MEDIUMIMAGE": "/medium.jpg",
+    "SMALLIMAGE": "/small.jpg"
+   },
+   "MANUFACTURERSKU": "4E6HTRF",
+   "OPTIONS": [
+    {
+     "ACTIVE": 1,
+     "COMBINABLE": 0,
+     "FILTERABLE": true,
+     "ID": 14789,
+     "IMAGE": "/img.jpg",
+     "LANGUAGES": [
+      {
+       "FILTERNAME": "filterName",
+       "IMAGE": "/img.jpg",
+       "LANGUAGE": "ES",
+       "NAME": "Product option",
+       "PROMPT": "abc"
+      }
+     ],
+     "MAXVALUES": 30,
+     "MINVALUES": 10,
+     "PID": "color",
+     "PRIORITY": 3,
+     "REQUIRED": true,
+     "SHOWASGRID": 0,
+     "TYPOLOGY": 1,
+     "UNIQUEPRICE": 1,
+     "VALUES": [
+      {
+       "ACTIVE": 1,
+       "ID": 1,
+       "LANGUAGES": [
+        {
+         "LANGUAGE": "ES",
+         "LONGDESCRIPTION": "Size XL long description",
+         "SEARCHVALUE": "XL",
+         "SHORTDESCRIPTION": "Size XL short description",
+         "VALUE": "XL"
+        }
+       ],
+       "LARGEIMAGE": "b.jpg",
+       "PID": "abc",
+       "PRICES": [
+        {
+         "BASEPRICE": 14,
+         "CURRENCIES": [
+          {
+           "BASEPRICE": 30,
+           "CURRENCY": "EUR",
+           "ID": 1,
+           "RETAILPRICE": 10
+          }
+         ],
+         "ID": 843,
+         "RETAILPRICE": 12
+        }
+       ],
+       "PRIORITY": 1,
+       "SMALLIMAGE": "a.jpg",
+       "WEIGHT": 6
+      }
+     ],
+     "VALUETYPE": 1
+    }
+   ],
+   "PID": "abc",
+   "PLUGINTAXDEFINITION": {
+    "CODE": "abc"
+   },
+   "PRICECATEGORY": {
+    "ID": 123,
+    "PID": "abc"
+   },
+   "PRICELISTS": [
+    {
+     "PRICELIST": {
+      "ID": 123,
+      "PID": "abc"
+     },
+     "PRICES": [
+      {
+       "BASEPRICE": 14,
+       "CURRENCIES": [
+        {
+         "BASEPRICE": 30,
+         "CURRENCY": "EUR",
+         "ID": 1,
+         "RETAILPRICE": 10
+        }
+       ],
+       "ID": 843,
+       "RETAILPRICE": 12
+      }
+     ]
+    }
+   ],
+   "PRICES": [
+    {
+     "BASEPRICE": 14,
+     "CURRENCIES": [
+      {
+       "BASEPRICE": 30,
+       "CURRENCY": "EUR",
+       "ID": 1,
+       "RETAILPRICE": 10
+      }
+     ],
+     "ID": 843,
+     "RETAILPRICE": 12
+    }
+   ],
+   "PRODUCTTYPE": 1,
+   "PROPERTIES": {
+    "ACTIVE": true,
+    "AVAILABILITY": {
+     "ID": 1,
+     "PID": "abc"
+    },
+    "AVAILABLEDATE": "2021-11-21T20:25:51+02:00",
+    "BACKORDER": 0,
+    "COSTPRICE": 30,
+    "ENDHIGHLIGHTDATE": "2021-10-21T20:25:51+02:00",
+    "ENDOFFERDATE": "2023-10-21T12:34:56+02:00",
+    "EXCLUSIVELINKED": false,
+    "GROUPQUANTITYBYOPTIONS": false,
+    "HIGHLIGHT": false,
+    "MAXORDERQUANTITY": 200,
+    "MINORDERQUANTITY": 2,
+    "MULTIPLEACTSOVER": 20,
+    "MULTIPLEORDERQUANTITY": 10,
+    "NORETURN": false,
+    "ONREQUEST": false,
+    "ONREQUESTDAYS": 3,
+    "PERCENTPRICE": 34,
+    "PERCENTPRICEOVERRIDECUSTOMPRICES": false,
+    "PRIORITY": 2,
+    "SALE": false,
+    "SHOWBASEPRICE": false,
+    "SHOWDISCOUNTS": true,
+    "SHOWORDERBOX": true,
+    "SHOWPRICE": true,
+    "STARTOFFERDATE": "2020-10-21T20:00:00+02:00",
+    "STOCKMANAGEMENT": true,
+    "USERRETAILPRICE": false
+   },
+   "RELATEDITEMS": [
+    {
+     "ID": 2,
+     "ITEMS": {
+      "BANNERS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "BLOGPOSTS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "BRANDS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "CATEGORIES": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "NEWS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "PAGES": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "PRODUCTS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ]
+     },
+     "PID": "abc"
+    }
+   ],
+   "REVERSECHARGEVAT": 1,
+   "SALEUNIT": 1,
+   "SEO": {
+    "LANGUAGES": [
+     {
+      "ALTIMAGEKEYWORDS": "image,keywords",
+      "COREKEYWORD": "keyword",
+      "KEYWORDS": "product,keywords",
+      "LANGUAGE": "ES",
+      "METADESCRIPTION": "Meta description",
+      "PARTICULARTITLE": "SEO Title",
+      "URLSEO": "/product/url"
+     }
+    ]
+   },
+   "SHIPPING": true,
+   "SHIPPINGTYPES": [
+    {
+     "ID": 123,
+     "PID": "ShippingType1"
+    }
+   ],
+   "SKU": "124TG67",
+   "STOCKS": [
+    {
+     "BACKORDERPREVISION": [
+      {
+       "ID": 134646,
+       "INCOMINGDATE": "2015-04-03",
+       "PID": "sdfsdf",
+       "STOCK": 230
+      }
+     ],
+     "COMBINATION": {
+      "PID": "combination M"
+     },
+     "ID": 16534,
+     "PREVISION": [
+      {
+       "ID": 134646,
+       "INCOMINGDATE": "2015-04-03",
+       "PID": "sdfsdf",
+       "STOCK": 230
+      }
+     ],
+     "STOCK": 555,
+     "WAREHOUSE": {
+      "ID": 1,
+      "PID": "abc"
+     }
+    }
+   ],
+   "SUPPLIER": {
+    "ID": 1,
+    "PID": "abc"
+   },
+   "TAXDEFINITION": {
+    "ID": 1,
+    "PID": "abc"
+   },
+   "TEMPLATEID": 1,
+   "UPC": "CODE UPC",
+   "VOUCHERPURCHASE": {
+    "CODEMASK": "VP_LLLLNNN",
+    "EXPIRATIONDAYS": 30
+   },
+   "WEIGHT": 36
+  }
+ ]
+}

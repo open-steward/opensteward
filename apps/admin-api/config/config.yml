@@ -1,0 +1,47 @@
+server:
+  port: 3001
+  host: 0.0.0.0
+
+jwt:
+  secret: change-me-to-a-long-random-string-at-least-32-chars
+  expiresIn: 24h
+
+db:
+  path: ./data/admin.db
+
+# Every vertical points at the unified integration-server. The `name`
+# field drives /api/verticals/:vertical/* routing in admin-api — and
+# gates it: Aggregator.knownVertical() 404s anything missing here, so a
+# vertical left off this list is unreachable through the admin UI even
+# though integration-server serves it. Keep it in step with the
+# integration-server's registered verticals.
+# The URL is the same backend for every entry. Compose overrides each
+# `url` with the in-network DNS name (http://integration-server:3010).
+verticals:
+  - name: accounting
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: crm
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: ecommerce
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: logistics
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: payments
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: docsign
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: projects
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: customer-support
+    url: http://localhost:3010
+    admin_secret: ""
+  - name: inventory
+    url: http://localhost:3010
+    admin_secret: ""

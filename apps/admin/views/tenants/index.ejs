@@ -1,0 +1,15 @@
+<% layout('../layout', { title: 'Tenants & domains' }) -%>
+
+<div class="row row--between" style="align-items: center">
+  <div>
+    <h1 style="margin: 0">Tenants &amp; domains</h1>
+    <p class="muted" style="margin: var(--space-1) 0 0; max-width: 60ch">
+      Tenants are the isolation boundary behind your developer keys, customers and Connect Links.
+      Attach a custom domain to a tenant and any request arriving on that host resolves to it —
+      e.g. point <span class="mono">dept-a.acme.com</span> at this deployment to scope it to a
+      department. Branding stays deployment-wide.
+    </p>
+  </div>
+</div>
+
+<%- include('_manage', { tenants, rows, csrfToken, user, tableSpec, tableState }) %>

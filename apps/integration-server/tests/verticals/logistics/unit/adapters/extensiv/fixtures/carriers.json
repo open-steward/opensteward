@@ -1,0 +1,241 @@
+{
+  "defaultBillingCodes": [
+    {
+      "code": "BillThirdParty",
+      "billingCodeType": 1
+    },
+    {
+      "code": "FreightCollect",
+      "billingCodeType": 3
+    },
+    {
+      "code": "Prepaid",
+      "billingCodeType": 4
+    }
+  ],
+  "defaultShipmentServices": [
+    {
+      "code": "01",
+      "description": "LTL",
+      "shipEngineId": ""
+    },
+    {
+      "code": "02",
+      "description": "FTL",
+      "shipEngineId": ""
+    },
+    {
+      "code": "03",
+      "description": "Air Freight",
+      "shipEngineId": ""
+    },
+    {
+      "code": "04",
+      "description": "Ground",
+      "shipEngineId": ""
+    },
+    {
+      "code": "05",
+      "description": "Ground Expedited",
+      "shipEngineId": ""
+    },
+    {
+      "code": "06",
+      "description": "3-Day",
+      "shipEngineId": ""
+    },
+    {
+      "code": "07",
+      "description": "Next Day",
+      "shipEngineId": ""
+    },
+    {
+      "code": "08",
+      "description": "Next Day - AM",
+      "shipEngineId": ""
+    },
+    {
+      "code": "09",
+      "description": "Two-Day",
+      "shipEngineId": ""
+    },
+    {
+      "code": "10",
+      "description": "Will Call",
+      "shipEngineId": ""
+    },
+    {
+      "code": "CS01",
+      "description": "Negative",
+      "shipEngineId": ""
+    }
+  ],
+  "_links": {
+    "self": {
+      "href": "/properties/carriers"
+    },
+    "http://api.3plcentral.com/rels/properties/carrier": {
+      "href": "/properties/carriers/{name}",
+      "templated": true
+    }
+  },
+  "_embedded": {
+    "http://api.3plCentral.com/rels/properties/carrier": [
+      {
+        "name": "Asendia",
+        "description": "Asendia",
+        "needsBillOfLading": false,
+        "scacCode": "",
+        "deactivated": false,
+        "disallowOnOrder": false,
+        "shipmentServices": [
+          {
+            "code": "388",
+            "description": "Asendia PMI",
+            "shipEngineId": "asendia_pmi"
+          },
+          {
+            "code": "389",
+            "description": "Asendia IPA",
+            "shipEngineId": "asendia_ipa"
+          },
+          {
+            "code": "390",
+            "description": "Asendia ePacket",
+            "shipEngineId": "asendia_epacket"
+          },
+          {
+            "code": "391",
+            "description": "Asendia ISAL",
+            "shipEngineId": "asendia_isal"
+          },
+          {
+            "code": "392",
+            "description": "Asendia Other",
+            "shipEngineId": "asendia_other"
+          },
+          {
+            "code": "393",
+            "description": "Asendia Priority Tracked",
+            "shipEngineId": "asendia_priority_tracked"
+          },
+          {
+            "code": "394",
+            "description": "Asendia PMEI",
+            "shipEngineId": "asendia_pmei"
+          },
+          {
+            "code": "395",
+            "description": "Asendia International Express",
+            "shipEngineId": "asendia_international_express"
+          }
+        ],
+        "_links": {
+          "self": {
+            "href": "/properties/carriers/Asendia"
+          }
+        }
+      },
+      {
+        "name": "Canada Post",
+        "description": "Canada Post",
+        "needsBillOfLading": false,
+        "deactivated": false,
+        "disallowOnOrder": false,
+        "shipmentServices": [
+          {
+            "code": "222",
+            "description": "Canada Post Express Post",
+            "shipEngineId": "xpresspost"
+          },
+          {
+            "code": "223",
+            "description": "Canada Post Expedited",
+            "shipEngineId": "expedited_parcel"
+          },
+          {
+            "code": "224",
+            "description": "Canada Post Regular",
+            "shipEngineId": "regular_parcel"
+          },
+          {
+            "code": "225",
+            "description": "Canada Post Priority",
+            "shipEngineId": "priority"
+          },
+          {
+            "code": "226",
+            "description": "Canada Post Expedited Parcel",
+            "shipEngineId": "expedited_parcel"
+          }
+        ],
+        "_links": {
+          "self": {
+            "href": "/properties/carriers/Canada%20Post"
+          }
+        }
+      },
+      {
+        "name": "CUST",
+        "description": "Custom Freight",
+        "needsBillOfLading": true,
+        "deactivated": false,
+        "disallowOnOrder": false,
+        "shipmentServices": [],
+        "_links": {
+          "self": {
+            "href": "/properties/carriers/CUST"
+          }
+        }
+      },
+      {
+        "name": "FedEx",
+        "description": "Federal Express",
+        "needsBillOfLading": false,
+        "scacCode": "FDEG",
+        "deactivated": false,
+        "disallowOnOrder": false,
+        "shipmentServices": [
+          {
+            "code": "327",
+            "description": "First Overnight One Rate",
+            "shipEngineId": ""
+          },
+          {
+            "code": "328",
+            "description": "Priority Overnight One Rate",
+            "shipEngineId": ""
+          },
+          {
+            "code": "329",
+            "description": "Standard Overnight One Rate",
+            "shipEngineId": ""
+          }
+        ],
+        "billingCodes": [
+          {
+            "code": "collect",
+            "billingCodeType": 3
+          },
+          {
+            "code": "recipient",
+            "billingCodeType": 0
+          },
+          {
+            "code": "sender",
+            "billingCodeType": 4
+          },
+          {
+            "code": "third party",
+            "billingCodeType": 1
+          }
+        ],
+        "_links": {
+          "self": {
+            "href": "/properties/carriers/FedEx"
+          }
+        }
+      }
+    ]
+  }
+}

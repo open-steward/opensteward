@@ -1,0 +1,129 @@
+{
+  "_comment": [
+    "Provenance for the `verification` tier declared on each platform in",
+    "src/verticals/<vertical>/platforms/metadata.ts.",
+    "",
+    "The metadata field says WHICH rung an adapter sits on. This file says who put",
+    "it there, when, and on what evidence — the same split `readScopes` has with",
+    "read-scopes-audit.json. Keeping the prose here is what stops 1,545-entry",
+    "catalog files turning into an audit log.",
+    "",
+    "Every platform carrying a `verification` field MUST have an entry here, and",
+    "every entry here MUST name a platform that carries one. check:adapter-verification",
+    "fails on either mismatch, so the badge can never outlive its justification.",
+    "",
+    "tier values (see packages/shared/src/reference/platform-verification.ts):",
+    "  unit-tested  — transform + factory tests present and passing",
+    "  verified     — OUR adapter driven against the platform's API: its sandbox",
+    "                 or test mode, or a live tenant",
+    "",
+    "Sandbox and live tenant are one rung because a platform's sandbox serves the",
+    "same API as its production. Say which one the run used in `evidence`. Until",
+    "2026-11 they were two tiers, sandbox-verified and production-verified.",
+    "",
+    "The distinction that matters: calling a platform's own API by hand proves the",
+    "PLATFORM works. verified means the request went through this repo's",
+    "adapter — its auth, its client, its transforms. Only the latter is a claim",
+    "about our code, and only the latter earns the rung.",
+    "",
+    "`verifiedAt` is THE DATE THE EVIDENCE WAS PRODUCED — when the sync job ran, not",
+    "when this entry was typed up. check:adapter-verification compares it against the",
+    "adapter directory's last commit and warns when the code has moved on since, which",
+    "is the mechanism that stops a badge quietly becoming a lie.",
+    "",
+    "The run date is load-bearing, and using the write-up date defeats the check: if",
+    "you run a sync on the 10th, the adapter changes on the 15th, and you record it on",
+    "the 16th, a write-up date hides the intervening commit and the warning never",
+    "fires. That happened on the first six entries and is why this now says so",
+    "explicitly. If the two dates differ, the run's date goes here; note the write-up",
+    "date in `evidence` if it matters.",
+    "",
+    "To promote an adapter: do the work, then add or amend its entry here and set",
+    "the matching `verification` field in the vertical's metadata.ts. See",
+    "CONTRIBUTING.md § Adapter verification."
+  ],
+  "adapters": {
+    "accounting/bokio": {
+      "tier": "verified",
+      "verifiedAt": "2026-11-16",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Driven through the integration-server against a Bokio company on api.bokio.se, via the adapter's own OAuth, client and transforms. Sync job feb42dd1 (2026-11-16) completed 1,254 rows across every resource the adapter implements: accounts 1242, bills 5, contacts 3, journals 3, invoices 1, creditmemos 0. The other six resources (transactions, taxrates, expenses, orders, salesorders, purchaseorders) are skipped by design because Bokio's API has no endpoint for them, and the job records each reason. An earlier run that day (a1936bfa) failed on accounts after 800 rows with 'Upstream platform unreachable: socket hang up', a network drop rather than an adapter error; the next run completed. Whether the Bokio company is a test company or a live one is not recorded here."
+    },
+    "accounting/fortnox": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-10",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Driven through the integration-server against a live Fortnox tenant. Sync job 6e0fa57d (2026-09-10) completed 1341 rows — accounts 1339, invoices 1, contacts 1 — via the adapter own OAuth, client and transforms. 4 completed sync jobs on this connection, 5364 rows in total."
+    },
+    "accounting/xero": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-17",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Re-verified against the current adapter after the Quotes resource was added. Driven through the integration-server against a live Xero tenant: sync job 58f85568 (2026-09-17) completed 306 rows across 10 canonical resources — accounts 58, contacts 51, bills 46, transactions 46, expenses 46, invoices 32, taxrates 8, orders 7, purchaseorders 7, creditmemos 5 — via the adapter own OAuth, client and transforms."
+    },
+    "crm/hubspot": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-17",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Re-verified against the current adapter after a change to the shared list-envelope hasMore path this adapter reports through. Driven through the integration-server against a HubSpot developer test account: sync job 4186ddbb (2026-09-17) completed 9 rows across 6 canonical resources — activities 3, contacts 2, companies 1, deals 1, pipelines 1, notes 1. Low counts reflect a small test portal, not partial coverage."
+    },
+    "ecommerce/shopify": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-13",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Driven through the integration-server against a Shopify development store. Sync job abeef969 (2026-09-13) completed 83 rows across 7 canonical resources — inventory_levels 28, variants 26, products 17, collections 3, locations 3, customers 3, discounts 3 — via the adapter own OAuth, client and transforms."
+    },
+    "inventory/megaventory": {
+      "tier": "unit-tested",
+      "verifiedAt": "2026-09-18",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Rebuilt from a Cin7 Core byte-clone — the file header still read \"Cin7 Core adapter — reference implementation for the inventory vertical\", it sent Cin7 paths (productList, ref/stockonhand, supplierList, purchaseList) to Megaventory host, and authenticated with a Bearer header Megaventory does not read. Megaventory publishes no readable documentation (megaventory.com/developers points at api.megaventory.com, which renders no content), so the adapter was written against the LIVE service own ServiceStack metadata on 2026-09-18: https://api.megaventory.com/v2017a/metadata lists all 112 operations and https://api.megaventory.com/v2017a/json/metadata?op=<Op> gives each request/response DTO. Every operation name was additionally probed against the live endpoint to confirm it resolves. NOT verified: no Megaventory account exists to drive our own client, auth and transforms through — API access requires a paid plan. The live probing corrected four things: errors are returned IN-BAND on HTTP 200 with ResponseStatus.ErrorCode, so an invalid key read as a successful empty sync; there is no pagination of any kind (ReturnTopNRecords is a top-N limiter ordered by id descending); dates are .NET format with DateTime.MinValue as the unset sentinel; and SupplierClientGet returns customers alongside suppliers. Stock-transfer and stock-adjustment have no operation at all — nine candidate names were probed and none resolves.",
+      "suites": [
+        "tests/verticals/inventory/unit/adapters/megaventory/client.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/requests.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/webhook.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/transform/shared.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/transform/product.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/transform/stock-level.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/transform/supplier.test.ts",
+        "tests/verticals/inventory/unit/adapters/megaventory/transform/purchase-order.test.ts"
+      ]
+    },
+    "inventory/shipbob-inventory": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-18",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Driven through the integration-server against the ShipBob sandbox (sandbox-api.shipbob.com) via the adapter own credential handling, client and transforms. Sync job 380e99bb (2026-09-18) completed 147 rows across all four implemented resources — stock-levels 84, products 38, purchase-orders 17, locations 8 — with suppliers, stock-transfers and stock-adjustments skipped, which is correct: metadata.ts declares all three unavailable because ShipBob has no such endpoint. Referential integrity was checked on the synced data: the location ids the stock levels reference (7, 9, 10, 80, 81, 82, 83, 85) are exactly the locations the sync returned, with no dangling reference. The run confirmed the rebuild end to end, including the oz-to-gram and inch-to-centimetre conversions (2722 g, 30.48 cm), the composite per-location stock id (16160673:80) and the Completed-to-received WRO mapping with 240 received against 120 ordered. Two defects were found by the live run and fixed before this entry: listStockLevels forwarded the caller limit as a PageSize of vendor ITEMS and then flattened each into per-location rows, so a request for 3 returned 19 and the router logged that it had truncated the response; and locations read GET /location, which is the only route here requiring the locations_read scope and which 401d with an empty body on a token carrying products_read, inventory_read and receiving_read. The location fix was to change endpoint rather than request the extra scope — GET /fulfillment-center returns the 8 centres this merchant uses rather than the 69-centre network of which 65 are access_granted false, needs no additional scope, and is what makes every stockLevel.locationId resolve.",
+      "suites": [
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/requests.test.ts",
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/webhook.test.ts",
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/transform/product.test.ts",
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/transform/stock-level.test.ts",
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/transform/location.test.ts",
+        "tests/verticals/inventory/unit/adapters/shipbob-inventory/transform/purchase-order.test.ts"
+      ]
+    },
+    "logistics/shipbob": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-17",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Re-verified against the current adapter after a change to its channel-header handling. Driven through the integration-server against the ShipBob sandbox (sandbox-api.shipbob.com; the same token returns 401 against production, so the environment is not in doubt): sync job 6844d23d (2026-09-17) completed 87 rows — orders 25, shipments 25, trackingevents 25, warehouses 8, carriers 4 — via the adapter own OAuth, shipbob_channel_id handling, client and transforms.",
+      "suites": [
+        "tests/verticals/logistics/unit/adapters/shipbob.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/auth.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/pkce.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/channel.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/channel-header.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/listing.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/transform/rate.test.ts",
+        "tests/verticals/logistics/unit/adapters/shipbob/transform/carrier.test.ts"
+      ]
+    },
+    "payments/stripe": {
+      "tier": "verified",
+      "verifiedAt": "2026-09-17",
+      "verifiedBy": "mattsfalco",
+      "evidence": "Re-verified against the current adapter. Driven through the integration-server against Stripe test mode: sync job 2c3ca52d (2026-09-17) completed 14 rows across 6 canonical resources — invoices 5, prices 3, products 3, customers 1, subscriptions 1, plans 1 — via the adapter own client and transforms."
+    }
+  }
+}

@@ -1,0 +1,3475 @@
+{
+  "accounting/accurate": {
+    "readScopes": [
+      "item_view",
+      "customer_view",
+      "sales_invoice_view",
+      "purchase_invoice_view",
+      "journal_entry_view",
+      "gl_view",
+      "report_view",
+      "bank_view"
+    ],
+    "recommendedScopes": [
+      "item_view",
+      "item_save",
+      "item_delete",
+      "customer_view",
+      "customer_save",
+      "customer_delete",
+      "sales_invoice_view",
+      "sales_invoice_save",
+      "sales_invoice_delete",
+      "purchase_invoice_view",
+      "purchase_invoice_save",
+      "purchase_invoice_delete",
+      "journal_entry_view",
+      "journal_entry_save",
+      "gl_view",
+      "report_view",
+      "bank_view",
+      "bank_save"
+    ]
+  },
+  "accounting/bexio": {
+    "readScopes": [
+      "article_show",
+      "bank_account_show",
+      "bank_payment_show",
+      "contact_show",
+      "kb_article_order_show",
+      "kb_bill_show",
+      "kb_delivery_show",
+      "kb_expense_show",
+      "kb_invoice_show",
+      "kb_offer_show",
+      "kb_order_show",
+      "monitoring_show",
+      "note_show",
+      "payroll_absence_show",
+      "payroll_employee_show",
+      "payroll_paystub_show",
+      "project_show",
+      "task_show"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "address_edit",
+      "article_edit",
+      "article_show",
+      "bank_payment_edit",
+      "bank_payment_show",
+      "bill_edit",
+      "contact_edit",
+      "contact_show",
+      "expense_edit",
+      "file_edit",
+      "invoice_edit",
+      "kb_bill_edit",
+      "kb_bill_show",
+      "kb_credit_voucher_edit",
+      "kb_delivery_edit",
+      "kb_delivery_show",
+      "kb_invoice_edit",
+      "kb_invoice_show",
+      "kb_offer_edit",
+      "kb_offer_show",
+      "kb_order_edit",
+      "kb_order_show",
+      "note_edit",
+      "note_show",
+      "payment_edit",
+      "project_edit",
+      "project_show",
+      "task_edit",
+      "task_show",
+      "bank_account_show",
+      "kb_article_order_show",
+      "kb_expense_show",
+      "monitoring_show",
+      "payroll_absence_show",
+      "payroll_employee_show",
+      "payroll_paystub_show"
+    ]
+  },
+  "accounting/bokio": {
+    "readScopes": [
+      "journal-entries:read",
+      "invoices:read",
+      "customers:read",
+      "credit-notes:read",
+      "chart-of-accounts:read",
+      "company-information:read",
+      "fiscal-years:read",
+      "supplier-invoices:read",
+      "suppliers:read"
+    ],
+    "recommendedScopes": [
+      "journal-entries:read",
+      "journal-entries:write",
+      "uploads:read",
+      "uploads:write",
+      "invoices:read",
+      "invoices:write",
+      "credit-notes:read",
+      "credit-notes:write",
+      "customers:read",
+      "customers:write",
+      "fiscal-years:read",
+      "company-information:read",
+      "chart-of-accounts:read",
+      "supplier-invoices:read",
+      "supplier-invoices:write",
+      "suppliers:read",
+      "suppliers:write"
+    ]
+  },
+  "accounting/brex": {
+    "readScopes": [
+      "transactions.card.readonly",
+      "transactions.cash.readonly",
+      "accounts.card.readonly",
+      "accounts.cash.readonly",
+      "cards.readonly",
+      "expenses.card.readonly",
+      "users.readonly",
+      "companies.readonly",
+      "budgets.readonly",
+      "vendors.readonly"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "offline_access",
+      "cards.readonly",
+      "users.readonly",
+      "companies.readonly",
+      "budgets.readonly",
+      "vendors.readonly",
+      "cards.write",
+      "expenses.write",
+      "payments.write",
+      "transfers.write",
+      "transactions.card.readonly",
+      "transactions.cash.readonly",
+      "accounts.card.readonly",
+      "accounts.cash.readonly",
+      "expenses.card.readonly"
+    ]
+  },
+  "accounting/datev": {
+    "readScopes": [
+      "accounting:clients:read",
+      "datev:accounting:clients"
+    ],
+    "recommendedScopes": [
+      "accounting:documents",
+      "accounting:clients:read",
+      "datev:accounting:clients",
+      "datev:accounting:extf-files-import"
+    ]
+  },
+  "accounting/dinero": {
+    "readScopes": [
+      "dineropublicapi:read"
+    ],
+    "recommendedScopes": [
+      "offline_access",
+      "openid",
+      "dineropublicapi:read"
+    ]
+  },
+  "accounting/facturadirecta": {
+    "readScopes": [
+      "contacts:read",
+      "products:read",
+      "invoices:read",
+      "estimates:read",
+      "deliveryNotes:read",
+      "bills:read",
+      "payrolls:read",
+      "recurring:read",
+      "banks:read",
+      "paymentMethods:read"
+    ],
+    "recommendedScopes": [
+      "basic",
+      "write",
+      "contacts:read",
+      "products:read",
+      "invoices:read",
+      "estimates:read",
+      "deliveryNotes:read",
+      "bills:read",
+      "payrolls:read",
+      "recurring:read",
+      "banks:read",
+      "paymentMethods:read"
+    ]
+  },
+  "accounting/fatturecloud": {
+    "readScopes": [
+      "entity.clients:r",
+      "entity.suppliers:r",
+      "products:r",
+      "issued_documents.invoices:r",
+      "issued_documents.quotes:r",
+      "issued_documents.credit_notes:r",
+      "issued_documents.delivery_notes:r",
+      "received_documents:r",
+      "cashbook:r",
+      "taxes:r",
+      "settings:r",
+      "situation:r"
+    ],
+    "recommendedScopes": [
+      "entity.clients:r",
+      "entity.clients:a",
+      "entity.suppliers:r",
+      "entity.suppliers:a",
+      "entity.products:a",
+      "issued_documents.invoices:r",
+      "issued_documents.invoices:a",
+      "issued_documents.quotes:r",
+      "issued_documents.quotes:a",
+      "issued_documents.credit_notes:r",
+      "issued_documents.credit_notes:a",
+      "issued_documents.delivery_notes:r",
+      "issued_documents.delivery_notes:a",
+      "received_documents:r",
+      "received_documents:a",
+      "cashbook:r",
+      "cashbook:a",
+      "taxes:r",
+      "settings:r",
+      "settings:a",
+      "situation:r",
+      "products:r"
+    ]
+  },
+  "accounting/freee": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write"
+    ]
+  },
+  "accounting/freshbooks": {
+    "readScopes": [
+      "user:profile:read",
+      "user:clients:read",
+      "user:invoices:read",
+      "user:expenses:read",
+      "user:projects:read",
+      "user:taxes:read",
+      "user:estimates:read",
+      "user:payments:read",
+      "user:reports:read"
+    ],
+    "recommendedScopes": [
+      "user:profile:read",
+      "user:clients:read",
+      "user:clients:write",
+      "user:invoices:read",
+      "user:invoices:write",
+      "user:expenses:read",
+      "user:expenses:write",
+      "user:projects:read",
+      "user:taxes:read",
+      "user:estimates:read",
+      "user:estimates:write",
+      "user:payments:read",
+      "user:payments:write",
+      "user:reports:read"
+    ]
+  },
+  "accounting/moneyforward": {
+    "readScopes": [
+      "mfc/invoice/data.read",
+      "mfc/accounting/journal.read",
+      "public_resource:read"
+    ],
+    "recommendedScopes": [
+      "mf_invoice:write",
+      "mf_accounting:write",
+      "mf_expense:write",
+      "mfc/invoice/data.read",
+      "mfc/accounting/journal.read",
+      "public_resource:read"
+    ]
+  },
+  "accounting/pleo": {
+    "readScopes": [
+      "accounting-entries:read",
+      "export-jobs:read",
+      "export-items:read",
+      "tag-groups:read",
+      "companies:read",
+      "users:read",
+      "vendors:read",
+      "accounts:read",
+      "tax-codes:read"
+    ],
+    "recommendedScopes": [
+      "write:expenses",
+      "write:company",
+      "write:tags",
+      "write:cards",
+      "write:invoices",
+      "accounting-entries:read",
+      "export-jobs:read",
+      "export-items:read",
+      "tag-groups:read",
+      "companies:read",
+      "users:read",
+      "vendors:read",
+      "accounts:read",
+      "tax-codes:read"
+    ]
+  },
+  "accounting/ramp": {
+    "readScopes": [
+      "transactions:read",
+      "cards:read",
+      "users:read",
+      "departments:read",
+      "locations:read",
+      "accounting:read",
+      "bills:read",
+      "reimbursements:read",
+      "receipts:read",
+      "limits:read"
+    ],
+    "recommendedScopes": [
+      "transactions:read",
+      "cards:read",
+      "cards:write",
+      "users:read",
+      "users:write",
+      "departments:read",
+      "locations:read",
+      "accounting:read",
+      "bills:read",
+      "bills:write",
+      "reimbursements:read",
+      "reimbursements:write",
+      "receipts:read",
+      "limits:read",
+      "limits:write",
+      "offline_access"
+    ]
+  },
+  "accounting/sagebusinesscloud": {
+    "readScopes": [
+      "readonly"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "readonly",
+      "full_access"
+    ]
+  },
+  "accounting/sellsy": {
+    "readScopes": [
+      "invoices.read",
+      "contacts.read",
+      "accounting-entry.read",
+      "items.read",
+      "payments.read"
+    ],
+    "recommendedScopes": [
+      "write:invoices",
+      "write:contacts",
+      "write:expenses",
+      "write:accounting",
+      "write:purchases",
+      "write:products",
+      "write:payments",
+      "invoices.read",
+      "contacts.read",
+      "accounting-entry.read",
+      "items.read",
+      "payments.read"
+    ]
+  },
+  "accounting/silverfin": {
+    "readScopes": [
+      "administration:read",
+      "communication:read",
+      "financials:read",
+      "financials:transactions:read",
+      "permanent_documents:read",
+      "workflows:read"
+    ],
+    "recommendedScopes": [
+      "administration:read",
+      "administration:write",
+      "reconciliations:write",
+      "transactions:write",
+      "workflows:read",
+      "workflows:write",
+      "communication:read",
+      "financials:read",
+      "financials:transactions:read",
+      "permanent_documents:read"
+    ]
+  },
+  "accounting/soldo": {
+    "readScopes": [
+      "transactions.read",
+      "cards.read",
+      "users.read",
+      "wallets.read",
+      "companies.read"
+    ],
+    "recommendedScopes": [
+      "transactions.read",
+      "cards.read",
+      "cards.write",
+      "users.read",
+      "wallets.read",
+      "companies.read"
+    ]
+  },
+  "accounting/spendesk": {
+    "readScopes": [
+      "payable:read",
+      "payable-attachment:read",
+      "settlement:read",
+      "bank-fee:read",
+      "wallet-load:read",
+      "wallet-summary:read",
+      "user:read",
+      "supplier:read",
+      "cost-center:read",
+      "expense-category:read",
+      "analytical-field:read",
+      "experimental:accounting-export:read",
+      "experimental:payable-search:read",
+      "experimental:chart-of-accounts:read"
+    ],
+    "recommendedScopes": [
+      "expenses:write",
+      "purchases:write",
+      "suppliers:write",
+      "payments:write",
+      "payable:read",
+      "payable-attachment:read",
+      "settlement:read",
+      "bank-fee:read",
+      "wallet-load:read",
+      "wallet-summary:read",
+      "user:read",
+      "supplier:read",
+      "cost-center:read",
+      "expense-category:read",
+      "analytical-field:read",
+      "experimental:accounting-export:read",
+      "experimental:payable-search:read",
+      "experimental:chart-of-accounts:read"
+    ]
+  },
+  "accounting/visma": {
+    "readScopes": [
+      "openid",
+      "profile",
+      "email"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "ea:api"
+    ]
+  },
+  "accounting/vismabusinessnxt": {
+    "readScopes": [
+      "openid",
+      "profile",
+      "email"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access"
+    ]
+  },
+  "accounting/vismanet": {
+    "readScopes": [
+      "openid",
+      "profile",
+      "email",
+      "vismanet_erp_interactive_api:read"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "vismanet_erp_interactive_api:read"
+    ]
+  },
+  "accounting/wave": {
+    "readScopes": [
+      "user:read",
+      "business:read",
+      "account:read",
+      "customer:read",
+      "invoice:read",
+      "product:read",
+      "transaction:read"
+    ],
+    "recommendedScopes": [
+      "customer.write",
+      "invoice.write",
+      "product.write",
+      "transactions.write",
+      "user:read",
+      "business:read",
+      "account:read",
+      "customer:read",
+      "invoice:read",
+      "product:read",
+      "transaction:read"
+    ]
+  },
+  "accounting/xero": {
+    "readScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "accounting.invoices.read",
+      "accounting.contacts.read",
+      "accounting.settings.read",
+      "accounting.banktransactions.read",
+      "accounting.manualjournals.read"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "accounting.contacts",
+      "accounting.settings",
+      "accounting.contacts.read",
+      "accounting.settings.read",
+      "accounting.attachments",
+      "accounting.attachments.read",
+      "assets",
+      "assets.read",
+      "projects",
+      "projects.read",
+      "files",
+      "files.read",
+      "accounting.invoices.read",
+      "accounting.banktransactions.read",
+      "accounting.manualjournals.read"
+    ]
+  },
+  "accounting/zohobooks": {
+    "readScopes": [
+      "ZohoBooks.invoices.READ",
+      "ZohoBooks.contacts.READ",
+      "ZohoBooks.bills.READ",
+      "ZohoBooks.expenses.READ",
+      "ZohoBooks.banking.READ",
+      "ZohoBooks.settings.READ",
+      "ZohoBooks.purchaseorders.READ",
+      "ZohoBooks.salesorders.READ",
+      "ZohoBooks.creditnotes.READ",
+      "ZohoBooks.customerpayments.READ",
+      "ZohoBooks.vendorpayments.READ",
+      "ZohoBooks.estimates.READ",
+      "ZohoBooks.projects.READ",
+      "ZohoBooks.accountants.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoBooks.fullaccess.all",
+      "ZohoBooks.invoices.READ",
+      "ZohoBooks.invoices.CREATE",
+      "ZohoBooks.contacts.READ",
+      "ZohoBooks.contacts.CREATE",
+      "ZohoBooks.bills.READ",
+      "ZohoBooks.expenses.READ",
+      "ZohoBooks.banking.READ",
+      "ZohoBooks.settings.READ",
+      "ZohoBooks.purchaseorders.READ",
+      "ZohoBooks.salesorders.READ",
+      "ZohoBooks.creditnotes.READ",
+      "ZohoBooks.customerpayments.READ",
+      "ZohoBooks.vendorpayments.READ",
+      "ZohoBooks.estimates.READ",
+      "ZohoBooks.projects.READ",
+      "ZohoBooks.accountants.READ"
+    ]
+  },
+  "accounting/gusto": {
+    "recommendedScopes": [
+      "ach_transactions:read",
+      "benefits:read",
+      "companies:read",
+      "companies:write",
+      "company_admin:read",
+      "company_admin:write",
+      "company_attachments:read",
+      "company_attachments:write",
+      "company_bank_accounts:read",
+      "company_bank_accounts:write",
+      "company_benefits:read",
+      "company_benefits:write",
+      "company_federal_taxes:read",
+      "company_federal_taxes:write",
+      "company_forms:read",
+      "company_forms:sign",
+      "company_onboarding_status:read",
+      "company_payment_configs:read",
+      "company_payment_configs:write",
+      "company_reports:read",
+      "company_reports:write",
+      "company_suspensions:read",
+      "company_suspensions:write",
+      "company_tax_requirements:read",
+      "company_tax_requirements:write",
+      "compensations:read",
+      "compensations:write",
+      "contractor_documents:read",
+      "contractor_documents:write",
+      "contractor_forms:read",
+      "contractor_pay_stubs:read",
+      "contractor_payment_methods:read",
+      "contractor_payment_methods:write",
+      "contractors:manage",
+      "contractors:read",
+      "contractors:write",
+      "departments:read",
+      "departments:write",
+      "employee_benefits:read",
+      "employee_benefits:write",
+      "employee_federal_taxes:read",
+      "employee_federal_taxes:write",
+      "employee_forms:read",
+      "employee_forms:sign",
+      "employee_payment_methods:read",
+      "employee_payment_methods:write",
+      "employee_state_taxes:read",
+      "employee_state_taxes:write",
+      "employee_time_off_activities:read",
+      "employees:manage",
+      "employees:read",
+      "employees:write",
+      "employments:read",
+      "employments:write",
+      "events:read",
+      "external_payrolls:read",
+      "external_payrolls:write",
+      "flows:write",
+      "garnishments:read",
+      "garnishments:write",
+      "generated_documents:read",
+      "generated_documents:write",
+      "holiday_pay_policies:read",
+      "holiday_pay_policies:write",
+      "i9_authorizations:manage",
+      "i9_authorizations:read",
+      "i9_authorizations:write",
+      "information_requests:read",
+      "invoices:read",
+      "jobs:read",
+      "jobs:write",
+      "member_portal_invitation:read",
+      "member_portal_invitation:write",
+      "notifications:read",
+      "partner_disbursements:read",
+      "partner_disbursements:write",
+      "partner_managed_companies:disassociate",
+      "partner_managed_companies:manage",
+      "partner_managed_companies:read",
+      "partner_managed_companies:write",
+      "pay_schedules:read",
+      "pay_schedules:write",
+      "pay_stubs:read",
+      "payroll_batches:read",
+      "payroll_batches:write",
+      "payroll_digests:read",
+      "payroll_digests:write",
+      "payrolls:read",
+      "payrolls:run",
+      "payrolls:write",
+      "people_batches:read",
+      "people_batches:write",
+      "plaid_processor:write",
+      "recovery_cases:read",
+      "recovery_cases:write",
+      "reimbursements:read",
+      "reimbursements:write",
+      "reverse_wire_transactions:read",
+      "salary_estimates:read",
+      "salary_estimates:write",
+      "signatories:manage",
+      "signatories:read",
+      "signatories:write",
+      "terms_of_services:read",
+      "terms_of_services:write",
+      "time_off_policies:read",
+      "time_off_policies:write",
+      "time_off_requests:manage",
+      "time_off_requests:read",
+      "time_off_requests:write",
+      "webhook_subscriptions:read",
+      "webhook_subscriptions:write"
+    ]
+  },
+  "accounting/dynamics365bc": {
+    "recommendedScopes": [
+      "https://api.businesscentral.dynamics.com/.default",
+      "offline_access"
+    ]
+  },
+  "accounting/abacus-ch": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "abacus.pad"
+    ]
+  },
+  "accounting/accountingseed": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "api",
+      "refresh_token"
+    ]
+  },
+  "accounting/acumatica": {
+    "recommendedScopes": [
+      "api",
+      "offline_access",
+      "api:concurrent_access"
+    ]
+  },
+  "accounting/bling": {
+    "recommendedScopes": [
+      "97471"
+    ]
+  },
+  "accounting/certinia": {
+    "recommendedScopes": [
+      "full",
+      "api",
+      "refresh_token",
+      "offline_access"
+    ]
+  },
+  "accounting/contaazul": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "aws.cognito.signin.user.admin"
+    ]
+  },
+  "accounting/exactonline": {
+    "recommendedScopes": [
+      "openid"
+    ]
+  },
+  "accounting/fortnox": {
+    "recommendedScopes": [
+      "companyinformation",
+      "invoice",
+      "customer",
+      "supplier",
+      "supplierinvoice",
+      "article",
+      "order",
+      "offer",
+      "payment",
+      "bookkeeping",
+      "salary",
+      "settings",
+      "project",
+      "costcenter",
+      "currency",
+      "price",
+      "archive",
+      "assets",
+      "inbox",
+      "timereporting",
+      "warehouse",
+      "connectfile",
+      "profile",
+      "print",
+      "noxfinansinvoice",
+      "warehousecustomdocument"
+    ]
+  },
+  "accounting/idoklad": {
+    "recommendedScopes": [
+      "idoklad_api",
+      "offline_access",
+      "eet"
+    ]
+  },
+  "accounting/moneybird": {
+    "recommendedScopes": [
+      "sales_invoices",
+      "documents",
+      "estimates",
+      "bank",
+      "time_entries",
+      "settings"
+    ]
+  },
+  "accounting/myob": {
+    "recommendedScopes": [
+      "sme-general-ledger",
+      "sme-sales",
+      "sme-timebilling",
+      "sme-inventory",
+      "sme-contacts-customer",
+      "sme-contacts-supplier",
+      "sme-contacts-personal",
+      "sme-contacts-employee",
+      "sme-banking",
+      "sme-purchases",
+      "sme-payroll",
+      "sme-company-settings",
+      "sme-company-file"
+    ]
+  },
+  "accounting/netsuite": {
+    "recommendedScopes": [
+      "rest_webservices",
+      "restlets",
+      "suite_analytics"
+    ]
+  },
+  "accounting/nuvemfiscal": {
+    "recommendedScopes": [
+      "nfe",
+      "nfse",
+      "cte",
+      "mdfe",
+      "nfce",
+      "cnpj"
+    ]
+  },
+  "accounting/parasut": {
+    "recommendedScopes": [
+      "write"
+    ]
+  },
+  "accounting/reckon": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "read",
+      "write"
+    ]
+  },
+  "accounting/reckon-one": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "read",
+      "write"
+    ]
+  },
+  "accounting/sageintacct": {
+    "recommendedScopes": [
+      "offline_access"
+    ]
+  },
+  "accounting/speedledger": {
+    "recommendedScopes": [
+      "offline_access",
+      "openid"
+    ]
+  },
+  "accounting/spiris": {
+    "recommendedScopes": [
+      "ea:api",
+      "offline_access",
+      "openid"
+    ]
+  },
+  "accounting/tiny": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access"
+    ]
+  },
+  "accounting/twinfield": {
+    "recommendedScopes": [
+      "openid",
+      "twf.user",
+      "twf.organisation",
+      "twf.organisationUser",
+      "twf.accounting"
+    ]
+  },
+  "accounting/yayoi": {
+    "recommendedScopes": [
+      "read",
+      "write"
+    ]
+  },
+  "crm/bexio": {
+    "readScopes": [
+      "openid",
+      "contact_show",
+      "article_show",
+      "project_show",
+      "note_show",
+      "monitoring_show",
+      "kb_invoice_show",
+      "kb_order_show",
+      "kb_offer_show",
+      "bank_account_show",
+      "bank_payment_show",
+      "task_show"
+    ],
+    "recommendedScopes": [
+      "contact_show",
+      "contact_edit",
+      "openid",
+      "offline_access",
+      "contact_delete",
+      "article_show",
+      "article_edit",
+      "project_show",
+      "project_edit",
+      "note_show",
+      "note_edit",
+      "invoice_edit",
+      "order_edit",
+      "offer_edit",
+      "banking_edit",
+      "monitoring_show",
+      "monitoring_edit",
+      "opportunities_edit",
+      "tasks_edit",
+      "kb_invoice_show",
+      "kb_order_show",
+      "kb_offer_show",
+      "bank_account_show",
+      "bank_payment_show",
+      "task_show"
+    ]
+  },
+  "crm/highlevel": {
+    "readScopes": [
+      "contacts.readonly",
+      "opportunities.readonly",
+      "companies.readonly",
+      "locations.readonly",
+      "users.readonly",
+      "calendars.readonly",
+      "conversations.readonly",
+      "conversations/message.readonly",
+      "forms.readonly",
+      "surveys.readonly",
+      "links.readonly",
+      "snapshots.readonly",
+      "medias.readonly",
+      "businesses.readonly",
+      "workflows.readonly",
+      "campaigns.readonly",
+      "emails/builder.readonly"
+    ],
+    "recommendedScopes": [
+      "contacts.readonly",
+      "contacts.write",
+      "opportunities.readonly",
+      "opportunities.write",
+      "companies.readonly",
+      "companies.write",
+      "locations.readonly",
+      "users.readonly",
+      "calendars.readonly",
+      "calendars.write",
+      "conversations.readonly",
+      "conversations.write",
+      "conversations/message.readonly",
+      "conversations/message.write",
+      "forms.readonly",
+      "surveys.readonly",
+      "links.readonly",
+      "links.write",
+      "snapshots.readonly",
+      "medias.readonly",
+      "medias.write",
+      "businesses.readonly",
+      "businesses.write",
+      "workflows.readonly",
+      "campaigns.readonly",
+      "emails/builder.readonly",
+      "emails/builder.write"
+    ]
+  },
+  "crm/hubspot": {
+    "readScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.companies.read",
+      "crm.objects.deals.read",
+      "crm.schemas.deals.read"
+    ],
+    "recommendedScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.contacts.write",
+      "crm.objects.companies.read",
+      "crm.objects.companies.write",
+      "crm.objects.deals.read",
+      "crm.objects.deals.write",
+      "crm.schemas.deals.read"
+    ]
+  },
+  "crm/jobadder": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "offline_access"
+    ]
+  },
+  "crm/monday-crm": {
+    "readScopes": [
+      "me:read",
+      "boards:read",
+      "workspaces:read",
+      "users:read",
+      "updates:read",
+      "assets:read",
+      "tags:read"
+    ],
+    "recommendedScopes": [
+      "me:read",
+      "boards:read",
+      "boards:write",
+      "workspaces:read",
+      "users:read",
+      "updates:read",
+      "updates:write",
+      "workspaces:write",
+      "notifications:write",
+      "assets:read",
+      "tags:read"
+    ]
+  },
+  "crm/outreach": {
+    "readScopes": [
+      "users.read",
+      "stages.read",
+      "sequences.read",
+      "mailboxes.read",
+      "calls.read"
+    ],
+    "recommendedScopes": [
+      "accounts.all",
+      "prospects.all",
+      "opportunities.all",
+      "activities.all",
+      "users.read",
+      "stages.read",
+      "sequences.read",
+      "mailboxes.read",
+      "calls.read",
+      "tasks.all"
+    ]
+  },
+  "crm/pipedrive": {
+    "readScopes": [
+      "users:read",
+      "deals:read",
+      "contacts:read",
+      "leads:read",
+      "activities:read",
+      "products:read"
+    ],
+    "recommendedScopes": [
+      "deals:full",
+      "contacts:full",
+      "leads:full",
+      "mail:full",
+      "activities:full",
+      "products:full",
+      "users:read",
+      "admin",
+      "deals:read",
+      "contacts:read",
+      "leads:read",
+      "activities:read",
+      "products:read"
+    ]
+  },
+  "crm/sellsy": {
+    "readScopes": [
+      "companies.read",
+      "contacts.read",
+      "individuals.read",
+      "opportunities.read",
+      "activities.read",
+      "comments.read"
+    ],
+    "recommendedScopes": [
+      "companies.read",
+      "contacts.read",
+      "individuals.read",
+      "opportunities.read",
+      "activities.read",
+      "comments.read"
+    ]
+  },
+  "crm/wix-crm": {
+    "readScopes": [
+      "SCOPE.DC-CONTACTS.READ-CONTACTS",
+      "SCOPE.DC-MEMBERS.READ-MEMBERS"
+    ],
+    "recommendedScopes": [
+      "contacts.write",
+      "members.write",
+      "SCOPE.DC-CONTACTS.READ-CONTACTS",
+      "SCOPE.DC-MEMBERS.READ-MEMBERS"
+    ]
+  },
+  "crm/zendesk-sell": {
+    "readScopes": [
+      "read",
+      "profile"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "profile"
+    ]
+  },
+  "crm/zoho-bigin": {
+    "readScopes": [
+      "ZohoBigin.modules.contacts.READ",
+      "ZohoBigin.modules.accounts.READ",
+      "ZohoBigin.modules.pipelines.READ",
+      "ZohoBigin.modules.notes.READ",
+      "ZohoBigin.settings.layouts.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoBigin.modules.contacts.ALL",
+      "ZohoBigin.modules.accounts.ALL",
+      "ZohoBigin.modules.pipelines.ALL",
+      "ZohoBigin.modules.activities.ALL",
+      "ZohoBigin.modules.notes.ALL",
+      "ZohoBigin.modules.contacts.READ",
+      "ZohoBigin.modules.accounts.READ",
+      "ZohoBigin.modules.pipelines.READ",
+      "ZohoBigin.modules.notes.READ",
+      "ZohoBigin.settings.layouts.READ"
+    ]
+  },
+  "crm/zoho-crm": {
+    "readScopes": [
+      "ZohoCRM.modules.contacts.READ",
+      "ZohoCRM.modules.accounts.READ",
+      "ZohoCRM.modules.deals.READ",
+      "ZohoCRM.modules.tasks.READ",
+      "ZohoCRM.modules.notes.READ",
+      "ZohoCRM.settings.pipeline.READ",
+      "ZohoCRM.settings.layouts.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoCRM.modules.contacts.ALL",
+      "ZohoCRM.modules.Accounts.ALL",
+      "ZohoCRM.modules.Deals.ALL",
+      "ZohoCRM.modules.Tasks.ALL",
+      "ZohoCRM.modules.Notes.ALL",
+      "ZohoCRM.settings.pipeline.ALL",
+      "ZohoCRM.modules.contacts.READ",
+      "ZohoCRM.modules.accounts.READ",
+      "ZohoCRM.modules.deals.READ",
+      "ZohoCRM.modules.tasks.READ",
+      "ZohoCRM.modules.notes.READ",
+      "ZohoCRM.settings.pipeline.READ",
+      "ZohoCRM.settings.layouts.READ"
+    ]
+  },
+  "crm/salesforce": {
+    "recommendedScopes": [
+      "api",
+      "refresh_token",
+      "offline_access"
+    ]
+  },
+  "crm/netsuite-crm": {
+    "recommendedScopes": [
+      "restlets",
+      "rest_webservices",
+      "suite_analytics",
+      "mcp"
+    ]
+  },
+  "crm/keap": {
+    "recommendedScopes": [
+      "full"
+    ]
+  },
+  "crm/corteza-crm": {
+    "recommendedScopes": [
+      "openid",
+      "offline_access",
+      "profile",
+      "email"
+    ]
+  },
+  "crm/creatio": {
+    "recommendedScopes": [
+      "offline_access"
+    ]
+  },
+  "crm/dynamics365-crm": {
+    "recommendedScopes": [
+      "offline_access",
+      "openid",
+      "profile",
+      "email"
+    ]
+  },
+  "crm/suitecrm": {
+    "recommendedScopes": [
+      "offline_access"
+    ]
+  },
+  "crm/superoffice": {
+    "recommendedScopes": [
+      "openid",
+      "offline_access",
+      "SuperOffice"
+    ]
+  },
+  "customer-support/genesys-cloud": {
+    "readScopes": [
+      "conversations:readonly",
+      "users:readonly",
+      "groups:readonly",
+      "routing:readonly",
+      "analytics:readonly",
+      "quality:readonly",
+      "recordings:readonly",
+      "outbound:readonly",
+      "presence:readonly",
+      "telephony:readonly"
+    ],
+    "recommendedScopes": [
+      "conversations:readonly",
+      "conversations:write",
+      "users:readonly",
+      "groups:readonly",
+      "routing:readonly",
+      "routing:write",
+      "analytics:readonly",
+      "quality:readonly",
+      "quality:write",
+      "recording:write",
+      "notifications",
+      "outbound:readonly",
+      "presence:readonly",
+      "presence:write",
+      "telephony:readonly",
+      "recordings:readonly"
+    ]
+  },
+  "customer-support/hubspot-service-hub": {
+    "readScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.companies.read",
+      "crm.objects.deals.read",
+      "conversations.read",
+      "crm.objects.custom.read",
+      "crm.schemas.contacts.read",
+      "crm.schemas.companies.read",
+      "crm.schemas.deals.read",
+      "crm.schemas.custom.read",
+      "files.ui_hidden.read"
+    ],
+    "recommendedScopes": [
+      "crm.objects.contacts.read",
+      "crm.objects.contacts.write",
+      "crm.objects.companies.read",
+      "crm.objects.companies.write",
+      "crm.objects.deals.read",
+      "crm.objects.deals.write",
+      "tickets",
+      "conversations.read",
+      "conversations.write",
+      "conversations.visitor_identification.tokens.create",
+      "crm.objects.custom.read",
+      "crm.objects.custom.write",
+      "crm.schemas.contacts.read",
+      "crm.schemas.companies.read",
+      "crm.schemas.deals.read",
+      "crm.schemas.custom.read",
+      "files",
+      "files.ui_hidden.read",
+      "oauth"
+    ]
+  },
+  "customer-support/jira-service-management": {
+    "readScopes": [
+      "read:servicedesk-request",
+      "read:jira-work",
+      "read:jira-user"
+    ],
+    "recommendedScopes": [
+      "read:servicedesk-request",
+      "write:servicedesk-request",
+      "read:jira-work",
+      "write:jira-work",
+      "read:jira-user",
+      "manage:jira-project",
+      "offline_access"
+    ]
+  },
+  "customer-support/talkdesk": {
+    "readScopes": [
+      "contacts:read",
+      "queues:read",
+      "reports:read",
+      "users:read",
+      "recordings:read"
+    ],
+    "recommendedScopes": [
+      "conversations:write",
+      "contacts:read",
+      "contacts:write",
+      "queues:read",
+      "reports:read",
+      "users:read",
+      "recordings:read"
+    ]
+  },
+  "customer-support/zendesk": {
+    "readScopes": [
+      "read",
+      "tickets:read",
+      "users:read",
+      "organizations:read",
+      "hc:read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "tickets:read",
+      "tickets:write",
+      "users:read",
+      "users:write",
+      "organizations:read",
+      "organizations:write",
+      "hc:read",
+      "hc:write"
+    ]
+  },
+  "customer-support/zoho-desk": {
+    "readScopes": [
+      "Desk.tickets.READ",
+      "Desk.search.READ",
+      "Desk.contacts.READ",
+      "Desk.basic.READ",
+      "Desk.agents.READ"
+    ],
+    "recommendedScopes": [
+      "Desk.tickets.READ",
+      "Desk.contacts.READ",
+      "Desk.tickets.CREATE",
+      "Desk.tickets.UPDATE",
+      "Desk.contacts.CREATE",
+      "Desk.contacts.UPDATE",
+      "Desk.accounts.READ",
+      "Desk.articles.READ",
+      "Desk.tasks.READ",
+      "Desk.settings.READ",
+      "Desk.activities.calls.READ",
+      "Desk.search.READ",
+      "Desk.basic.READ",
+      "Desk.agents.READ"
+    ]
+  },
+  "customer-support/salesforce-service": {
+    "recommendedScopes": [
+      "api",
+      "refresh_token",
+      "offline_access"
+    ]
+  },
+  "customer-support/halopsa": {
+    "recommendedScopes": [
+      "all"
+    ]
+  },
+  "docsign/adobe-acrobat-sign": {
+    "readScopes": [
+      "agreement_read:account",
+      "library_read:account",
+      "user_read:account",
+      "widget_read:account",
+      "workflow_read:account"
+    ],
+    "recommendedScopes": [
+      "agreement_read:account",
+      "agreement_write:account",
+      "agreement_send:account",
+      "library_read:account",
+      "library_write:account",
+      "user_read:account",
+      "user_write:account",
+      "widget_read:account",
+      "widget_write:account",
+      "workflow_read:account",
+      "workflow_write:account"
+    ]
+  },
+  "docsign/scrive": {
+    "readScopes": [
+      "DOC_CHECK"
+    ],
+    "recommendedScopes": [
+      "PERSONAL_DATA_CONFIDENTIAL",
+      "DOC_CREATE",
+      "DOC_SEND",
+      "DOC_CHECK",
+      "DOC_MODIFY",
+      "USER_MODIFY"
+    ]
+  },
+  "docsign/signeasy": {
+    "readScopes": [
+      "user:read",
+      "files:read",
+      "original:read",
+      "signed:read",
+      "rs:read",
+      "rs:signingurl"
+    ],
+    "recommendedScopes": [
+      "write",
+      "signature_request:write",
+      "template:write",
+      "user:read",
+      "files:read",
+      "original:read",
+      "signed:read",
+      "rs:read",
+      "rs:signingurl"
+    ]
+  },
+  "docsign/zealid": {
+    "readScopes": [
+      "service"
+    ],
+    "recommendedScopes": [
+      "sign",
+      "service"
+    ]
+  },
+  "docsign/zoho-sign": {
+    "readScopes": [
+      "ZohoSign.documents.READ",
+      "ZohoSign.templates.READ",
+      "ZohoSign.account.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoSign.documents.ALL",
+      "ZohoSign.templates.ALL",
+      "ZohoSign.documents.READ",
+      "ZohoSign.templates.READ",
+      "ZohoSign.account.READ"
+    ]
+  },
+  "docsign/pandadoc": {
+    "recommendedScopes": [
+      "read+write"
+    ]
+  },
+  "docsign/dropbox-sign": {
+    "recommendedScopes": [
+      "request_signature",
+      "basic_account_info",
+      "account_access",
+      "signature_request_access",
+      "template_access",
+      "team_access",
+      "api_app_access"
+    ]
+  },
+  "docsign/box-sign": {
+    "recommendedScopes": [
+      "root_readwrite",
+      "sign_requests.readwrite",
+      "manage_enterprise_properties"
+    ]
+  },
+  "docsign/docusign": {
+    "recommendedScopes": [
+      "signature",
+      "impersonation",
+      "openid",
+      "click.manage",
+      "click.send",
+      "extended",
+      "spring_read",
+      "spring_write"
+    ]
+  },
+  "docsign/rightsignature": {
+    "recommendedScopes": [
+      "read",
+      "write",
+      "read write"
+    ]
+  },
+  "docsign/swisscom-trust-services": {
+    "recommendedScopes": [
+      "sign"
+    ]
+  },
+  "docsign/yousign": {
+    "recommendedScopes": [
+      "write:sign_request",
+      "write:signer",
+      "write:document",
+      "write:template",
+      "write:user"
+    ]
+  },
+  "ecommerce/allegro": {
+    "readScopes": [
+      "allegro:api:orders:read",
+      "allegro:api:sale:offers:read",
+      "allegro:api:profile:read",
+      "allegro:api:fulfillment:read",
+      "allegro:api:payments:read",
+      "allegro:api:disputes",
+      "allegro:api:sale:settings:read"
+    ],
+    "recommendedScopes": [
+      "allegro:api:orders:read",
+      "allegro:api:orders:write",
+      "allegro:api:sale:offers:read",
+      "allegro:api:sale:offers:write",
+      "allegro:api:profile:read",
+      "allegro:api:fulfillment:read",
+      "allegro:api:fulfillment:write",
+      "allegro:api:payments:read",
+      "allegro:api:bidding",
+      "allegro:api:disputes",
+      "allegro:api:sale:settings:read"
+    ]
+  },
+  "ecommerce/base-ec": {
+    "readScopes": [
+      "read_users",
+      "read_users_mail",
+      "read_items",
+      "read_orders",
+      "read_savings"
+    ],
+    "recommendedScopes": [
+      "read_users",
+      "read_users_mail",
+      "read_items",
+      "read_orders",
+      "read_savings",
+      "write_items",
+      "write_orders"
+    ]
+  },
+  "ecommerce/bigcommerce": {
+    "readScopes": [
+      "store_v2_orders_read_only",
+      "store_v2_products_read_only",
+      "store_v2_customers_read_only",
+      "store_v2_marketing_read_only",
+      "store_inventory_read_only",
+      "store_v2_information_read_only",
+      "store_fulfillment_methods_read_only"
+    ],
+    "recommendedScopes": [
+      "store_v2_orders",
+      "store_v2_products",
+      "store_v2_customers",
+      "store_v2_orders_read_only",
+      "store_v2_products_read_only",
+      "store_v2_customers_read_only",
+      "store_v2_marketing",
+      "store_v2_marketing_read_only",
+      "store_inventory",
+      "store_inventory_read_only",
+      "store_v2_information_read_only",
+      "store_fulfillment_methods_read_only",
+      "store_fulfillment_methods_write"
+    ]
+  },
+  "ecommerce/cafe24": {
+    "readScopes": [
+      "mall.read_product",
+      "mall.read_order",
+      "mall.read_customer",
+      "mall.read_store",
+      "mall.read_category",
+      "mall.read_supply",
+      "mall.read_shipping",
+      "mall.read_privacy"
+    ],
+    "recommendedScopes": [
+      "mall.read_product",
+      "mall.write_product",
+      "mall.read_order",
+      "mall.write_order",
+      "mall.read_customer",
+      "mall.write_customer",
+      "mall.read_store",
+      "mall.write_store",
+      "mall.read_category",
+      "mall.write_category",
+      "mall.read_supply",
+      "mall.write_supply",
+      "mall.read_shipping",
+      "mall.write_shipping",
+      "mall.read_privacy"
+    ]
+  },
+  "ecommerce/clover": {
+    "readScopes": [
+      "Read customers",
+      "Read employees",
+      "Read inventory",
+      "Read merchant",
+      "Read order",
+      "Read payments"
+    ],
+    "recommendedScopes": [
+      "Read customers",
+      "Write customers",
+      "Read employees",
+      "Write employees",
+      "Read inventory",
+      "Write inventory",
+      "Read merchant",
+      "Write merchant",
+      "Read order",
+      "Write order",
+      "Read payments",
+      "Write payments"
+    ]
+  },
+  "ecommerce/colorme-shop": {
+    "readScopes": [
+      "read_products",
+      "read_sales",
+      "read_shop_coupons",
+      "read_templates"
+    ],
+    "recommendedScopes": [
+      "read_products",
+      "write_products",
+      "read_sales",
+      "write_sales",
+      "read_shop_coupons",
+      "write_shop_coupons",
+      "read_templates",
+      "write_templates"
+    ]
+  },
+  "ecommerce/commercetools": {
+    "readScopes": [
+      "view_products:{projectKey}",
+      "view_orders:{projectKey}",
+      "view_customers:{projectKey}",
+      "view_payments:{projectKey}",
+      "view_categories:{projectKey}",
+      "view_shipping_methods:{projectKey}",
+      "view_discount_codes:{projectKey}"
+    ],
+    "recommendedScopes": [
+      "view_products:{projectKey}",
+      "manage_products:{projectKey}",
+      "view_orders:{projectKey}",
+      "manage_orders:{projectKey}",
+      "view_customers:{projectKey}",
+      "manage_customers:{projectKey}",
+      "view_payments:{projectKey}",
+      "manage_payments:{projectKey}",
+      "view_categories:{projectKey}",
+      "manage_categories:{projectKey}",
+      "view_shipping_methods:{projectKey}",
+      "view_discount_codes:{projectKey}",
+      "manage_discount_codes:{projectKey}"
+    ]
+  },
+  "ecommerce/ebay": {
+    "readScopes": [
+      "https://api.ebay.com/oauth/api_scope",
+      "https://api.ebay.com/oauth/api_scope/sell.inventory.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.finances",
+      "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
+      "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.marketing.readonly"
+    ],
+    "recommendedScopes": [
+      "https://api.ebay.com/oauth/api_scope/sell.inventory",
+      "https://api.ebay.com/oauth/api_scope/sell.fulfillment",
+      "https://api.ebay.com/oauth/api_scope/sell.finances",
+      "https://api.ebay.com/oauth/api_scope",
+      "https://api.ebay.com/oauth/api_scope/sell.inventory.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.account",
+      "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
+      "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
+      "https://api.ebay.com/oauth/api_scope/sell.marketing",
+      "https://api.ebay.com/oauth/api_scope/sell.marketing.readonly"
+    ]
+  },
+  "ecommerce/etsy": {
+    "readScopes": [
+      "transactions_r",
+      "listings_r",
+      "shops_r",
+      "address_r",
+      "email_r",
+      "profile_r"
+    ],
+    "recommendedScopes": [
+      "transactions_r",
+      "transactions_w",
+      "listings_r",
+      "listings_w",
+      "shops_r",
+      "shops_w",
+      "address_r",
+      "address_w",
+      "email_r",
+      "profile_r",
+      "treasury_w",
+      "recommend_w",
+      "favorites_rw"
+    ]
+  },
+  "ecommerce/facebook-shop": {
+    "readScopes": [
+      "pages_read_engagement",
+      "pages_show_list"
+    ],
+    "recommendedScopes": [
+      "catalog_management",
+      "pages_read_engagement",
+      "pages_show_list",
+      "business_management",
+      "ads_management"
+    ]
+  },
+  "ecommerce/faire": {
+    "readScopes": [
+      "READ_PRODUCTS",
+      "READ_ORDERS",
+      "READ_BRAND",
+      "READ_RETAILER",
+      "READ_INVENTORIES",
+      "READ_SHIPMENTS",
+      "READ_REVIEWS"
+    ],
+    "recommendedScopes": [
+      "READ_PRODUCTS",
+      "WRITE_PRODUCTS",
+      "READ_ORDERS",
+      "WRITE_ORDERS",
+      "READ_BRAND",
+      "READ_RETAILER",
+      "READ_INVENTORIES",
+      "WRITE_INVENTORIES",
+      "READ_SHIPMENTS",
+      "READ_REVIEWS"
+    ]
+  },
+  "ecommerce/gumroad": {
+    "readScopes": [
+      "view_profile",
+      "view_sales"
+    ],
+    "recommendedScopes": [
+      "view_profile",
+      "view_sales",
+      "edit_products",
+      "mark_sales_as_shipped"
+    ]
+  },
+  "ecommerce/haravan": {
+    "readScopes": [
+      "com.read_products",
+      "com.read_orders",
+      "com.read_customers",
+      "com.read_inventories",
+      "web.read_script_tags"
+    ],
+    "recommendedScopes": [
+      "com.read_products",
+      "com.write_products",
+      "com.read_orders",
+      "com.write_orders",
+      "com.read_customers",
+      "com.write_customers",
+      "com.read_inventories",
+      "com.write_inventories",
+      "web.read_script_tags",
+      "web.write_script_tags"
+    ]
+  },
+  "ecommerce/instamojo": {
+    "readScopes": [
+      "read",
+      "cases:read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "cases:read"
+    ]
+  },
+  "ecommerce/jimdo": {
+    "readScopes": [
+      "read:site",
+      "read:business",
+      "read:order"
+    ],
+    "recommendedScopes": [
+      "read:site",
+      "write:site",
+      "read:business",
+      "write:business",
+      "read:order",
+      "write:order"
+    ]
+  },
+  "ecommerce/jumpseller": {
+    "readScopes": [
+      "read_orders",
+      "read_products",
+      "read_customers",
+      "read_categories"
+    ],
+    "recommendedScopes": [
+      "read_orders",
+      "write_orders",
+      "read_products",
+      "write_products",
+      "read_customers",
+      "write_customers",
+      "read_categories",
+      "write_categories"
+    ]
+  },
+  "ecommerce/loyverse": {
+    "readScopes": [
+      "RECEIPTS_READ",
+      "ITEMS_READ",
+      "INVENTORY_READ",
+      "CUSTOMERS_READ",
+      "EMPLOYEES_READ",
+      "STORES_READ",
+      "PAYMENT_TYPES_READ",
+      "SUPPLIERS_READ",
+      "TAXES_READ"
+    ],
+    "recommendedScopes": [
+      "RECEIPTS_READ",
+      "ITEMS_READ",
+      "INVENTORY_READ",
+      "CUSTOMERS_READ",
+      "EMPLOYEES_READ",
+      "STORES_READ",
+      "PAYMENT_TYPES_READ",
+      "SUPPLIERS_READ",
+      "TAXES_READ"
+    ]
+  },
+  "ecommerce/mercadolibre": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "offline_access"
+    ]
+  },
+  "ecommerce/patreon": {
+    "readScopes": [
+      "identity",
+      "identity[email]",
+      "campaigns",
+      "campaigns.members",
+      "campaigns.members[email]",
+      "campaigns.members.address"
+    ],
+    "recommendedScopes": [
+      "identity",
+      "identity[email]",
+      "campaigns",
+      "campaigns.members",
+      "campaigns.members[email]",
+      "campaigns.members.address",
+      "w:campaigns.webhook"
+    ]
+  },
+  "ecommerce/pinterest-shop": {
+    "readScopes": [
+      "catalogs:read",
+      "pins:read",
+      "boards:read",
+      "ads:read",
+      "user_accounts:read"
+    ],
+    "recommendedScopes": [
+      "catalogs:read",
+      "pins:read",
+      "boards:read",
+      "catalogs:write",
+      "pins:write",
+      "boards:write",
+      "ads:read",
+      "ads:write",
+      "user_accounts:read"
+    ]
+  },
+  "ecommerce/salesforce-commerce-cloud": {
+    "readScopes": [
+      "sfcc.products",
+      "sfcc.catalogs",
+      "sfcc.orders",
+      "sfcc.customerlists",
+      "sfcc.inventory.impex-inventory",
+      "sfcc.promotions"
+    ],
+    "recommendedScopes": [
+      "sfcc.products.rw",
+      "sfcc.products",
+      "sfcc.catalogs",
+      "sfcc.catalogs.rw",
+      "sfcc.orders",
+      "sfcc.orders.rw",
+      "sfcc.customers.rw",
+      "sfcc.inventory.impex.rw",
+      "sfcc.promotions",
+      "sfcc.promotions.rw",
+      "sfcc.customerlists",
+      "sfcc.inventory.impex-inventory"
+    ]
+  },
+  "ecommerce/salla": {
+    "readScopes": [
+      "settings.read",
+      "payments.read",
+      "carts.read"
+    ],
+    "recommendedScopes": [
+      "store.info.read_write",
+      "orders.read_write",
+      "products.read_write",
+      "customers.read_write",
+      "orders.read",
+      "products.read",
+      "customers.read",
+      "inventory.read_write",
+      "categories.read",
+      "coupons.read_write",
+      "settings.read",
+      "payments.read",
+      "carts.read"
+    ]
+  },
+  "ecommerce/shopify": {
+    "readScopes": [
+      "read_products",
+      "read_orders",
+      "read_customers",
+      "read_inventory",
+      "read_locations",
+      "read_fulfillments",
+      "read_discounts",
+      "read_shipping",
+      "read_price_rules"
+    ],
+    "recommendedScopes": [
+      "read_products",
+      "write_products",
+      "read_orders",
+      "write_orders",
+      "read_customers",
+      "read_inventory",
+      "write_inventory",
+      "read_locations",
+      "read_fulfillments",
+      "write_fulfillments",
+      "write_customers",
+      "read_discounts",
+      "write_discounts",
+      "read_shipping",
+      "write_shipping",
+      "read_price_rules",
+      "write_price_rules"
+    ]
+  },
+  "ecommerce/shoplazza": {
+    "readScopes": [
+      "read_shop",
+      "read_themes",
+      "read_shop_navigation",
+      "read_product",
+      "read_collection",
+      "read_comments",
+      "read_payment_info",
+      "read_order",
+      "read_customer",
+      "read_price_rules",
+      "read_gift_cards",
+      "read_app_proxy",
+      "read_data",
+      "read_script_tags",
+      "read_finance"
+    ],
+    "recommendedScopes": [
+      "read_shop",
+      "read_themes",
+      "write_themes",
+      "read_shop_navigation",
+      "write_shop_navigation",
+      "read_product",
+      "write_product",
+      "read_collection",
+      "write_collection",
+      "read_comments",
+      "write_comments",
+      "read_payment_info",
+      "write_payment_info",
+      "read_order",
+      "write_order",
+      "read_customer",
+      "write_customer",
+      "read_price_rules",
+      "write_price_rules",
+      "read_gift_cards",
+      "write_gift_cards",
+      "read_app_proxy",
+      "write_app_proxy",
+      "read_data",
+      "write_data",
+      "read_script_tags",
+      "write_script_tags",
+      "read_finance",
+      "write_finance"
+    ]
+  },
+  "ecommerce/shopline": {
+    "readScopes": [
+      "read_products",
+      "read_orders",
+      "read_customers",
+      "read_inventory"
+    ],
+    "recommendedScopes": [
+      "read_products",
+      "write_products",
+      "read_orders",
+      "write_orders",
+      "read_customers",
+      "write_customers",
+      "read_inventory",
+      "write_inventory"
+    ]
+  },
+  "ecommerce/square": {
+    "readScopes": [
+      "MERCHANT_PROFILE_READ",
+      "PAYMENTS_READ",
+      "ORDERS_READ",
+      "ITEMS_READ",
+      "INVENTORY_READ",
+      "CUSTOMERS_READ",
+      "EMPLOYEES_READ",
+      "TIMECARDS_READ",
+      "APPOINTMENTS_READ"
+    ],
+    "recommendedScopes": [
+      "MERCHANT_PROFILE_READ",
+      "PAYMENTS_READ",
+      "PAYMENTS_WRITE",
+      "ORDERS_READ",
+      "ORDERS_WRITE",
+      "ITEMS_READ",
+      "ITEMS_WRITE",
+      "INVENTORY_READ",
+      "INVENTORY_WRITE",
+      "CUSTOMERS_READ",
+      "CUSTOMERS_WRITE",
+      "EMPLOYEES_READ",
+      "TIMECARDS_READ",
+      "APPOINTMENTS_READ",
+      "APPOINTMENTS_WRITE"
+    ]
+  },
+  "ecommerce/tiendanube": {
+    "readScopes": [
+      "read_products",
+      "read_orders",
+      "read_customers",
+      "read_content",
+      "read_coupons"
+    ],
+    "recommendedScopes": [
+      "read_products",
+      "write_products",
+      "read_orders",
+      "write_orders",
+      "read_customers",
+      "write_customers",
+      "read_content",
+      "write_content",
+      "read_coupons",
+      "write_coupons"
+    ]
+  },
+  "ecommerce/tiktok-shop": {
+    "readScopes": [
+      "Shop Authorized Information",
+      "Product Basic",
+      "Order Information",
+      "Logistics Basic",
+      "Finance Information",
+      "Promotion Information",
+      "Global Shop Information",
+      "Global Product Information",
+      "Global Category Information"
+    ],
+    "recommendedScopes": [
+      "Shop Authorized Information",
+      "Product Basic",
+      "Product Modify",
+      "Product Delete & Recover",
+      "Order Information",
+      "Fulfillment Basic",
+      "Package Split And Combine",
+      "Update Delivery Status",
+      "Logistics Basic",
+      "Return & Refund Basic",
+      "Finance Information",
+      "Promotion Information",
+      "Promotion Modify",
+      "Global Shop Information",
+      "Global Product Information",
+      "Global Product Modify",
+      "Global Product Delete",
+      "Global Category Information"
+    ]
+  },
+  "ecommerce/webflow": {
+    "readScopes": [
+      "sites:read",
+      "ecommerce:read",
+      "cms:read",
+      "users:read",
+      "authorized_user:read",
+      "workspace:read"
+    ],
+    "recommendedScopes": [
+      "sites:read",
+      "ecommerce:read",
+      "ecommerce:write",
+      "cms:read",
+      "cms:write",
+      "users:read",
+      "users:write",
+      "custom_code:read",
+      "custom_code:write",
+      "authorized_user:read",
+      "workspace:read"
+    ]
+  },
+  "ecommerce/weebly": {
+    "readScopes": [
+      "read:site",
+      "read:blog",
+      "read:membership",
+      "read:store-catalog",
+      "read:store-orders"
+    ],
+    "recommendedScopes": [
+      "read:site",
+      "write:site",
+      "read:blog",
+      "write:blog",
+      "read:membership",
+      "read:store-catalog",
+      "write:store-catalog",
+      "read:store-orders",
+      "write:store-orders"
+    ]
+  },
+  "ecommerce/wix": {
+    "readScopes": [
+      "SCOPE.DC-STORES.READ-ORDERS",
+      "SCOPE.DC-STORES.READ-PRODUCTS",
+      "SCOPE.STORES.PRODUCT_READ",
+      "SCOPE.DC-MULTILOCATION.READ-LOCATIONS"
+    ],
+    "recommendedScopes": [
+      "SCOPE.DC-STORES-MEGA.MANAGE-PRODUCTS",
+      "SCOPE.DC-STORES-MEGA.MANAGE-ORDERS",
+      "SCOPE.DC-STORES-MEGA.MANAGE-INVENTORY",
+      "SCOPE.DC-CONTACTS.READ-WRITE",
+      "SCOPE.DC-STORES-MEGA.MANAGE-COUPONS",
+      "SCOPE.DC-STORES.READ-ORDERS",
+      "SCOPE.DC-STORES.READ-PRODUCTS",
+      "SCOPE.STORES.PRODUCT_READ",
+      "SCOPE.DC-MULTILOCATION.READ-LOCATIONS"
+    ]
+  },
+  "ecommerce/zid": {
+    "readScopes": [
+      "products.read",
+      "orders.read",
+      "customers.read",
+      "inventory.read",
+      "store.read",
+      "webhooks.read"
+    ],
+    "recommendedScopes": [
+      "products.read",
+      "products.write",
+      "orders.read",
+      "orders.write",
+      "customers.read",
+      "customers.write",
+      "inventory.read",
+      "inventory.write",
+      "store.read",
+      "webhooks.read",
+      "webhooks.write"
+    ]
+  },
+  "ecommerce/alibaba": {
+    "recommendedScopes": [
+      "alitrip.visa.issue.apply",
+      "alibaba:trade:readProductInfo",
+      "alibaba:trade:readOrderInfo",
+      "alibaba:trade:writeOrderInfo",
+      "alibaba:trade:readLogisticsInfo"
+    ]
+  },
+  "ecommerce/amazon-sp": {
+    "recommendedScopes": [
+      "sellingpartnerapi::notifications",
+      "sellingpartnerapi::client_credential:rotation",
+      "sellingpartnerapi::shipments:track"
+    ]
+  },
+  "ecommerce/elasticpath": {
+    "recommendedScopes": [
+      "implicit",
+      "client_credentials"
+    ]
+  },
+  "ecommerce/fynd": {
+    "recommendedScopes": [
+      "company/brands/read",
+      "company/brands/write",
+      "company/locations/read",
+      "company/locations/write",
+      "company/properties/read",
+      "company/properties/write",
+      "company/legal/read",
+      "company/legal/write",
+      "company/applications/read",
+      "company/applications/write",
+      "company/products/read",
+      "company/products/write",
+      "company/inventory/read",
+      "company/inventory/write",
+      "company/price_rules/read",
+      "company/price_rules/write",
+      "company/orders/read",
+      "company/orders/write",
+      "company/logistics/read",
+      "company/logistics/write",
+      "company/analytics/read",
+      "company/analytics/write",
+      "company/settings/read",
+      "company/settings/write",
+      "company/shipping/read",
+      "company/shipping/write",
+      "company/meta/read",
+      "company/meta/write",
+      "application/customers/read",
+      "application/protected_customer_data/read",
+      "application/customers/write",
+      "application/products/read",
+      "application/products/write",
+      "application/price_rules/read",
+      "application/price_rules/write",
+      "application/content/read",
+      "application/content/write",
+      "application/rewards/read",
+      "application/rewards/write",
+      "application/communications/read",
+      "application/communications/write",
+      "application/customer_support/read",
+      "application/customer_support/write",
+      "application/themes/read",
+      "application/themes/write",
+      "application/navigation/read",
+      "application/navigation/write",
+      "application/payment/read",
+      "application/payment/write",
+      "application/settings/read",
+      "application/settings/write",
+      "application/integrations/read",
+      "application/integrations/write",
+      "application/inventory/read",
+      "application/inventory/write",
+      "application/cart/read",
+      "application/cart/write",
+      "application/currency/read",
+      "application/currency/write",
+      "application/credit_note/read",
+      "application/credit_note/write",
+      "application/logistics/read",
+      "application/logistics/write",
+      "application/data_loader/read",
+      "application/data_loader/write",
+      "application/legal_docs/read",
+      "application/legal_docs/write",
+      "application/payments/read",
+      "application/payments/write",
+      "application/meta/read",
+      "application/meta/write"
+    ]
+  },
+  "ecommerce/lightspeed-retail": {
+    "recommendedScopes": [
+      "audit:read",
+      "billing:partner_subscription:read",
+      "billing:partner_subscription:write",
+      "business_rules:read",
+      "business_rules:write",
+      "channels:read",
+      "consignments:read",
+      "consignments:write:inventory_count",
+      "consignments:write:stock_order",
+      "consignments:write:stock_transfer",
+      "customers:read",
+      "customers:write",
+      "custom_fields:read",
+      "custom_fields:write",
+      "fulfillments:read",
+      "fulfillments:write",
+      "gift_cards:read",
+      "gift_cards:write:issue",
+      "gift_cards:write:redeem",
+      "inventory:read",
+      "inventory:write",
+      "outlets:read",
+      "payments:read",
+      "payment_types:read",
+      "products:read",
+      "products:read:price_books",
+      "products:write",
+      "products:write:price_books",
+      "promotions:read",
+      "promotions:write",
+      "register:close",
+      "register:open",
+      "registers:read",
+      "remote_rules:read",
+      "remote_rules:write",
+      "retailer:read",
+      "sales:read",
+      "sales:write",
+      "serial_numbers:read",
+      "serial_numbers:write",
+      "services:read",
+      "services:write",
+      "store_credits:read",
+      "store_credits:write:issue",
+      "suppliers:read",
+      "suppliers:write",
+      "taxes:read",
+      "taxes:write",
+      "users:read",
+      "users:write",
+      "webhooks"
+    ]
+  },
+  "ecommerce/otto-market": {
+    "recommendedScopes": [
+      "products",
+      "orders",
+      "receipts",
+      "returns",
+      "price-reduction",
+      "shipments",
+      "shipping-profiles",
+      "availability",
+      "returns-warehouse-read",
+      "returns-warehouse-write",
+      "advertising-services"
+    ]
+  },
+  "ecommerce/plentyone": {
+    "recommendedScopes": [
+      "rest:write"
+    ]
+  },
+  "ecommerce/sap-commerce": {
+    "recommendedScopes": [
+      "basic",
+      "extended"
+    ]
+  },
+  "ecommerce/sharetribe": {
+    "recommendedScopes": [
+      "trusted:user:profile",
+      "integration_api:write"
+    ]
+  },
+  "ecommerce/shopware": {
+    "recommendedScopes": [
+      "write"
+    ]
+  },
+  "ecommerce/shopware-b2b": {
+    "recommendedScopes": [
+      "write"
+    ]
+  },
+  "inventory/bling": {
+    "readScopes": [
+      "produtos.read",
+      "estoques.read",
+      "fornecedores.read",
+      "pedidos_compra.read",
+      "depositos.read"
+    ],
+    "recommendedScopes": [
+      "produtos.read",
+      "produtos.write",
+      "estoques.read",
+      "estoques.write",
+      "fornecedores.read",
+      "fornecedores.write",
+      "pedidos_compra.read",
+      "pedidos_compra.write",
+      "depositos.read",
+      "depositos.write"
+    ]
+  },
+  "inventory/extensiv-order-manager": {
+    "readScopes": [
+      "inventory.read",
+      "orders.read",
+      "products.read",
+      "warehouses.read",
+      "suppliers.read"
+    ],
+    "recommendedScopes": [
+      "inventory.read",
+      "inventory.write",
+      "orders.read",
+      "orders.write",
+      "products.read",
+      "products.write",
+      "warehouses.read",
+      "suppliers.read"
+    ]
+  },
+  "inventory/lightspeed-inventory": {
+    "readScopes": [
+      "products:read",
+      "inventory:read",
+      "outlets:read",
+      "suppliers:read",
+      "consignments:read"
+    ],
+    "recommendedScopes": [
+      "products:read",
+      "inventory:read",
+      "outlets:read",
+      "suppliers:read",
+      "consignments:read",
+      "products:write",
+      "inventory:write",
+      "consignments:write"
+    ]
+  },
+  "inventory/sap-ewm": {
+    "readScopes": [
+      "ExtendedWarehouseManagement.WarehouseOrder.Read",
+      "ExtendedWarehouseManagement.WarehouseTask.Read",
+      "ExtendedWarehouseManagement.ProductAvailability.Read"
+    ],
+    "recommendedScopes": [
+      "ExtendedWarehouseManagement.WarehouseOrder.Read",
+      "ExtendedWarehouseManagement.WarehouseTask.Read",
+      "ExtendedWarehouseManagement.WarehouseTask.Write",
+      "ExtendedWarehouseManagement.ProductAvailability.Read"
+    ]
+  },
+  "inventory/shipbob-inventory": {
+    "readScopes": [
+      "products_read",
+      "inventory_read",
+      "receiving_read",
+      "offline_access"
+    ],
+    "recommendedScopes": [
+      "products_read",
+      "inventory_read",
+      "orders_read",
+      "receiving_read",
+      "locations_read",
+      "returns_read",
+      "offline_access"
+    ]
+  },
+  "inventory/vend-pos": {
+    "readScopes": [
+      "products:read",
+      "inventory:read",
+      "outlets:read",
+      "suppliers:read",
+      "customers:read",
+      "sales:read",
+      "consignments:read",
+      "registers:read"
+    ],
+    "recommendedScopes": [
+      "products:read",
+      "products:write",
+      "inventory:read",
+      "inventory:write",
+      "outlets:read",
+      "outlets:write",
+      "suppliers:read",
+      "suppliers:write",
+      "customers:read",
+      "customers:write",
+      "sales:read",
+      "sales:write",
+      "consignments:read",
+      "consignments:write",
+      "registers:read"
+    ]
+  },
+  "inventory/zoho-inventory": {
+    "readScopes": [
+      "ZohoInventory.items.READ",
+      "ZohoInventory.purchaseorders.READ",
+      "ZohoInventory.salesorders.READ",
+      "ZohoInventory.contacts.READ",
+      "ZohoInventory.invoices.READ",
+      "ZohoInventory.transferorders.READ",
+      "ZohoInventory.settings.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoInventory.items.READ",
+      "ZohoInventory.items.CREATE",
+      "ZohoInventory.items.UPDATE",
+      "ZohoInventory.items.DELETE",
+      "ZohoInventory.warehouses.CREATE",
+      "ZohoInventory.warehouses.UPDATE",
+      "ZohoInventory.purchaseorders.READ",
+      "ZohoInventory.purchaseorders.CREATE",
+      "ZohoInventory.purchaseorders.UPDATE",
+      "ZohoInventory.salesorders.READ",
+      "ZohoInventory.salesorders.CREATE",
+      "ZohoInventory.salesorders.UPDATE",
+      "ZohoInventory.contacts.READ",
+      "ZohoInventory.contacts.CREATE",
+      "ZohoInventory.contacts.UPDATE",
+      "ZohoInventory.invoices.READ",
+      "ZohoInventory.invoices.CREATE",
+      "ZohoInventory.invoices.UPDATE",
+      "ZohoInventory.transferorders.READ",
+      "ZohoInventory.transferorders.CREATE",
+      "ZohoInventory.transferorders.UPDATE",
+      "ZohoInventory.settings.READ"
+    ]
+  },
+  "inventory/dynamics-365-bc-inventory": {
+    "recommendedScopes": [
+      "Financials.ReadWrite.All"
+    ]
+  },
+  "inventory/acumatica-inventory": {
+    "recommendedScopes": [
+      "api"
+    ]
+  },
+  "inventory/brightpearl": {
+    "recommendedScopes": [
+      "inventory-write",
+      "products-write",
+      "orders-write"
+    ]
+  },
+  "inventory/channeladvisor": {
+    "recommendedScopes": [
+      "orders",
+      "orders.readonly",
+      "inventory",
+      "inventory.readonly"
+    ]
+  },
+  "inventory/epicor-kinetic": {
+    "recommendedScopes": [
+      "EpicorApi"
+    ]
+  },
+  "inventory/netsuite-inventory": {
+    "recommendedScopes": [
+      "rest_webservices",
+      "suite_analytics"
+    ]
+  },
+  "inventory/shiphero-inventory": {
+    "recommendedScopes": [
+      "write:inventory",
+      "write:orders",
+      "write:products",
+      "write:shipments",
+      "write:purchase_orders"
+    ]
+  },
+  "inventory/sps-commerce": {
+    "recommendedScopes": [
+      "read:documents",
+      "write:documents",
+      "read:trading_partners",
+      "read:items",
+      "write:items",
+      "read:inventory",
+      "write:inventory",
+      "read:orders",
+      "write:orders",
+      "read:asns",
+      "write:asns"
+    ]
+  },
+  "inventory/tiny-erp": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access"
+    ]
+  },
+  "inventory/unicommerce": {
+    "recommendedScopes": [
+      "offline_access",
+      "fulfillment_manage",
+      "catalog_manage",
+      "inventory_manage"
+    ]
+  },
+  "logistics/easyship": {
+    "readScopes": [
+      "public.shipment:read",
+      "public.rate:read",
+      "public.track:read",
+      "public.pickup:read"
+    ],
+    "recommendedScopes": [
+      "shipments.write",
+      "pickups.write",
+      "public.shipment:read",
+      "public.rate:read",
+      "public.track:read",
+      "public.pickup:read"
+    ]
+  },
+  "logistics/ninja-van": {
+    "readScopes": [
+      "SHIPPER_PUBLIC_APIS_GET_AWB",
+      "SHIPPER_PUBLIC_APIS_GET_SHIPPER_SETTINGS",
+      "SHIPPER_PUBLIC_APIS_GET_SUBSCRIPTIONS"
+    ],
+    "recommendedScopes": [
+      "SHIPPER_PUBLIC_APIS_CREATE_ORDER",
+      "SHIPPER_PUBLIC_APIS_CANCEL_ORDER",
+      "SHIPPER_PUBLIC_APIS_GET_AWB",
+      "SHIPPER_PUBLIC_APIS_GET_SHIPPER_SETTINGS",
+      "SHIPPER_PUBLIC_APIS_GET_SUBSCRIPTIONS",
+      "SHIPPER_PUBLIC_APIS_CREATE_SUBSCRIPTIONS",
+      "SHIPPER_PUBLIC_APIS_DELETE_SUBSCRIPTIONS"
+    ]
+  },
+  "logistics/shipbob": {
+    "readScopes": [
+      "orders_read",
+      "fulfillments_read",
+      "inventory_read",
+      "products_read",
+      "receiving_read",
+      "channels_read",
+      "webhooks_read"
+    ],
+    "recommendedScopes": [
+      "orders_read",
+      "orders_write",
+      "fulfillments_read",
+      "inventory_read",
+      "products_read",
+      "receiving_read",
+      "channels_read",
+      "webhooks_read",
+      "webhooks_write",
+      "offline_access"
+    ]
+  },
+  "logistics/tforce-freight": {
+    "readScopes": [
+      "rating",
+      "tracking",
+      "documents"
+    ],
+    "recommendedScopes": [
+      "shipping",
+      "rating",
+      "tracking",
+      "documents",
+      "pickups"
+    ]
+  },
+  "logistics/uber-freight": {
+    "readScopes": [
+      "freight.quotes",
+      "freight.tracking",
+      "freight.invoices",
+      "freight.profile"
+    ],
+    "recommendedScopes": [
+      "freight.quotes",
+      "freight.bookings",
+      "freight.tracking",
+      "freight.invoices",
+      "freight.profile"
+    ]
+  },
+  "logistics/webshipper": {
+    "readScopes": [
+      "read_orders",
+      "read_shipments",
+      "read_rates",
+      "read_carriers",
+      "read_reports",
+      "read_waybills",
+      "read_shipping_addresses",
+      "read_templates",
+      "read_users"
+    ],
+    "recommendedScopes": [
+      "write",
+      "read_orders",
+      "read_shipments",
+      "read_rates",
+      "read_carriers",
+      "read_reports",
+      "read_waybills",
+      "read_shipping_addresses",
+      "read_templates",
+      "read_users"
+    ]
+  },
+  "logistics/amazon-sp-api": {
+    "recommendedScopes": [
+      "sellingpartnerapi::notifications",
+      "sellingpartnerapi::client_credential:rotation",
+      "sellingpartnerapi::shipments:track"
+    ]
+  },
+  "logistics/dhl": {
+    "recommendedScopes": [
+      "express:shipment:create",
+      "express:pickup:create",
+      "express:address:validate"
+    ]
+  },
+  "logistics/loadsmart": {
+    "recommendedScopes": [
+      "shipments:write",
+      "quotes:write",
+      "orders:write"
+    ]
+  },
+  "logistics/stuart": {
+    "recommendedScopes": [
+      "api"
+    ]
+  },
+  "logistics/truckstop": {
+    "recommendedScopes": [
+      "loads:write",
+      "postings:write"
+    ]
+  },
+  "logistics/uber-direct": {
+    "recommendedScopes": [
+      "eats.deliveries"
+    ]
+  },
+  "logistics/xpo": {
+    "recommendedScopes": [
+      "default"
+    ]
+  },
+  "payments/checkout-com": {
+    "readScopes": [
+      "disputes:view",
+      "reports:view",
+      "financial-actions:view",
+      "balances:view",
+      "transfers:view"
+    ],
+    "recommendedScopes": [
+      "vault",
+      "gateway",
+      "payouts:manage",
+      "disputes:view",
+      "disputes:manage",
+      "sessions:app",
+      "sessions:browser",
+      "reports:view",
+      "financial-actions:view",
+      "balances:view",
+      "transfers:view"
+    ]
+  },
+  "payments/instamojo": {
+    "readScopes": [
+      "payments:read",
+      "payouts:read",
+      "store-inventory:read",
+      "store-orders:read",
+      "store-settings:read",
+      "user-contact:read",
+      "user-info:read"
+    ],
+    "recommendedScopes": [
+      "payments:read",
+      "payouts:read",
+      "store-inventory:read",
+      "store-orders:read",
+      "store-settings:read",
+      "user-contact:read",
+      "user-info:read"
+    ]
+  },
+  "payments/pagseguro": {
+    "readScopes": [
+      "payments.read",
+      "accounts.read",
+      "payments.split.read",
+      "checkout.view"
+    ],
+    "recommendedScopes": [
+      "payments.read",
+      "payments.create",
+      "accounts.read",
+      "payments.split.read",
+      "checkout.view"
+    ]
+  },
+  "payments/payoneer": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write"
+    ]
+  },
+  "payments/paypal": {
+    "readScopes": [
+      "openid",
+      "profile",
+      "email",
+      "address",
+      "phone",
+      "https://uri.paypal.com/services/reporting/search/read",
+      "https://uri.paypal.com/services/disputes/read-buyer",
+      "https://uri.paypal.com/services/disputes/read-seller"
+    ],
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "address",
+      "phone",
+      "https://uri.paypal.com/services/payments/realtimepayment",
+      "https://uri.paypal.com/services/payments/payment/authcapture",
+      "https://uri.paypal.com/services/payments/refunds",
+      "https://uri.paypal.com/services/payments/orders/checkout/actions/process",
+      "https://uri.paypal.com/services/subscriptions",
+      "https://uri.paypal.com/services/invoicing",
+      "https://uri.paypal.com/services/paypalhere",
+      "https://uri.paypal.com/services/reporting/search/read",
+      "https://uri.paypal.com/services/disputes/read-buyer",
+      "https://uri.paypal.com/services/disputes/read-seller"
+    ]
+  },
+  "payments/spoton": {
+    "readScopes": [
+      "read:payments",
+      "read:transactions",
+      "read:customers",
+      "read:orders",
+      "read:locations",
+      "read:employees",
+      "read:reports"
+    ],
+    "recommendedScopes": [
+      "read:payments",
+      "write:payments",
+      "read:transactions",
+      "read:customers",
+      "write:customers",
+      "read:orders",
+      "write:orders",
+      "read:locations",
+      "read:employees",
+      "read:reports"
+    ]
+  },
+  "payments/square": {
+    "readScopes": [
+      "PAYMENTS_READ",
+      "ORDERS_READ",
+      "CUSTOMERS_READ",
+      "INVENTORY_READ",
+      "MERCHANT_PROFILE_READ",
+      "EMPLOYEES_READ",
+      "SUBSCRIPTIONS_READ",
+      "INVOICES_READ",
+      "DISPUTES_READ",
+      "BANK_ACCOUNTS_READ",
+      "CASH_DRAWER_READ",
+      "APPOINTMENTS_READ",
+      "ITEMS_READ"
+    ],
+    "recommendedScopes": [
+      "PAYMENTS_READ",
+      "PAYMENTS_WRITE",
+      "ORDERS_READ",
+      "ORDERS_WRITE",
+      "CUSTOMERS_READ",
+      "CUSTOMERS_WRITE",
+      "INVENTORY_READ",
+      "INVENTORY_WRITE",
+      "MERCHANT_PROFILE_READ",
+      "EMPLOYEES_READ",
+      "SUBSCRIPTIONS_READ",
+      "SUBSCRIPTIONS_WRITE",
+      "INVOICES_READ",
+      "INVOICES_WRITE",
+      "DISPUTES_READ",
+      "BANK_ACCOUNTS_READ",
+      "CASH_DRAWER_READ",
+      "APPOINTMENTS_READ",
+      "APPOINTMENTS_WRITE",
+      "ITEMS_READ",
+      "ITEMS_WRITE"
+    ]
+  },
+  "payments/stripe": {
+    "readScopes": [
+      "read_only"
+    ],
+    "recommendedScopes": [
+      "read_write",
+      "read_only"
+    ]
+  },
+  "payments/sumup": {
+    "readScopes": [
+      "transactions.history",
+      "user.profile_readonly",
+      "customers.read"
+    ],
+    "recommendedScopes": [
+      "payments",
+      "transactions.history",
+      "user.profile_readonly",
+      "user.app-settings",
+      "user.profile",
+      "products",
+      "payouts",
+      "customers.read"
+    ]
+  },
+  "payments/yapily": {
+    "readScopes": [
+      "ACCOUNTS",
+      "ACCOUNT_TRANSACTIONS",
+      "ACCOUNT_BALANCES",
+      "IDENTITY",
+      "ACCOUNT_BENEFICIARIES",
+      "ACCOUNT_DIRECT_DEBITS",
+      "ACCOUNT_SCHEDULED_PAYMENTS",
+      "ACCOUNT_STATEMENTS",
+      "ACCOUNT_PERIODIC_PAYMENTS"
+    ],
+    "recommendedScopes": [
+      "payments",
+      "transfer",
+      "ACCOUNTS",
+      "ACCOUNT_TRANSACTIONS",
+      "ACCOUNT_BALANCES",
+      "IDENTITY",
+      "ACCOUNT_BENEFICIARIES",
+      "ACCOUNT_DIRECT_DEBITS",
+      "ACCOUNT_SCHEDULED_PAYMENTS",
+      "ACCOUNT_STATEMENTS",
+      "ACCOUNT_PERIODIC_PAYMENTS"
+    ]
+  },
+  "payments/mpesa": {
+    "recommendedScopes": [
+      "GlobalFeedBack:Read",
+      "GlobalFeedBack:Write"
+    ]
+  },
+  "payments/splitit": {
+    "recommendedScopes": [
+      "api.v1",
+      "api.v3"
+    ]
+  },
+  "payments/wise": {
+    "recommendedScopes": [
+      "transfers:write",
+      "balances:write",
+      "recipient_accounts:write",
+      "offline_access",
+      "openid"
+    ]
+  },
+  "payments/worldpay-fis": {
+    "recommendedScopes": [
+      "payments",
+      "refunds",
+      "disputes",
+      "payouts",
+      "tokenization"
+    ]
+  },
+  "payments/zip-bnpl": {
+    "recommendedScopes": [
+      "write:charges",
+      "write:checkouts",
+      "offline_access"
+    ]
+  },
+  "projects/airtable": {
+    "readScopes": [
+      "data.records:read",
+      "data.recordComments:read",
+      "schema.bases:read"
+    ],
+    "recommendedScopes": [
+      "data.records:read",
+      "schema.bases:read",
+      "data.records:write",
+      "data.recordComments:read",
+      "data.recordComments:write",
+      "schema.bases:write",
+      "webhook:manage"
+    ]
+  },
+  "projects/avaza": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write"
+    ]
+  },
+  "projects/jira": {
+    "readScopes": [
+      "read:jira-work",
+      "read:jira-user"
+    ],
+    "recommendedScopes": [
+      "read:jira-work",
+      "read:jira-user",
+      "write:jira-work",
+      "manage:jira-project",
+      "manage:jira-configuration",
+      "offline_access"
+    ]
+  },
+  "projects/kintone": {
+    "readScopes": [
+      "k:app_record:read",
+      "k:app_settings:read",
+      "k:file:read"
+    ],
+    "recommendedScopes": [
+      "k:app_record:read",
+      "k:app_record:write",
+      "k:app_settings:read",
+      "k:app_settings:write",
+      "k:file:read",
+      "k:file:write"
+    ]
+  },
+  "projects/lark": {
+    "readScopes": [
+      "task:task:read",
+      "task:tasklist:read",
+      "task:comment:read",
+      "contact:user.id:readonly"
+    ],
+    "recommendedScopes": [
+      "task:task:read",
+      "task:task:write",
+      "task:tasklist:read",
+      "task:tasklist:write",
+      "task:comment:read",
+      "task:comment:write",
+      "contact:user.id:readonly",
+      "offline_access"
+    ]
+  },
+  "projects/linear": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "write",
+      "issues:create",
+      "comments:create"
+    ]
+  },
+  "projects/microsoft-planner": {
+    "readScopes": [
+      "Tasks.Read",
+      "Group.Read.All",
+      "User.Read"
+    ],
+    "recommendedScopes": [
+      "Tasks.Read",
+      "Group.Read.All",
+      "Tasks.ReadWrite",
+      "User.Read"
+    ]
+  },
+  "projects/microsoft-todo": {
+    "readScopes": [
+      "Tasks.Read",
+      "User.Read"
+    ],
+    "recommendedScopes": [
+      "Tasks.Read",
+      "Tasks.ReadWrite",
+      "User.Read"
+    ]
+  },
+  "projects/monday": {
+    "readScopes": [
+      "me:read",
+      "boards:read",
+      "workspaces:read",
+      "updates:read",
+      "users:read"
+    ],
+    "recommendedScopes": [
+      "me:read",
+      "boards:read",
+      "workspaces:read",
+      "updates:read",
+      "users:read",
+      "boards:write",
+      "updates:write"
+    ]
+  },
+  "projects/pingcode": {
+    "readScopes": [
+      "pcp:read:pjm:project",
+      "pcp:read:pjm:workitem",
+      "pcp:read:pjm:sprint",
+      "pcp:read:pjm:board",
+      "pcp:read:pjm:release",
+      "pcp:read:pjm:configuration",
+      "pcp:read:global:team",
+      "pcp:read:account:personal",
+      "pcp:read:wiki:page",
+      "pcp:read:wiki:space"
+    ],
+    "recommendedScopes": [
+      "pcp:read:pjm:project",
+      "pcp:write:pjm:project",
+      "pcp:read:pjm:workitem",
+      "pcp:write:pjm:workitem",
+      "pcp:read:pjm:sprint",
+      "pcp:write:pjm:sprint",
+      "pcp:read:pjm:board",
+      "pcp:write:pjm:board",
+      "pcp:read:pjm:release",
+      "pcp:write:pjm:release",
+      "pcp:read:pjm:configuration",
+      "pcp:write:pjm:configuration",
+      "pcp:read:global:team",
+      "pcp:write:global:team",
+      "pcp:read:account:personal",
+      "pcp:read:wiki:page",
+      "pcp:write:wiki:page",
+      "pcp:read:wiki:space",
+      "pcp:write:wiki:space"
+    ]
+  },
+  "projects/productboard": {
+    "readScopes": [
+      "entities:read",
+      "notes:read"
+    ],
+    "recommendedScopes": [
+      "write:features",
+      "write:notes",
+      "entities:read",
+      "notes:read"
+    ]
+  },
+  "projects/quire": {
+    "readScopes": [
+      "read"
+    ],
+    "recommendedScopes": [
+      "read",
+      "task_write",
+      "project_write"
+    ]
+  },
+  "projects/smartsheet": {
+    "readScopes": [
+      "READ_SHEETS",
+      "READ_USERS"
+    ],
+    "recommendedScopes": [
+      "READ_SHEETS",
+      "READ_USERS",
+      "WRITE_SHEETS",
+      "SHARE_SHEETS",
+      "ADMIN_SHEETS"
+    ]
+  },
+  "projects/todoist": {
+    "readScopes": [
+      "data:read"
+    ],
+    "recommendedScopes": [
+      "data:read",
+      "data:read_write",
+      "data:delete",
+      "project:delete"
+    ]
+  },
+  "projects/wrike": {
+    "readScopes": [
+      "wsReadOnly",
+      "amReadOnlyUser",
+      "amReadOnlyGroup",
+      "amReadOnlyInvitation",
+      "amReadOnlyWorkflow"
+    ],
+    "recommendedScopes": [
+      "Default",
+      "wsReadOnly",
+      "wsReadWrite",
+      "amReadOnlyUser",
+      "amReadWriteUser",
+      "amReadOnlyGroup",
+      "amReadWriteGroup",
+      "amReadOnlyInvitation",
+      "amReadWriteInvitation",
+      "amReadOnlyWorkflow",
+      "amReadWriteWorkflow"
+    ]
+  },
+  "projects/yandex-tracker": {
+    "readScopes": [
+      "tracker:read"
+    ],
+    "recommendedScopes": [
+      "tracker:read",
+      "tracker:write"
+    ]
+  },
+  "projects/zoho-bugtracker": {
+    "readScopes": [
+      "ZohoBugTracker.bugs.READ",
+      "ZohoBugTracker.projects.READ",
+      "ZohoBugTracker.milestones.READ",
+      "ZohoBugTracker.users.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoBugTracker.bugs.READ",
+      "ZohoBugTracker.bugs.CREATE",
+      "ZohoBugTracker.bugs.UPDATE",
+      "ZohoBugTracker.bugs.DELETE",
+      "ZohoBugTracker.projects.READ",
+      "ZohoBugTracker.milestones.READ",
+      "ZohoBugTracker.users.READ"
+    ]
+  },
+  "projects/zoho-projects": {
+    "readScopes": [
+      "ZohoProjects.projects.READ",
+      "ZohoProjects.tasks.READ",
+      "ZohoProjects.milestones.READ",
+      "ZohoProjects.timesheets.READ",
+      "ZohoProjects.users.READ",
+      "ZohoProjects.bugs.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoProjects.projects.READ",
+      "ZohoProjects.tasks.READ",
+      "ZohoProjects.projects.CREATE",
+      "ZohoProjects.projects.UPDATE",
+      "ZohoProjects.projects.DELETE",
+      "ZohoProjects.tasks.CREATE",
+      "ZohoProjects.tasks.UPDATE",
+      "ZohoProjects.tasks.DELETE",
+      "ZohoProjects.milestones.READ",
+      "ZohoProjects.milestones.CREATE",
+      "ZohoProjects.timesheets.READ",
+      "ZohoProjects.timesheets.CREATE",
+      "ZohoProjects.users.READ",
+      "ZohoProjects.bugs.READ",
+      "ZohoProjects.bugs.CREATE",
+      "ZohoProjects.bugs.UPDATE"
+    ]
+  },
+  "projects/zoho-sprints": {
+    "readScopes": [
+      "ZohoSprints.sprints.READ",
+      "ZohoSprints.items.READ",
+      "ZohoSprints.projects.READ",
+      "ZohoSprints.epic.READ",
+      "ZohoSprints.timesheets.READ",
+      "ZohoSprints.teamusers.READ"
+    ],
+    "recommendedScopes": [
+      "ZohoSprints.sprints.READ",
+      "ZohoSprints.sprints.CREATE",
+      "ZohoSprints.sprints.UPDATE",
+      "ZohoSprints.sprints.DELETE",
+      "ZohoSprints.items.READ",
+      "ZohoSprints.items.CREATE",
+      "ZohoSprints.items.UPDATE",
+      "ZohoSprints.items.DELETE",
+      "ZohoSprints.projects.READ",
+      "ZohoSprints.projects.CREATE",
+      "ZohoSprints.projects.UPDATE",
+      "ZohoSprints.projects.DELETE",
+      "ZohoSprints.epic.READ",
+      "ZohoSprints.epic.CREATE",
+      "ZohoSprints.epic.UPDATE",
+      "ZohoSprints.epic.DELETE",
+      "ZohoSprints.timesheets.READ",
+      "ZohoSprints.timesheets.CREATE",
+      "ZohoSprints.timesheets.UPDATE",
+      "ZohoSprints.timesheets.DELETE",
+      "ZohoSprints.teamusers.READ",
+      "ZohoSprints.teamusers.CREATE",
+      "ZohoSprints.teamusers.UPDATE",
+      "ZohoSprints.teamusers.DELETE"
+    ]
+  },
+  "projects/aha": {
+    "recommendedScopes": [
+      "write"
+    ]
+  },
+  "projects/awork": {
+    "recommendedScopes": [
+      "full_access",
+      "offline_access"
+    ]
+  },
+  "projects/bitrix24": {
+    "recommendedScopes": [
+      "task",
+      "user",
+      "user.userfield",
+      "imopenlines",
+      "crm",
+      "department"
+    ]
+  },
+  "projects/buildertrend": {
+    "recommendedScopes": [
+      "openid",
+      "profile",
+      "email",
+      "offline_access",
+      "buildertrend-api"
+    ]
+  },
+  "projects/height": {
+    "recommendedScopes": [
+      "api"
+    ]
+  },
+  "projects/meistertask": {
+    "recommendedScopes": [
+      "userinfo.profile",
+      "userinfo.email",
+      "meistertask"
+    ]
+  },
+  "projects/openproject": {
+    "recommendedScopes": [
+      "api_v3"
+    ]
+  },
+  "projects/suiteprojects-pro": {
+    "recommendedScopes": [
+      "bi",
+      "rest",
+      "soap",
+      "xml"
+    ]
+  },
+  "projects/youtrack": {
+    "recommendedScopes": [
+      "YouTrack"
+    ]
+  }
+}

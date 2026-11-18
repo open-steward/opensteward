@@ -1,0 +1,524 @@
+name: test
+
+# Regression gate. Runs the full Vitest suite — unit, integration, and the
+# user-journey suites under each app's tests/journeys/ — on every PR and on
+# pushes to main. A red run names the journey (and therefore the user-facing
+# behaviour) that a change broke.
+#
+# Four jobs:
+#   - test            : guards (read-scopes, guides, openapi-examples,
+#                       transform-tests, transform-schema-assertions), the 11
+#                       non-integration-server workspaces, then check:docs.
+#   - test-adapters   : integration-server only, split six ways with
+#                       `vitest --shard=i/6` (matrix, fail-fast: false so one
+#                       red shard doesn't hide the others). Sharding is by
+#                       file, not by test: across the full suite vitest
+#                       spends ~1,258s loading modules against ~42s executing
+#                       assertions, so wall-clock tracks file count, not test
+#                       count. Parallelism, not fewer tests, is the lever —
+#                       tune the shard count against file count.
+#   - test-postgres   : `scripts/test-pg.sh`, the same script as `pnpm test:pg`
+#                       locally — the dual-backend store suites
+#                       (@opensteward/shared, @opensteward/destinations,
+#                       admin-api, webhook-gateway) against a real Postgres,
+#                       run SERIALLY across packages via turbo
+#                       `--concurrency=1`. shared, destinations and admin-api
+#                       gate `fileParallelism: false` (on TEST_DATABASE_URL) so
+#                       their own files don't collide on the one shared
+#                       database; webhook-gateway resets via targeted
+#                       `DROP TABLE IF EXISTS deliveries` /
+#                       `_schema_migrations` and has no fileParallelism gate.
+#                       Then the integration-server files that read
+#                       TEST_DATABASE_URL, serially: SQL access (its own
+#                       throwaway database) and metrics.
+#   - compose-smoke   : the only job that starts docker-compose.yml. Builds the
+#                       five published images, brings the stack up gated on
+#                       every healthcheck, probes each published port from the
+#                       runner, and mutation-tests each healthcheck to prove it
+#                       is capable of failing. Vitest cannot see any of this:
+#                       the whole suite passes against an image whose
+#                       healthcheck binary does not exist.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Pin the timezone for every job. The shared toIsoDatetime parses offset-less
+# datetimes via `new Date()`, which resolves in the host's local zone, so an
+# unpinned runner makes timestamp assertions host-dependent. Belt-and-braces
+# with the vitest configs: this also covers the guard scripts and check:docs.
+env:
+  TZ: UTC
+
+jobs:
+  test:
+    name: guards + app suites
+    runs-on: ubuntu-latest
+    # Adapter (integration-server) suites run in the sharded `test-adapters`
+    # matrix below. This job covers the 11 other workspaces (~355 tests),
+    # the five static guards, and check:docs — which regenerates every
+    # generated artifact and is the slowest thing here.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      # pnpm version is pinned in package.json `packageManager`; specifying
+      # it here too triggers ERR_PNPM_BAD_PM_VERSION when they diverge.
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: turbo cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: install
+        run: pnpm install --frozen-lockfile
+      # Tests `dependsOn: ['^build']` in turbo.json, so workspace dependencies
+      # must be built first. `tsc` is the native TypeScript 7 binary and does
+      # not run on Node, so NODE_OPTIONS heap settings would have no effect
+      # here.
+      - name: build
+        run: pnpm build
+      # Static regression guards. Cheap, read-only checks that fail the build
+      # on classes of drift Vitest can't see. Run before the suite so a guard
+      # failure surfaces fast.
+      - name: guard — read-only scopes (no write scope leaks into readScopes)
+        run: pnpm check:read-scopes
+      # Every verification badge in platforms/metadata.ts has a matching entry
+      # in scripts/adapter-verification-audit.json, and the README count
+      # agrees. Its "badge is stale" warnings compare against each adapter's
+      # last commit, which a shallow checkout cannot see, so they are noise
+      # here; only its errors fail the step.
+      - name: guard — every verification badge has evidence in the audit ledger
+        run: pnpm check:adapter-verification
+      - name: guard — guides reference valid anchors and assets
+        run: pnpm check:guides
+      - name: guard — every OpenAPI component field has an example
+        run: pnpm check:openapi-examples
+      # A generated secret can be documented in .env.example and set by the
+      # operator yet never reach the container, silently disabling the control
+      # it guards (missing ADMIN_SECRET: 403s everywhere; missing
+      # BOOTSTRAP_TOKEN: unauthenticated first-run admin creation). Each file
+      # can be correct alone; this guard checks the join.
+      # integration-server compiles as eleven per-vertical project references,
+      # not one program — that is what keeps its typecheck near 1.3 GB instead
+      # of 4.1 GB. A vertical that lands without a tsconfig, or an aggregate
+      # that stops referencing one, is in no project at all: never typechecked,
+      # never emitted, and green.
+      - name: guard — every vertical has a project and nothing builds with a bare tsc
+        run: pnpm check:project-references
+      # And the check that the check can fail: against a solution tsconfig a
+      # bare `tsc --noEmit` compiles nothing and exits 0 in a tenth of a second.
+      # Injects a real type error and requires the typecheck to catch it.
+      - name: guard — the typecheck is not vacuous
+        run: pnpm check:typecheck-bites
+      - name: guard — every generated secret reaches the service that reads it
+        run: pnpm check:secret-passthrough
+      # pnpm publish rewrites workspace:* to a plain version, so a published npm
+      # package that depends on @opensteward/shared (private, never published)
+      # installs with a dependency nobody can resolve. Also pins each package's
+      # license (Apache-2.0: mcp-server, sdk; Elastic-2.0: license-token) and
+      # publish-npm.yml's publish loop and build filters to the same list.
+      - name: guard — published npm packages install from the registry and carry their license
+        run: pnpm check:published-packages
+      # LOG_REDACT_PATHS only protects loggers built by buildLoggerConfig. An
+      # app constructing its own `Fastify({ logger: true })` silently opts out
+      # of redaction for auth headers, cookies and upstream errors.
+      - name: guard — every Fastify instance logs through the shared redaction
+        run: pnpm check:server-logging
+      # Which license public keys the product trusts: exactly the five
+      # production kids, well-formed, no dev key reused, dev1 matching its
+      # fixture, keys.dev never imported statically. The Dockerfile's
+      # --artifact run checks compiled output; --release (release.ts,
+      # images.yml) adds placeholders and the signed revocation list.
+      - name: guard — the license key ring is exactly the five production kids
+        run: pnpm check:license-keys
+      # An adapter that prefixes Contact.id to merge customers+suppliers into
+      # one canonical list, but emits a bare contactId, produces a foreign key
+      # that resolves to nothing — silently, since nothing validates transform
+      # output in production. 19 adapters are allowlisted as pre-existing; the
+      # gate is closed for anything new.
+      - name: guard — contactId foreign keys resolve
+        run: pnpm check:contact-fk-prefix
+      # `[]` asserts "this document has no line items". Defaulting a source
+      # collection the platform never returned to `[]` states that falsely, and
+      # nothing downstream can detect it. Baseline: 1292 pre-existing mappers;
+      # the gate is closed for anything new.
+      - name: guard — nullish collections are not defaulted to []
+        run: pnpm check:collection-null-policy
+      # Canonical field names are the product's public vocabulary — they reach
+      # the OpenAPI spec, SDK, CLI and every MCP tool description, so an
+      # outlier is permanent once anyone pins to it. CRM is allowlisted.
+      - name: guard — canonical schema fields are camelCase
+        run: pnpm check:schema-field-casing
+      # One-way coverage ratchet: a new adapter without a transform test, or a
+      # baseline adapter that lost its test, fails the build. See
+      # scripts/transform-test-baseline.json.
+      - name: guard — adapter transform-test ratchet holds
+        run: pnpm check:transform-tests
+      # Companion ratchet: a transform test that never parses its output
+      # against the canonical schema cannot catch transforms emitting
+      # schema-invalid output undetected. Baseline: 338 files the gate
+      # tolerates (290 flat-layout + 28 stub-throw + 19 no-schema + 1 genuine
+      # open bug — see docs/architecture/testing.md).
+      - name: guard — transform tests assert schema validity
+        run: pnpm check:transform-schema-assertions
+      # An adapter's metadata.ts declares which resources the platform has;
+      # nothing reads it at runtime, so nothing notices when index.ts and
+      # metadata.ts disagree. The case it was built for: ShipBob gained listCarriers
+      # while its declaration still said carrier was unavailable. Declared
+      # unavailable + a method = contradiction, fails the build. Baseline: 7
+      # pre-existing logistics `rate` contradictions (each needs a method
+      # deleted or a live check) in scripts/adapter-declaration-baseline.json;
+      # the gate is closed for anything new. Available-but-unimplemented is
+      # backlog, reported only.
+      - name: guard — adapter metadata declarations do not contradict index.ts
+        run: pnpm check:adapter-declarations
+      # Money scaled by a literal 100 instead of the currency-aware helpers in
+      # @opensteward/shared. Right for the ~95% of ISO-4217 with two fractional
+      # digits, silently wrong for the rest: JPY/KRW have none (¥1000 becomes
+      # ¥100,000) and BHD/KWD/OMR have three (a tenth of the real amount).
+      # 548 pre-existing sites are grandfathered in
+      # scripts/money-scaling-baseline.json; the gate is closed for anything
+      # new. Write-path hits are listed first — those persist a wrong number on
+      # the customer's own records.
+      - name: guard — money is not scaled by a hardcoded 100
+        run: pnpm check:money-scaling
+      # A "clone" adapter keeps its reference adapter's literal
+      # vendor-specific request paths (e.g. an Asana-shaped
+      # /tasks/{id}/stories in a ClickUp adapter) instead of calling its own
+      # vendor's real API. Static scan over adapters/*/{index,client,constants}.ts,
+      # reference adapters (asana, zendesk, cin7-core) excluded. Baseline: 88
+      # pre-existing offenders (39 projects + 25 customer-support + 24
+      # inventory) in scripts/clone-signature-baseline.json; the gate is
+      # closed for anything new. payments' /charges is a sweep, not a
+      # signature — reported only under --report, never fails.
+      - name: guard — non-reference adapters do not call a reference adapter's vendor-specific paths
+        run: pnpm check:clone-signatures
+      # Every adapter's list* methods are called for page 1, page 2 and page 1
+      # again through the real parseListQuery(limit=10), then page 1 at
+      # limit=7 (a size has to follow the limit, not merely equal 10), with
+      # axios and fetch replaced by an in-process recorder (any socket that
+      # opens anyway is refused and fails the step). The recorded requests are
+      # classified by VALUE, not parameter name: page-ignored (page 2 repeats
+      # page 1; -unsized when no request carries a size), page1-skips (offset
+      # = page × limit, or page sent + 1), page-stride (position moves by
+      # neither 1 nor the limit), first-page-only, over-asks, fixed-size.
+      # Failing list methods are banked in scripts/paging-contract-baseline.json
+      # and the ones the stubs cannot measure in
+      # scripts/paging-contract-unmeasured-baseline.json (`--report` prints the
+      # counts by vertical and verdict). Both are strict: a
+      # new entry fails, and a fixed one fails until `--update` banks it. A
+      # full sweep under 75% measured fails even with --soft. Runs after
+      # `pnpm build` because adapters load shared's dist; ~7s warm, ~15s cold.
+      - name: guard — list methods page by the caller's limit and position
+        run: pnpm check:paging-contract
+      # The data viewer, exports and destinations mask stored records by the
+      # per-vertical sidecars in verticals/<v>/schema/classification.ts. A
+      # listable resource type without one is served fully masked, and a
+      # field named like personal data (email, phone, address, iban, …) left
+      # internal is served in clear. Business-facility addresses are
+      # allow-listed in the script with a reason; stale entries fail too.
+      - name: guard — every stored resource type has a field classification
+        run: pnpm check:field-classification
+      # Read-only SQL access exposes one view per stored resource type
+      # (apps/integration-server/src/analytics/view-catalog.ts). BI queries are
+      # written against those columns, so removing a view or column, or changing
+      # a type, fails until catalog.lock.json is updated with `--update` (which
+      # bumps the catalog version). Additive changes pass with a note.
+      - name: guard — SQL view catalog changes are acknowledged in catalog.lock.json
+        run: pnpm check:analytics-catalog
+      # Boots admin-api with a route recorder and reads the guards every route
+      # carries: each route must authenticate (JWT, service secret or SCIM
+      # token) unless it is on the reasoned public allow-list, every route on
+      # the data-access surfaces (data, dashboards, destinations, SQL access,
+      # Superset, roles) must check its documented permission, and every
+      # fail-closed (SCOPE_RESTRICTED) route must declare its 403 in OpenAPI.
+      # Also part of admin-api's unit suite; a named step so a miss says why.
+      - name: guard — every admin-api route authenticates and data routes check a permission
+        run: pnpm check:route-access
+      # The license check has no off switch (handover §5.2): no env var,
+      # setting or flag named like a bypass, licensing reads no environment
+      # (P1), imports no network client and calls no global fetch or
+      # WebSocket (§5.9), and nothing gates on tier (§3).
+      - name: guard — the license check has no off switch or side door
+        run: pnpm check:no-license-bypass
+      # GitHub Actions sets CI=true on every runner, and under that env
+      # prettier colours its `[warn]` lines — which defeats naive file-count
+      # extraction. check-warning-gates.ts strips ANSI centrally; this step
+      # exercises the extractor functions directly against fixed fixtures
+      # (coloured and not) so that behaviour can't silently regress — unlike
+      # the three ratchet steps below, it doesn't depend on any tool actually
+      # emitting colour in whatever environment happens to run it.
+      - name: guard — warning-gate extractor regression tests
+        run: pnpm test:warning-gates
+      - name: guard scripts — unit tests
+        run: pnpm test:guard-scripts
+      # tests/** sits outside every workspace's tsconfig `include`, so
+      # tsconfig.test.json exists to typecheck them (otherwise e.g. a dropped
+      # fixture type annotation goes unnoticed).
+      # Ratcheted, not warning-only: scripts/check-warning-gates.ts
+      # compares the error count against scripts/warning-gate-baseline.json
+      # and fails the build on any increase — or on a decrease, since that
+      # means the baseline is stale and must be shrunk deliberately via
+      # `--update`. `tsc` is the native TypeScript 7 binary, which does not
+      # run on Node and ignores NODE_OPTIONS entirely; the only Node process
+      # here is tsx running check-warning-gates.ts as an orchestrator, so no
+      # heap bump is needed.
+      - name: guard — typecheck (test files) ratchet holds
+        run: pnpm check:warning-gates typecheck-tests
+      # `lint` only exists in 5 of 12 workspaces (packages/shared, cli,
+      # platforms-ui, sdk, and apps/integration-server) — `pnpm -r run lint`
+      # silently skips the other 7 (admin, admin-api, docs-server,
+      # mcp-server, webhook-gateway, codegen, design-system). Ratcheted, not
+      # warning-only: baseline is 48 errors in packages/shared and
+      # apps/integration-server; warnings are not counted or gated. The
+      # ratchet can be dropped once it reaches 0.
+      - name: guard — lint ratchet holds
+        run: pnpm check:warning-gates lint
+      # Scoped to scripts/ and packages/*/src TypeScript only — markdown
+      # (docs/architecture/testing.md and others) carries formatting drift,
+      # and reformatting it would bury real diffs, so markdown stays excluded
+      # from this and any future prettier gate. Ratcheted, not warning-only:
+      # baseline is 112 files failing `--check` under this glob. The ratchet
+      # can be dropped once it reaches 0.
+      - name: guard — prettier (TypeScript only) ratchet holds
+        run: pnpm check:warning-gates prettier
+      # Every workspace except integration-server, whose suites are sharded
+      # into the matrix job below. Verified scope: 11 packages.
+      - name: test (sqlite, non-adapter workspaces)
+        run: pnpm exec turbo run test --filter='!integration-server'
+      # Heaviest guard last: regenerates every generated artifact (OpenAPI,
+      # Postman, SDK types, CLI) via `pnpm docs:all` and fails if the committed
+      # copies are stale. Mutates the working tree, so it runs after the suite.
+      - name: guard — generated docs are fresh
+        run: pnpm check:docs
+
+  test-adapters:
+    name: adapter suites (shard ${{ matrix.shard }}/6)
+    runs-on: ubuntu-latest
+    # A shard is ~1,300 files, mean 14,052 tests (range 13,472-15,398).
+    # Measured full-job wall clock including install and build: 558-656s
+    # (9.3-10.9 min) across the six shards. 25 is generous headroom above the
+    # slowest observed.
+    timeout-minutes: 25
+    strategy:
+      # One shard failing must not cancel the others — a red shard should
+      # still let you see whether the rest are green.
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: turbo cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: build
+        run: pnpm build
+      # vitest --shard partitions by file. The config at
+      # apps/integration-server/vitest.config.ts pins TZ=UTC and the
+      # `tests/**/*.test.ts` include glob and does not override partitioning.
+      - name: test (sqlite, shard ${{ matrix.shard }}/6)
+        run: pnpm --filter integration-server exec vitest run --shard=${{ matrix.shard }}/6
+
+  test-postgres:
+    name: dual-backend (postgres)
+    runs-on: ubuntu-latest
+    # The test step alone took 9 min on 2026-10-01 and 11.5 min on 10-05, and
+    # was still passing suites when 15 min cut it off on 10-25 and 10-26.
+    # 30 leaves room to grow; a real hang still ends it.
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: osdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: turbo cache
+        uses: actions/cache@v6
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+      - name: install
+        run: pnpm install --frozen-lockfile
+      # Build first: the dual-backend suites import the BUILT `@opensteward/shared`
+      # (`import { openDb } from '@opensteward/shared'`), and turbo's `test` task
+      # only `dependsOn: ['^build']` (deps), not each package's own dist — so
+      # `packages/shared/dist` must be produced here or the import won't resolve.
+      - name: build
+        run: pnpm build
+      # The same script as `pnpm test:pg` locally, pointed at the service
+      # container instead of starting its own (TEST_PG_URL), so the two run
+      # exactly the same suites:
+      #   - turbo `test` for @opensteward/shared, @opensteward/destinations,
+      #     admin-api and webhook-gateway, one workspace at a time
+      #     (--concurrency=1) so per-file Postgres resets never collide on the
+      #     single shared database. shared, destinations and admin-api reset
+      #     via `DROP SCHEMA public CASCADE`; webhook-gateway via targeted
+      #     `DROP TABLE IF EXISTS deliveries` / `_schema_migrations`.
+      #   - integration-server: only the files that read TEST_DATABASE_URL
+      #     (found by grep), serially — today the SQL-access suite (its own
+      #     throwaway database and random role prefix, dropped afterwards) and
+      #     the metrics suite.
+      - name: test (postgres)
+        run: bash scripts/test-pg.sh
+        env:
+          TEST_PG_URL: postgres://postgres:test@localhost:5432/osdb
+
+  compose-smoke:
+    name: compose stack smoke
+    runs-on: ubuntu-latest
+    # Measured: a cold build of all five images dominates this job; the stack
+    # itself comes up in ~90s (the healthcheck chain is
+    # integration-server -> {admin-api, docs-server, webhook-gateway} -> admin
+    # at interval 30s), and the meta-test adds one more ~90s cycle against
+    # already-built images.
+    timeout-minutes: 60
+    steps:
+      # fetch-depth 2 so a pull_request merge commit still has both parents:
+      # HEAD^1 is the base branch tip, so `git diff HEAD^1 HEAD` is exactly
+      # what the PR changes.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+      # Building five images is by far the most expensive thing in this
+      # workflow, and the Dockerfile installs AFTER copying sources
+      # (`COPY packages/` + `COPY apps/${APP}/` precede
+      # `pnpm install --frozen-lockfile`), so any source change invalidates
+      # every cacheable layer — a build cache would be cold on most PRs
+      # anyway. Rather than pay that on every adapter PR, this runs:
+      #   - always on push to main and workflow_dispatch, and
+      #   - on PRs that touch what can actually break the stack: the
+      #     Dockerfile, .dockerignore (it IS the build context — one added
+      #     entry excluding something the Dockerfile COPYs breaks every
+      #     image), the compose file, the lockfile (a dependency without a
+      #     musl prebuild breaks the image and nothing else), the workflows,
+      #     the smoke test and the secret generator it depends on, or what
+      #     its licence section checks (the in-image probe, the key check
+      #     the Dockerfile runs, packages/shared/src/licensing and the
+      #     license-token package it imports at runtime).
+      # Known gap, accepted deliberately: an app-source change that breaks
+      # container boot is caught post-merge on main, not on the PR.
+      # The diff is fail-safe — if the merge-commit assumption does not hold
+      # it runs the job rather than skipping it, so this can over-trigger but
+      # never silently under-trigger.
+      - name: scope — does this change touch the container stack?
+        id: scope
+        run: |
+          set -euo pipefail
+          decide() { echo "run=$1" >> "$GITHUB_OUTPUT"; echo "run=$1 ($2)"; exit 0; }
+          [ "$GITHUB_EVENT_NAME" = "pull_request" ] || decide true "event is $GITHUB_EVENT_NAME"
+          git rev-parse -q --verify 'HEAD^2' >/dev/null \
+            || decide true "not a PR merge commit — cannot diff, so running rather than skipping"
+          changed="$(git diff --name-only 'HEAD^1' HEAD)"
+          echo "changed files: $(printf '%s\n' "$changed" | wc -l)"; echo "$changed" | sed 's/^/  /'
+          # Herestring, NOT `printf ... | grep -q`. `grep -q` exits the instant
+          # it matches; on a large diff printf is still writing, takes SIGPIPE,
+          # and `pipefail` promotes 141 to the pipeline's status — so the `if`
+          # goes FALSE on a diff that DID match and the job silently disables
+          # itself. `git diff --name-only` sorts `.github/…` and `Dockerfile`
+          # to the top, so grep matches on line 1 while ~90KB is still
+          # unwritten: threshold is ~700-800 paths, which a `pnpm docs:all`
+          # regeneration or a prettier sweep across 1,548 adapter dirs clears
+          # easily. Reproduced on ubuntu:24.04 / GNU grep 3.11 (macOS BSD grep
+          # does not exhibit it, which is how it survived local testing). A
+          # herestring is a temp file, not a pipe, so there is nothing to
+          # SIGPIPE.
+          if grep -qE '^(Dockerfile|\.dockerignore|docker-compose\.yml|pnpm-lock\.yaml|\.github/workflows/|scripts/(compose-smoke|generate-secrets|image-license-probe|check-license-keys)|packages/shared/src/licensing/|packages/license-token/src/)' <<<"$changed"; then
+            decide true "PR touches the container stack"
+          fi
+          decide false "PR touches no container-stack file"
+      # No setup-node / pnpm here on purpose: nothing in this job runs on the
+      # runner's Node. The build happens inside the Dockerfile, which pins its
+      # own toolchain (node:24-alpine), and the smoke script itself is bash +
+      # docker + curl + jq + openssl, all preinstalled on ubuntu-latest.
+      #
+      # Builds the five images, `up -d --wait` (which IS the
+      # `condition: service_healthy` chain, asserted in one flag), curls
+      # /health on every published port from the runner rather than trusting
+      # the in-container healthcheck, and then re-runs each service's own
+      # healthcheck command — read back from `docker inspect`, never hardcoded
+      # — against a dead port and requires it to exit non-zero. Dumps
+      # `compose ps` + per-service logs on failure and always tears down with
+      # `down -v`.
+      #
+      # `!= 'false'`, not `== 'true'`, and the asymmetry is the point: if the
+      # scope plumbing ever breaks — `id: scope` renamed, the output key
+      # typo'd, $GITHUB_OUTPUT unwritable, the step dying before `decide` — the
+      # expression evaluates to '' and `== 'true'` would skip BOTH expensive
+      # steps while the job still reported SUCCESS. A permanently green check
+      # asserting nothing, on a job testing.md tells maintainers to require.
+      # Inverted, an absent or empty value runs the job instead.
+      - name: smoke — build, start, probe, mutation-test every healthcheck
+        if: steps.scope.outputs.run != 'false'
+        run: scripts/compose-smoke.sh
+      # Test the test. Everything above passes identically against a
+      # healthcheck that always returns success, which is precisely the bug
+      # class this job exists to catch — so run the same script again with
+      # scripts/compose-smoke-fail-open.yml merged on top (a node one-liner
+      # that swallows its connection error, a `|| true`, and a disabled
+      # healthcheck) and require it to go RED, for those exact reasons.
+      # Reuses the images the previous step built, so it costs one more
+      # up/teardown cycle and no rebuild. If this step ever passes, the
+      # negative control above has stopped asserting anything.
+      - name: meta-test — the mutation test catches a fail-open healthcheck
+        if: steps.scope.outputs.run != 'false'
+        run: |
+          set -uo pipefail
+          log="$RUNNER_TEMP/fail-open.log"
+          if SMOKE_EXTRA_COMPOSE_FILE=scripts/compose-smoke-fail-open.yml \
+             scripts/compose-smoke.sh >"$log" 2>&1; then
+            echo "::error::compose-smoke.sh PASSED against deliberately fail-open healthchecks — its negative control is not asserting anything"
+            cat "$log"
+            exit 1
+          fi
+          # Non-zero is necessary but not sufficient: it has to have failed for
+          # the right reason, once per fail-open shape in the overlay.
+          missing=0
+          while IFS= read -r want; do
+            [ -n "$want" ] || continue
+            grep -qF "$want" "$log" || { echo "::error::expected failure not reported: $want"; missing=1; }
+          done <<'EOF'
+          admin: healthcheck exits 0 against dead port
+          integration-server: healthcheck exits 0 against dead port
+          webhook-gateway: no healthcheck
+          EOF
+          if [ "$missing" -ne 0 ]; then cat "$log"; exit 1; fi
+          echo "the smoke test correctly went red against fail-open healthchecks:"
+          grep -E 'FAIL|PASS' "$log"

@@ -1,0 +1,58 @@
+{
+  "name": "admin",
+  "version": "1.0.0",
+  "description": "Admin panel for OpenSteward — manage connections, monitor health, onboard integrations",
+  "license": "Elastic-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "docs:screenshots": "tsx scripts/screenshots/run.ts",
+    "docs:screenshots:clean": "tsx scripts/screenshots/clean.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.5",
+    "@fastify/formbody": "^9.0.1",
+    "@fastify/helmet": "^13.2.0",
+    "@fastify/rate-limit": "^11.2.2",
+    "@fastify/static": "^10.1.10",
+    "@fastify/view": "^12.0.1",
+    "@opensteward/design-system": "workspace:*",
+    "@opensteward/platforms-ui": "workspace:*",
+    "@opensteward/shared": "workspace:^",
+    "@superset-ui/embedded-sdk": "0.4.0",
+    "axios": "^1.21.1",
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^13.1.1",
+    "dotenv": "^18.0.10",
+    "echarts": "6.1.0",
+    "ejs": "^7.0.2",
+    "fastify": "^5.12.8",
+    "js-yaml": "^5.5.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/ejs": "^3.1.5",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.6.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "playwright": "^1.65.0",
+    "tsx": "^4.23.15",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

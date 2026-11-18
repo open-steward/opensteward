@@ -1,0 +1,43 @@
+{
+  "totalResults": 1,
+  "_embedded": {
+    "http://api.3plCentral.com/rels/properties/facility": [
+      {
+        "facilityId": 1,
+        "name": "str",
+        "deactivated": true,
+        "usePredefinedLocations": true,
+        "code": "str",
+        "upsAccount": "str",
+        "fedExAccount": "str",
+        "fuelSurcharge": 7,
+        "locationFieldCount": 8,
+        "measurementSystemDefault": 64,
+        "lastCloseDate": "2016-12-25T23:00:00",
+        "freightRateLocationCode": "str",
+        "timeZoneName": "str",
+        "shippingZip": "str",
+        "contact": {
+          "contactId": 1,
+          "companyName": "str",
+          "name": "str",
+          "title": "str",
+          "address1": "str",
+          "address2": "str",
+          "city": "str",
+          "state": "str",
+          "zip": "str",
+          "country": "str",
+          "phoneNumber": "str",
+          "fax": "str",
+          "emailAddress": "str",
+          "dept": "str",
+          "code": "str",
+          "addressStatus": 0
+        },
+        "preventPartialOrderManualAllocation": true,
+        "rowVersion": "str"
+      }
+    ]
+  }
+}

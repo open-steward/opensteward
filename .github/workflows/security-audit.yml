@@ -1,0 +1,91 @@
+name: security-audit
+
+on:
+  pull_request:
+    paths:
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/security-audit.yml"
+      # Webhook-verifier check needs to run on any adapter or aggregator
+      # change so a dropped registration breaks the PR build.
+      - "apps/integration-server/src/verticals/**/webhook.ts"
+      - "apps/integration-server/src/verticals/**/webhooks.ts"
+      - "scripts/check-webhook-verifiers.ts"
+      - "scripts/generate-webhook-aggregators.ts"
+      # Adapter-parity check needs to run on any factory/metadata change.
+      - "apps/integration-server/src/verticals/**/adapter/factories.ts"
+      - "apps/integration-server/src/verticals/**/platforms/metadata.ts"
+      - "scripts/check-adapter-parity.ts"
+  push:
+    branches:
+      - main
+    paths:
+      - "**/package.json"
+      - "pnpm-lock.yaml"
+      - "apps/integration-server/src/verticals/**/webhook.ts"
+      - "apps/integration-server/src/verticals/**/webhooks.ts"
+      - "scripts/check-webhook-verifiers.ts"
+      - "scripts/generate-webhook-aggregators.ts"
+      - "apps/integration-server/src/verticals/**/adapter/factories.ts"
+      - "apps/integration-server/src/verticals/**/platforms/metadata.ts"
+      - "scripts/check-adapter-parity.ts"
+  schedule:
+    # Weekly run catches CVEs filed against pinned versions even when no
+    # PR touches package.json. Monday 07:00 UTC — operators see the alert
+    # at start of week.
+    - cron: "0 7 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm version is pinned in package.json `packageManager`; specifying
+      # it here too triggers ERR_PNPM_BAD_PM_VERSION when they diverge.
+      - uses: pnpm/action-setup@v6
+
+      # No `cache: pnpm` — this job runs `pnpm audit` only, never
+      # `pnpm install`, so pnpm's content-addressable store stays empty
+      # and the post-job cache-save step would fail with "path does not
+      # exist". Caching here would also provide no benefit: the audit
+      # talks straight to the registry without populating the local store.
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+
+      # `--prod` ignores devDependencies; `--audit-level=high` fails the
+      # job only on high/critical advisories. Adjust to `moderate` for
+      # tighter gating once the baseline is clean.
+      - name: pnpm audit
+        run: pnpm audit --prod --audit-level=high
+
+  webhook-verifiers:
+    # Every adapter shipping a webhook.ts must register a verifier in its
+    # vertical's WEBHOOK_HANDLERS map — without this, the unified router
+    # would accept unsigned bodies for unregistered platforms. The check
+    # is strict (non-soft) so any drift fails the build.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # Only the root devDeps (tsx) are needed; --ignore-scripts skips
+      # workspace prepare steps so install stays fast.
+      - name: install root deps
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: check webhook verifiers are wired
+        run: pnpm check:webhook-verifiers
+      # Every platform listed in a vertical's metadata.ts must have a factory,
+      # else it lists in the UI but throws "unknown adapter slug" on enable.
+      - name: check adapter parity (metadata <-> factory)
+        run: pnpm check:adapter-parity

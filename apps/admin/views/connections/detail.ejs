@@ -1,0 +1,223 @@
+<% layout('../layout', { title: 'Connection detail' }) -%>
+<%# The literal above is only the fallback the source-text title extractor in
+    core/server.ts can see; the real tab title is the connection's LABEL and is
+    passed from the route, which is the documented way to do a dynamic one.
+
+    `heading` is the same value for the <h1>. The label is what distinguishes
+    one connection from another — the platform slug is already a field in the
+    card below, so three ShipBob connections gave three pages headed "shipbob".
+    The list has always linked by label; this follows it.
+
+    Nullable: the rename box clears it to `label: null`, so the platform slug
+    stays the fallback rather than a page headed "Unlabelled". %>
+<% const heading = (connection && connection.label) || (connection && connection.platform) || 'Connection detail' -%>
+<% if (!connection) { %>
+<h1>Connection not found</h1>
+<p class="muted" style="margin-top: var(--space-2)">The requested connection does not exist.</p>
+<p style="margin-top: var(--space-4)"><a href="/connections">Back to connections</a></p>
+<% } else { %>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<div class="row row--between">
+  <%# The platform's logo beside its slug, as on the list — beside the <h1>,
+      never inside it: public/js/resource-modal.js names the dialog from the
+      heading's textContent, which does not honour aria-hidden, so a monogram
+      in the heading would be read aloud as part of the name. `logoHtml` is
+      absent only when the route did not derive one (the not-found branch
+      above never reaches here), so the guard is belt and braces. %>
+  <div class="row" style="gap: var(--space-2); align-items: center" data-platform-heading>
+    <%- (typeof logoHtml !== 'undefined' && logoHtml) ? logoHtml : '' %>
+    <%# The hover keeps naming the PLATFORM, which the heading no longer does.
+        `platformName` is the pretty name ("ShipBob") against the slug
+        ("shipbob"); when they are the same there is nothing extra to say. %>
+    <% if (typeof platformName !== 'undefined' && platformName && platformName !== connection.platform) { %>
+    <h1><span title="<%= platformName %>"><%= heading %></span></h1>
+    <% } else { %>
+    <h1><span title="<%= connection.platform %>"><%= heading %></span></h1>
+    <% } %>
+  </div>
+  <%# data-modal-omit: in the dialog copy of this page the close button is the
+      way back, so a second one would only compete with it. The page keeps it. %>
+  <a href="/connections" class="btn btn--ghost btn--sm" data-modal-omit>Back to connections</a>
+</div>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="stack stack--sm">
+      <span class="eyebrow">Connection ID</span>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm)"><%= connection.id %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Vertical</span>
+      <p style="margin: 0; text-transform: capitalize"><%= connection.vertical %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Platform</span>
+      <p style="margin: 0"><%= connection.platform %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Tenant</span>
+      <%# Read-only: the owning tenant is fixed when the connection is made —
+          by the Connect Link's tenant, or the key/operator that connected it
+          headlessly — and decides which developer keys may use it. %>
+      <p style="margin: 0"><%- include('../_tenant', { tenantId: connection.tenantId, tenants: (typeof tenants !== 'undefined' ? tenants : []) }) %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Label</span>
+      <%# Editable in place. The label is the only mutable field a connection
+          has, and it is what the list links and the search matches, so it is
+          edited where it is read rather than behind a separate page. Emptying
+          the box clears it — the same `label: null` the developer API takes. %>
+      <% if (canAct) { %>
+      <form method="POST" action="/connections/<%= connection.vertical %>/<%= connection.id %>/rename"
+        class="row" style="gap: var(--space-2); align-items: center">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input class="input" type="text" name="label" value="<%= connection.label || '' %>"
+          placeholder="Unlabelled" aria-label="Connection label" autocomplete="off"
+          style="flex: 1; min-width: 0">
+        <%# Full-height, not btn--sm: it sits beside a 36px input, and the 28px
+            variant used in the actions row below would ride visibly high. %>
+        <button type="submit" class="btn btn--secondary">Save</button>
+      </form>
+      <% } else { %>
+      <p style="margin: 0"><%= connection.label || '—' %></p>
+      <% } %>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Status</span>
+      <p style="margin: 0"><%- statusPill(connection.status) %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Expires at</span>
+      <p style="margin: 0"><%= connection.expiresAt ? new Date(connection.expiresAt).toLocaleString() : 'Never' %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Created</span>
+      <p style="margin: 0"><%= new Date(connection.createdAt).toLocaleString() %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Updated</span>
+      <p style="margin: 0"><%= new Date(connection.updatedAt).toLocaleString() %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Last refresh</span>
+      <p style="margin: 0">
+        <% if (connection.lastRefreshAt) { %>
+          <%= new Date(connection.lastRefreshAt).toLocaleString() %>
+          <% if (connection.lastRefreshStatus === 'ok') { %>
+          <span class="badge badge--success" style="margin-left: var(--space-2)">ok</span>
+          <% } else if (connection.lastRefreshStatus === 'failed') { %>
+          <span class="badge badge--warning" style="margin-left: var(--space-2)">failed</span>
+          <% } else if (connection.lastRefreshStatus === 'expired') { %>
+          <span class="badge badge--danger" style="margin-left: var(--space-2)">expired</span>
+          <% } else if (connection.lastRefreshStatus === 'platform_error') { %>
+          <span class="badge badge--danger" style="margin-left: var(--space-2)">platform creds</span>
+          <% } %>
+        <% } else { %>
+        <span class="muted">Never refreshed by keep-alive worker</span>
+        <% } %>
+      </p>
+      <%# The reason, not just the outcome — a status without its cause leaves
+          a connection failing to refresh for hours with nothing anywhere
+          saying why. %>
+      <% if (connection.lastRefreshStatus && connection.lastRefreshStatus !== 'ok') { %>
+        <% if (connection.lastRefreshError) { %>
+        <p class="muted" style="margin: var(--space-1) 0 0; font-size: var(--text-xs)"><%= connection.lastRefreshError %></p>
+        <% } else { %>
+        <p class="muted" style="margin: var(--space-1) 0 0; font-size: var(--text-xs)">No reason recorded for this attempt.</p>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <%# Sync schedule — how often this connection's data is re-read from the
+      platform. `syncView` (core/views/sync-schedule.ts) words the state
+      integration-server reports, which is the scheduler's own answer, so
+      "Next sync" is what will happen. %>
+  <section class="stack stack--sm" style="margin-top: var(--space-6)" data-sync-schedule>
+    <span class="eyebrow">Sync schedule</span>
+    <p style="margin: 0"><strong><%= syncView.summary %></strong></p>
+    <% if (!syncView.available) { %>
+    <p class="muted" style="margin: 0">This deployment does not cache platform data (passthrough mode), so nothing is synced on a schedule.</p>
+    <% } else { %>
+    <p style="margin: 0">Last synced: <%= syncView.lastSynced %> · Next sync: <%= syncView.nextSync %></p>
+    <% if (syncView.statusNote) { %>
+    <p class="muted" style="margin: 0; font-size: var(--text-xs)"><%= syncView.statusNote %></p>
+    <% } %>
+    <% if (syncView.lastFailure) { %>
+    <p class="muted" style="margin: 0; font-size: var(--text-xs)"><%= syncView.lastFailure %> Details are on the <a href="/sync-jobs">Sync jobs</a> page.</p>
+    <% } %>
+    <% } %>
+    <% if (canAct && syncView.available) { %>
+    <form method="POST" action="/connections/<%= connection.vertical %>/<%= connection.id %>/sync-schedule" class="stack stack--sm" style="margin-top: var(--space-2)">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <fieldset class="stack stack--sm" style="border: 0; padding: 0; margin: 0" aria-label="Sync schedule">
+        <% for (const choice of syncView.choices) { %>
+        <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+          <input type="radio" name="syncMode" value="<%= choice.value %>"<%= syncView.mode === choice.value ? ' checked' : '' %>>
+          <span><strong><%= choice.label %></strong><br><span class="field__hint"><%= choice.hint %></span></span>
+        </label>
+        <% } %>
+      </fieldset>
+      <div class="row" style="gap: var(--space-2); align-items: center">
+        <label for="syncIntervalValue">Custom interval: every</label>
+        <input class="input" style="width: 6rem" type="number" min="1" step="1" id="syncIntervalValue" name="syncIntervalValue" value="<%= syncView.interval.value %>">
+        <select class="select" name="syncIntervalUnit" aria-label="Custom interval unit">
+          <% for (const u of ['minutes', 'hours', 'days']) { %>
+          <option value="<%= u %>"<%= syncView.interval.unit === u ? ' selected' : '' %>><%= u %></option>
+          <% } %>
+        </select>
+      </div>
+      <div><button type="submit" class="btn btn--secondary btn--sm">Save schedule</button></div>
+    </form>
+    <% } %>
+  </section>
+
+  <%# Actions. This page was render-only: the re-authorize path existed solely
+      as link text buried inside the alert below, and there was no way to ask
+      for a sync at all. %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-6); flex-wrap: wrap">
+    <%# Browse the synced records — needs data:read (operators and admins by
+        default; a custom role may grant it to anyone). %>
+    <% const canBrowse = !!user && (Array.isArray(user.permissions) ? user.permissions.includes('data:read') : user.role !== 'viewer') %>
+    <% if (canBrowse) { %>
+    <a class="btn btn--secondary btn--sm" href="/data/connections/<%= encodeURIComponent(connection.id) %>" data-modal-omit><i class="ph ph-table" aria-hidden="true"></i> Browse data</a>
+    <% } %>
+    <% if (canAct) { %>
+    <form method="POST" action="/connections/<%= connection.vertical %>/<%= connection.id %>/sync" style="display: inline">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--secondary btn--sm"
+        title="Queue a background sync to refresh this connection's cached data">Sync now</button>
+    </form>
+    <% } %>
+    <%# Re-authorisation is the customer's to do, through a Connect Link the
+        operator mints. The admin origin does not serve /auth/…/connect, so a
+        link there went nowhere. Operator+: the mint form is theirs alone. %>
+    <% if (canAct && (connection.status === 'expired' || connection.status === 'platform_error' || connection.lastRefreshStatus === 'expired')) { %>
+    <a class="btn btn--primary btn--sm" href="/connect-links/new">Mint Connect Link</a>
+    <% } %>
+    <%# Pushed to the far end, away from Sync now and Reconnect: this is the
+        one action on the page that cannot be undone. What goes with it is
+        spelled out in the confirm — the cached data and sync history go too,
+        and only the customer can restore the connection. %>
+    <% if (canAct) { %>
+    <form method="POST" action="/connections/<%= connection.vertical %>/<%= connection.id %>/delete"
+      style="display: inline; margin-left: auto"
+      onsubmit="return confirm('Delete this connection?\n\nIts stored credentials, cached data and sync history are removed. The customer must complete a new connect link to restore it. This cannot be undone.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--danger btn--sm">Delete connection</button>
+    </form>
+    <% } %>
+  </div>
+
+  <% if (connection.status === 'platform_error' || connection.lastRefreshStatus === 'platform_error') { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-6)">
+    <strong>Platform credentials rejected.</strong> The provider rejected this platform's OAuth <em>client</em> credentials (<span class="mono">client_id</span>/<span class="mono">client_secret</span>) — they may have been rotated, expired, or entered incorrectly. <strong>Customer re-authorization will not fix this.</strong> Update the credentials in
+    <a href="/platforms/<%= connection.vertical %>/<%= connection.platform %>">Platforms → <%= connection.platform %></a>. This affects every connection for this platform.
+  </div>
+  <% } else if (connection.lastRefreshStatus === 'expired') { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-6)">
+    <strong>Authorization expired.</strong> The provider rejected the refresh token (likely revoked by the customer or beyond its rolling cap). The customer must re-authorize — mint them a <% if (canAct) { %><a href="/connect-links/new">Connect Link</a><% } else { %>Connect Link (operator+)<% } %> and send it.
+  </div>
+  <% } %>
+</div>
+<% } %>

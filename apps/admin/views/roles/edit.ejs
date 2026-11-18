@@ -1,0 +1,60 @@
+<% layout('../layout', { title: 'Role' }) -%>
+<%
+  const isNew = !role
+  const readOnly = !!(role && role.isBuiltin)
+  const held = new Set(role ? role.permissions : [])
+  const mine = new Set((user && user.permissions) || [])
+  const action = isNew ? '/roles' : '/roles/' + encodeURIComponent(role.id)
+  const base = role ? role.baseRole : 'viewer'
+%>
+<div class="row" style="align-items: center; gap: var(--space-3); margin-bottom: var(--space-4)">
+  <a href="/roles" class="btn btn--ghost btn--sm">&larr; Roles</a>
+  <h1 style="margin: 0"><%= isNew ? 'New role' : role.name %></h1>
+  <% if (readOnly) { %><span class="badge">built-in</span><% } %>
+</div>
+
+<% if (readOnly) { %>
+<div class="alert alert--info" style="margin-bottom: var(--space-4)">
+  Built-in roles are defined in code and cannot be changed. Create a custom role to grant a different set.
+</div>
+<% } %>
+
+<form method="POST" action="<%= action %>" class="card stack" style="max-width: 760px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="field">
+      <label class="field__label" for="name">Name</label>
+      <input class="input" id="name" name="name" maxlength="64" required value="<%= role ? role.name : '' %>" <%= readOnly ? 'disabled' : '' %>>
+    </div>
+    <div class="field">
+      <label class="field__label" for="baseRole">Base role</label>
+      <select class="select" id="baseRole" name="baseRole" <%= readOnly ? 'disabled' : '' %>>
+        <% for (const b of ['viewer', 'operator', 'admin']) { %>
+        <option value="<%= b %>" <%= base === b ? 'selected' : '' %>><%= b %></option>
+        <% } %>
+      </select>
+      <p class="field__hint">Role-gated pages and API routes treat holders as this built-in level. It cannot be above your own.</p>
+    </div>
+  </div>
+  <div class="field">
+    <label class="field__label" for="description">Description</label>
+    <input class="input" id="description" name="description" maxlength="500" value="<%= role && role.description ? role.description : '' %>" <%= readOnly ? 'disabled' : '' %>>
+  </div>
+  <fieldset class="field" style="border: 0; padding: 0; margin: 0">
+    <legend class="field__label">Permissions</legend>
+    <p class="field__hint">You can only grant permissions you hold yourself; the others are shown but disabled.</p>
+    <div class="stack stack--sm" style="margin-top: var(--space-2)">
+      <% for (const p of permissions) { %>
+      <label class="row" style="gap: var(--space-2); align-items: flex-start">
+        <input type="checkbox" name="permissions" value="<%= p.id %>"
+               <%= held.has(p.id) ? 'checked' : '' %>
+               <%= readOnly || !mine.has(p.id) ? 'disabled' : '' %>>
+        <span><span class="mono"><%= p.id %></span> <span class="muted">— <%= p.description %></span></span>
+      </label>
+      <% } %>
+    </div>
+  </fieldset>
+  <% if (!readOnly) { %>
+  <button type="submit" class="btn btn--primary" style="align-self: flex-start"><%= isNew ? 'Create role' : 'Save role' %></button>
+  <% } %>
+</form>

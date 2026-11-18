@@ -1,0 +1,80 @@
+name: Bug report
+description: Something that worked, or should work, doesn't.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Issues are public. Before you paste logs or config, remove API keys, `osk_` tokens,
+        anything from `.env`, connect-link URLs, OAuth and webhook secrets, and your customers' data.
+        Security problems go to [Security Advisories](https://github.com/open-steward/opensteward/security/advisories/new), not here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, including any error message exactly as shown.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the admin console at /connections
+        2. Click Sync now on a Xero connection
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: version
+    attributes:
+      label: Version
+      description: Shown at the bottom of the admin console's sidebar, for example `OpenSteward 0.1.0`. For full detail, paste what **Copy for a bug report** gives you on the System page, under Technical details.
+      render: text
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How it is deployed
+      options:
+        - Docker Compose
+        - Helm (Kubernetes)
+        - Local development (pnpm)
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Vertical
+      options:
+        - Not vertical-specific
+        - accounting
+        - crm
+        - ecommerce
+        - logistics
+        - payments
+        - docsign
+        - projects
+        - customer-support
+        - inventory
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: The platform's slug, if the bug is about one adapter, for example `xero` or `shopify`.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Redacted. This is pasted as code, so no formatting is needed.
+      render: shell

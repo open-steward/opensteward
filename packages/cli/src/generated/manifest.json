@@ -1,0 +1,2654 @@
+[
+  {
+    "command": "accounting create-bill",
+    "operationId": "createBill",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-contact",
+    "operationId": "createContact",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-creditmemo",
+    "operationId": "createCreditmemo",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-expense",
+    "operationId": "createExpense",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-invoice",
+    "operationId": "createInvoice",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-journal",
+    "operationId": "createJournal",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-order",
+    "operationId": "createOrder",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-purchaseorder",
+    "operationId": "createPurchaseorder",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting create-salesorder",
+    "operationId": "createSalesorder",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting delete-bill",
+    "operationId": "deleteBill",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting delete-contact",
+    "operationId": "deleteContact",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting delete-invoice",
+    "operationId": "deleteInvoice",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-account-by-id",
+    "operationId": "getAccountById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-bill-by-id",
+    "operationId": "getBillById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-contact-by-id",
+    "operationId": "getContactById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-creditmemo-by-id",
+    "operationId": "getCreditmemoById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-expense-by-id",
+    "operationId": "getExpenseById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-invoice-by-id",
+    "operationId": "getInvoiceById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-journal-by-id",
+    "operationId": "getJournalById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-order-by-id",
+    "operationId": "getOrderById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-purchaseorder-by-id",
+    "operationId": "getPurchaseorderById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-quote-by-id",
+    "operationId": "getQuoteById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-salesorder-by-id",
+    "operationId": "getSalesorderById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-taxrate-by-id",
+    "operationId": "getTaxrateById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting get-transaction-by-id",
+    "operationId": "getTransactionById",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-accounts",
+    "operationId": "listAccounts",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-bills",
+    "operationId": "listBills",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-contacts",
+    "operationId": "listContacts",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-creditmemos",
+    "operationId": "listCreditmemos",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-expenses",
+    "operationId": "listExpenses",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-invoices",
+    "operationId": "listInvoices",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-journals",
+    "operationId": "listJournals",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-orders",
+    "operationId": "listOrders",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-organizations",
+    "operationId": "listOrganizations",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-purchaseorders",
+    "operationId": "listPurchaseorders",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-quotes",
+    "operationId": "listQuotes",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-salesorders",
+    "operationId": "listSalesorders",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-taxrates",
+    "operationId": "listTaxrates",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting list-transactions",
+    "operationId": "listTransactions",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting update-bill",
+    "operationId": "updateBill",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting update-contact",
+    "operationId": "updateContact",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "accounting update-invoice",
+    "operationId": "updateInvoice",
+    "spec": "public",
+    "tag": "accounting"
+  },
+  {
+    "command": "api-keys create",
+    "operationId": "api-keys.create",
+    "spec": "admin",
+    "tag": "api-keys"
+  },
+  {
+    "command": "api-keys delete",
+    "operationId": "api-keys.delete",
+    "spec": "admin",
+    "tag": "api-keys"
+  },
+  {
+    "command": "api-keys list",
+    "operationId": "api-keys.list",
+    "spec": "admin",
+    "tag": "api-keys"
+  },
+  {
+    "command": "api-keys rotate",
+    "operationId": "api-keys.rotate",
+    "spec": "admin",
+    "tag": "api-keys"
+  },
+  {
+    "command": "audit actions",
+    "operationId": "audit.actions",
+    "spec": "admin",
+    "tag": "audit"
+  },
+  {
+    "command": "audit export",
+    "operationId": "audit.export",
+    "spec": "admin",
+    "tag": "audit"
+  },
+  {
+    "command": "audit list",
+    "operationId": "audit.list",
+    "spec": "admin",
+    "tag": "audit"
+  },
+  {
+    "command": "auth has-users",
+    "operationId": "auth.hasUsers",
+    "spec": "admin",
+    "tag": "auth"
+  },
+  {
+    "command": "auth login",
+    "operationId": "auth.login",
+    "spec": "admin",
+    "tag": "auth"
+  },
+  {
+    "command": "auth me",
+    "operationId": "auth.me",
+    "spec": "admin",
+    "tag": "auth"
+  },
+  {
+    "command": "auth setup",
+    "operationId": "auth.setup",
+    "spec": "admin",
+    "tag": "auth"
+  },
+  {
+    "command": "company-info get",
+    "operationId": "company-info.get",
+    "spec": "admin",
+    "tag": "company-info"
+  },
+  {
+    "command": "company-info get-public",
+    "operationId": "company-info.get-public",
+    "spec": "admin",
+    "tag": "company-info"
+  },
+  {
+    "command": "company-info reset",
+    "operationId": "company-info.reset",
+    "spec": "admin",
+    "tag": "company-info"
+  },
+  {
+    "command": "company-info update",
+    "operationId": "company-info.update",
+    "spec": "admin",
+    "tag": "company-info"
+  },
+  {
+    "command": "connect-link-templates create",
+    "operationId": "connect-link-templates.create",
+    "spec": "admin",
+    "tag": "connect-link-templates"
+  },
+  {
+    "command": "connect-link-templates delete",
+    "operationId": "connect-link-templates.delete",
+    "spec": "admin",
+    "tag": "connect-link-templates"
+  },
+  {
+    "command": "connect-link-templates get",
+    "operationId": "connect-link-templates.get",
+    "spec": "admin",
+    "tag": "connect-link-templates"
+  },
+  {
+    "command": "connect-link-templates list",
+    "operationId": "connect-link-templates.list",
+    "spec": "admin",
+    "tag": "connect-link-templates"
+  },
+  {
+    "command": "connect-link-templates update",
+    "operationId": "connect-link-templates.update",
+    "spec": "admin",
+    "tag": "connect-link-templates"
+  },
+  {
+    "command": "connect-sessions create",
+    "operationId": "connect-sessions.create",
+    "spec": "admin",
+    "tag": "connect-sessions"
+  },
+  {
+    "command": "connect-sessions delete",
+    "operationId": "connect-sessions.delete",
+    "spec": "admin",
+    "tag": "connect-sessions"
+  },
+  {
+    "command": "connect-sessions get",
+    "operationId": "connect-sessions.get",
+    "spec": "admin",
+    "tag": "connect-sessions"
+  },
+  {
+    "command": "connect-sessions list",
+    "operationId": "connect-sessions.list",
+    "spec": "admin",
+    "tag": "connect-sessions"
+  },
+  {
+    "command": "connections delete",
+    "operationId": "connections.delete",
+    "spec": "admin",
+    "tag": "connections"
+  },
+  {
+    "command": "connections get",
+    "operationId": "connections.get",
+    "spec": "admin",
+    "tag": "connections"
+  },
+  {
+    "command": "connections list",
+    "operationId": "connections.list",
+    "spec": "admin",
+    "tag": "connections"
+  },
+  {
+    "command": "connections set-sync-schedule",
+    "operationId": "connections.setSyncSchedule",
+    "spec": "admin",
+    "tag": "connections"
+  },
+  {
+    "command": "connections update",
+    "operationId": "connections.update",
+    "spec": "admin",
+    "tag": "connections"
+  },
+  {
+    "command": "crm create-activity",
+    "operationId": "createActivity",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm create-company",
+    "operationId": "createCompany",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm create-contact",
+    "operationId": "createContact",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm create-deal",
+    "operationId": "createDeal",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm create-note",
+    "operationId": "createNote",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm delete-activity",
+    "operationId": "deleteActivity",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm delete-company",
+    "operationId": "deleteCompany",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm delete-contact",
+    "operationId": "deleteContact",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm delete-deal",
+    "operationId": "deleteDeal",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm delete-note",
+    "operationId": "deleteNote",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-activity-by-id",
+    "operationId": "getActivityById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-company-by-id",
+    "operationId": "getCompanyById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-contact-by-id",
+    "operationId": "getContactById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-deal-by-id",
+    "operationId": "getDealById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-note-by-id",
+    "operationId": "getNoteById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm get-pipeline-by-id",
+    "operationId": "getPipelineById",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-activities",
+    "operationId": "listActivities",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-companies",
+    "operationId": "listCompanies",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-contacts",
+    "operationId": "listContacts",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-deals",
+    "operationId": "listDeals",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-notes",
+    "operationId": "listNotes",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm list-pipelines",
+    "operationId": "listPipelines",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm update-activity",
+    "operationId": "updateActivity",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm update-company",
+    "operationId": "updateCompany",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm update-contact",
+    "operationId": "updateContact",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm update-deal",
+    "operationId": "updateDeal",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "crm update-note",
+    "operationId": "updateNote",
+    "spec": "public",
+    "tag": "crm"
+  },
+  {
+    "command": "customer-support get-contact",
+    "operationId": "getContact",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-macro",
+    "operationId": "getMacro",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-message",
+    "operationId": "getMessage",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-tag",
+    "operationId": "getTag",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-team",
+    "operationId": "getTeam",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-ticket",
+    "operationId": "getTicket",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support get-user",
+    "operationId": "getUser",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-contacts",
+    "operationId": "listContacts",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-macros",
+    "operationId": "listMacros",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-messages",
+    "operationId": "listMessages",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-tags",
+    "operationId": "listTags",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-teams",
+    "operationId": "listTeams",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-tickets",
+    "operationId": "listTickets",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "customer-support list-users",
+    "operationId": "listUsers",
+    "spec": "public",
+    "tag": "customer-support"
+  },
+  {
+    "command": "dashboard-tasks dismiss",
+    "operationId": "dashboard-tasks.dismiss",
+    "spec": "admin",
+    "tag": "dashboard-tasks"
+  },
+  {
+    "command": "dashboard-tasks list-dismissals",
+    "operationId": "dashboard-tasks.list-dismissals",
+    "spec": "admin",
+    "tag": "dashboard-tasks"
+  },
+  {
+    "command": "dashboard-tasks undismiss",
+    "operationId": "dashboard-tasks.undismiss",
+    "spec": "admin",
+    "tag": "dashboard-tasks"
+  },
+  {
+    "command": "dashboards connections list",
+    "operationId": "dashboards.connections.list",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards create",
+    "operationId": "dashboards.create",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards currencies list",
+    "operationId": "dashboards.currencies.list",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards delete",
+    "operationId": "dashboards.delete",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards get",
+    "operationId": "dashboards.get",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards list",
+    "operationId": "dashboards.list",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards metrics get",
+    "operationId": "dashboards.metrics.get",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards metrics list",
+    "operationId": "dashboards.metrics.list",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "dashboards update",
+    "operationId": "dashboards.update",
+    "spec": "admin",
+    "tag": "dashboards"
+  },
+  {
+    "command": "data records export",
+    "operationId": "data.records.export",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "data records get",
+    "operationId": "data.records.get",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "data records list",
+    "operationId": "data.records.list",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "data records reveal",
+    "operationId": "data.records.reveal",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "data schema",
+    "operationId": "data.schema",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "data summary",
+    "operationId": "data.summary",
+    "spec": "admin",
+    "tag": "data"
+  },
+  {
+    "command": "destinations backfill",
+    "operationId": "destinations.backfill",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations create",
+    "operationId": "destinations.create",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations credentials",
+    "operationId": "destinations.credentials",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations delete",
+    "operationId": "destinations.delete",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations get",
+    "operationId": "destinations.get",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations list",
+    "operationId": "destinations.list",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations run",
+    "operationId": "destinations.run",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations runs",
+    "operationId": "destinations.runs",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations test",
+    "operationId": "destinations.test",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations types",
+    "operationId": "destinations.types",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "destinations update",
+    "operationId": "destinations.update",
+    "spec": "admin",
+    "tag": "destinations"
+  },
+  {
+    "command": "docsign get-audit-trail-entry",
+    "operationId": "getAuditTrailEntry",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign get-document",
+    "operationId": "getDocument",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign get-envelope",
+    "operationId": "getEnvelope",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign get-signer",
+    "operationId": "getSigner",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign get-template",
+    "operationId": "getTemplate",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign list-audit-trail-entries",
+    "operationId": "listAuditTrailEntries",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign list-documents",
+    "operationId": "listDocuments",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign list-envelopes",
+    "operationId": "listEnvelopes",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign list-signers",
+    "operationId": "listSigners",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign list-templates",
+    "operationId": "listTemplates",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "docsign void-envelope",
+    "operationId": "voidEnvelope",
+    "spec": "public",
+    "tag": "docsign"
+  },
+  {
+    "command": "ecommerce adjust-inventory-level",
+    "operationId": "adjustInventoryLevel",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce cancel-fulfillment",
+    "operationId": "cancelFulfillment",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce cancel-order",
+    "operationId": "cancelOrder",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-collection",
+    "operationId": "createCollection",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-customer",
+    "operationId": "createCustomer",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-discount",
+    "operationId": "createDiscount",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-fulfillment",
+    "operationId": "createFulfillment",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-order",
+    "operationId": "createOrder",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-product",
+    "operationId": "createProduct",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-refund",
+    "operationId": "createRefund",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-transaction",
+    "operationId": "createTransaction",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce create-variant",
+    "operationId": "createVariant",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce delete-collection",
+    "operationId": "deleteCollection",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce delete-customer",
+    "operationId": "deleteCustomer",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce delete-discount",
+    "operationId": "deleteDiscount",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce delete-product",
+    "operationId": "deleteProduct",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce delete-variant",
+    "operationId": "deleteVariant",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-collection-by-id",
+    "operationId": "getCollectionById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-customer-by-id",
+    "operationId": "getCustomerById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-discount-by-id",
+    "operationId": "getDiscountById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-fulfillment-by-id",
+    "operationId": "getFulfillmentById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-inventory-level-by-id",
+    "operationId": "getInventoryLevelById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-location-by-id",
+    "operationId": "getLocationById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-order-by-id",
+    "operationId": "getOrderById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-product-by-id",
+    "operationId": "getProductById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-refund-by-id",
+    "operationId": "getRefundById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-transaction-by-id",
+    "operationId": "getTransactionById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce get-variant-by-id",
+    "operationId": "getVariantById",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-collections",
+    "operationId": "listCollections",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-customers",
+    "operationId": "listCustomers",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-discounts",
+    "operationId": "listDiscounts",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-fulfillments",
+    "operationId": "listFulfillments",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-inventory-levels",
+    "operationId": "listInventoryLevels",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-locations",
+    "operationId": "listLocations",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-orders",
+    "operationId": "listOrders",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-products",
+    "operationId": "listProducts",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-refunds",
+    "operationId": "listRefunds",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-transactions",
+    "operationId": "listTransactions",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce list-variants",
+    "operationId": "listVariants",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce set-inventory-level",
+    "operationId": "setInventoryLevel",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-collection",
+    "operationId": "updateCollection",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-customer",
+    "operationId": "updateCustomer",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-discount",
+    "operationId": "updateDiscount",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-fulfillment",
+    "operationId": "updateFulfillment",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-order",
+    "operationId": "updateOrder",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-product",
+    "operationId": "updateProduct",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "ecommerce update-variant",
+    "operationId": "updateVariant",
+    "spec": "public",
+    "tag": "ecommerce"
+  },
+  {
+    "command": "end-user-tokens create",
+    "operationId": "end-user-tokens.create",
+    "spec": "admin",
+    "tag": "end-user-tokens"
+  },
+  {
+    "command": "end-user-tokens delete",
+    "operationId": "end-user-tokens.delete",
+    "spec": "admin",
+    "tag": "end-user-tokens"
+  },
+  {
+    "command": "end-user-tokens list",
+    "operationId": "end-user-tokens.list",
+    "spec": "admin",
+    "tag": "end-user-tokens"
+  },
+  {
+    "command": "end-users create",
+    "operationId": "end-users.create",
+    "spec": "admin",
+    "tag": "end-users"
+  },
+  {
+    "command": "end-users delete",
+    "operationId": "end-users.delete",
+    "spec": "admin",
+    "tag": "end-users"
+  },
+  {
+    "command": "end-users get",
+    "operationId": "end-users.get",
+    "spec": "admin",
+    "tag": "end-users"
+  },
+  {
+    "command": "end-users list",
+    "operationId": "end-users.list",
+    "spec": "admin",
+    "tag": "end-users"
+  },
+  {
+    "command": "end-users update",
+    "operationId": "end-users.update",
+    "spec": "admin",
+    "tag": "end-users"
+  },
+  {
+    "command": "events list",
+    "operationId": "events.list",
+    "spec": "public",
+    "tag": "events"
+  },
+  {
+    "command": "identity-providers create",
+    "operationId": "identity-providers.create",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers default-scope update",
+    "operationId": "identity-providers.default-scope.update",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers delete",
+    "operationId": "identity-providers.delete",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers get",
+    "operationId": "identity-providers.get",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers list",
+    "operationId": "identity-providers.list",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers metadata",
+    "operationId": "identity-providers.metadata",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers role-mappings create",
+    "operationId": "identity-providers.role-mappings.create",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers role-mappings delete",
+    "operationId": "identity-providers.role-mappings.delete",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers role-mappings list",
+    "operationId": "identity-providers.role-mappings.list",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scim-tokens create",
+    "operationId": "identity-providers.scim-tokens.create",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scim-tokens delete",
+    "operationId": "identity-providers.scim-tokens.delete",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scim-tokens list",
+    "operationId": "identity-providers.scim-tokens.list",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scope-rules create",
+    "operationId": "identity-providers.scope-rules.create",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scope-rules delete",
+    "operationId": "identity-providers.scope-rules.delete",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers scope-rules list",
+    "operationId": "identity-providers.scope-rules.list",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "identity-providers update",
+    "operationId": "identity-providers.update",
+    "spec": "admin",
+    "tag": "identity-providers"
+  },
+  {
+    "command": "inventory get-location",
+    "operationId": "getLocation",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-product",
+    "operationId": "getProduct",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-purchase-order",
+    "operationId": "getPurchaseOrder",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-stock-adjustment",
+    "operationId": "getStockAdjustment",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-stock-level",
+    "operationId": "getStockLevel",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-stock-transfer",
+    "operationId": "getStockTransfer",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory get-supplier",
+    "operationId": "getSupplier",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-locations",
+    "operationId": "listLocations",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-products",
+    "operationId": "listProducts",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-purchase-orders",
+    "operationId": "listPurchaseOrders",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-stock-adjustments",
+    "operationId": "listStockAdjustments",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-stock-levels",
+    "operationId": "listStockLevels",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-stock-transfers",
+    "operationId": "listStockTransfers",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "inventory list-suppliers",
+    "operationId": "listSuppliers",
+    "spec": "public",
+    "tag": "inventory"
+  },
+  {
+    "command": "license get",
+    "operationId": "license.get",
+    "spec": "admin",
+    "tag": "license"
+  },
+  {
+    "command": "logistics cancel-pickup",
+    "operationId": "cancelPickup",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics create-label",
+    "operationId": "createLabel",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics create-manifest",
+    "operationId": "createManifest",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics create-order",
+    "operationId": "createOrder",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics create-pickup",
+    "operationId": "createPickup",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics create-shipment",
+    "operationId": "createShipment",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics delete-label",
+    "operationId": "deleteLabel",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics delete-order",
+    "operationId": "deleteOrder",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics delete-shipment",
+    "operationId": "deleteShipment",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-carrier-by-id",
+    "operationId": "getCarrierById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-label-by-id",
+    "operationId": "getLabelById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-manifest-by-id",
+    "operationId": "getManifestById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-order-by-id",
+    "operationId": "getOrderById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-pickup-by-id",
+    "operationId": "getPickupById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-shipment-by-id",
+    "operationId": "getShipmentById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-tracking-event-by-id",
+    "operationId": "getTrackingEventById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics get-warehouse-by-id",
+    "operationId": "getWarehouseById",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-carriers",
+    "operationId": "listCarriers",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-labels",
+    "operationId": "listLabels",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-manifests",
+    "operationId": "listManifests",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-orders",
+    "operationId": "listOrders",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-pickups",
+    "operationId": "listPickups",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-shipments",
+    "operationId": "listShipments",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-tracking-events",
+    "operationId": "listTrackingEvents",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics list-warehouses",
+    "operationId": "listWarehouses",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics quote-rates",
+    "operationId": "quoteRates",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logistics update-order",
+    "operationId": "updateOrder",
+    "spec": "public",
+    "tag": "logistics"
+  },
+  {
+    "command": "logos logo-fetch cancel",
+    "operationId": "logo-fetch.cancel",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "logos logo-fetch get",
+    "operationId": "logo-fetch.get",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "logos logo-fetch list",
+    "operationId": "logo-fetch.list",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "logos logo-fetch start",
+    "operationId": "logo-fetch.start",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "logos purge",
+    "operationId": "logos.purge",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "logos status",
+    "operationId": "logos.status",
+    "spec": "admin",
+    "tag": "logos"
+  },
+  {
+    "command": "notifications acknowledge",
+    "operationId": "notifications.acknowledge",
+    "spec": "admin",
+    "tag": "notifications"
+  },
+  {
+    "command": "notifications acknowledge-all",
+    "operationId": "notifications.acknowledge-all",
+    "spec": "admin",
+    "tag": "notifications"
+  },
+  {
+    "command": "notifications list",
+    "operationId": "notifications.list",
+    "spec": "admin",
+    "tag": "notifications"
+  },
+  {
+    "command": "notifications unread-count",
+    "operationId": "notifications.unread-count",
+    "spec": "admin",
+    "tag": "notifications"
+  },
+  {
+    "command": "oauth-clients create-client",
+    "operationId": "oauth-clients.createClient",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients create-issuer",
+    "operationId": "oauth-clients.createIssuer",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients create-scope-rule",
+    "operationId": "oauth-clients.createScopeRule",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients delete-issuer",
+    "operationId": "oauth-clients.deleteIssuer",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients delete-scope-rule",
+    "operationId": "oauth-clients.deleteScopeRule",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients discover",
+    "operationId": "oauth-clients.discover",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients get-issuer",
+    "operationId": "oauth-clients.getIssuer",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients list-issuers",
+    "operationId": "oauth-clients.listIssuers",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients list-presets",
+    "operationId": "oauth-clients.listPresets",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients readiness",
+    "operationId": "oauth-clients.readiness",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients revoke-client",
+    "operationId": "oauth-clients.revokeClient",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "oauth-clients update-issuer",
+    "operationId": "oauth-clients.updateIssuer",
+    "spec": "admin",
+    "tag": "oauth-clients"
+  },
+  {
+    "command": "payments cancel-charge",
+    "operationId": "cancelCharge",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments cancel-subscription",
+    "operationId": "cancelSubscription",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments capture-charge",
+    "operationId": "captureCharge",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments create-charge",
+    "operationId": "createCharge",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments create-invoice",
+    "operationId": "createInvoice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments create-payments-customer",
+    "operationId": "createPaymentsCustomer",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments create-refund",
+    "operationId": "createRefund",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments create-subscription",
+    "operationId": "createSubscription",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments delete-payments-customer",
+    "operationId": "deletePaymentsCustomer",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments detach-payment-method",
+    "operationId": "detachPaymentMethod",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-balance-transaction",
+    "operationId": "getBalanceTransaction",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-charge",
+    "operationId": "getCharge",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-dispute",
+    "operationId": "getDispute",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-invoice",
+    "operationId": "getInvoice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-payment-method",
+    "operationId": "getPaymentMethod",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-payments-customer",
+    "operationId": "getPaymentsCustomer",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-payout",
+    "operationId": "getPayout",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-plan",
+    "operationId": "getPlan",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-price",
+    "operationId": "getPrice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-product",
+    "operationId": "getProduct",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-refund",
+    "operationId": "getRefund",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments get-subscription",
+    "operationId": "getSubscription",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-balance-transactions",
+    "operationId": "listBalanceTransactions",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-charges",
+    "operationId": "listCharges",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-disputes",
+    "operationId": "listDisputes",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-invoice-line-items",
+    "operationId": "listInvoiceLineItems",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-invoices",
+    "operationId": "listInvoices",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-payment-methods",
+    "operationId": "listPaymentMethods",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-payments-customers",
+    "operationId": "listPaymentsCustomers",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-payouts",
+    "operationId": "listPayouts",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-plans",
+    "operationId": "listPlans",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-prices",
+    "operationId": "listPrices",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-products",
+    "operationId": "listProducts",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-refunds",
+    "operationId": "listRefunds",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments list-subscriptions",
+    "operationId": "listSubscriptions",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments pay-invoice",
+    "operationId": "payInvoice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments submit-dispute-evidence",
+    "operationId": "submitDisputeEvidence",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments update-invoice",
+    "operationId": "updateInvoice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments update-payments-customer",
+    "operationId": "updatePaymentsCustomer",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments update-subscription",
+    "operationId": "updateSubscription",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "payments void-invoice",
+    "operationId": "voidInvoice",
+    "spec": "public",
+    "tag": "payments"
+  },
+  {
+    "command": "platform capabilities get",
+    "operationId": "capabilities.get",
+    "spec": "public",
+    "tag": "platform"
+  },
+  {
+    "command": "platforms config get",
+    "operationId": "platforms.config.get",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms config set",
+    "operationId": "platforms.config.set",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms disable",
+    "operationId": "platforms.disable",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms enable",
+    "operationId": "platforms.enable",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms list",
+    "operationId": "platforms.list",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms list-by-vertical",
+    "operationId": "platforms.list-by-vertical",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "platforms list-status",
+    "operationId": "platforms.list-status",
+    "spec": "admin",
+    "tag": "platforms"
+  },
+  {
+    "command": "projects get-comment",
+    "operationId": "getComment",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects get-project",
+    "operationId": "getProject",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects get-tag",
+    "operationId": "getTag",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects get-task",
+    "operationId": "getTask",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects get-user",
+    "operationId": "getUser",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects get-workspace",
+    "operationId": "getWorkspace",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-comments",
+    "operationId": "listComments",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-projects",
+    "operationId": "listProjects",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-tags",
+    "operationId": "listTags",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-tasks",
+    "operationId": "listTasks",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-users",
+    "operationId": "listUsers",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "projects list-workspaces",
+    "operationId": "listWorkspaces",
+    "spec": "public",
+    "tag": "projects"
+  },
+  {
+    "command": "roles create",
+    "operationId": "roles.create",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles delete",
+    "operationId": "roles.delete",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles get",
+    "operationId": "roles.get",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles list",
+    "operationId": "roles.list",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles permissions list",
+    "operationId": "permissions.list",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles update",
+    "operationId": "roles.update",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles users role assign",
+    "operationId": "users.role.assign",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "roles users scope update",
+    "operationId": "users.scope.update",
+    "spec": "admin",
+    "tag": "roles"
+  },
+  {
+    "command": "runtime-settings list",
+    "operationId": "runtime-settings.list",
+    "spec": "admin",
+    "tag": "runtime-settings"
+  },
+  {
+    "command": "runtime-settings reset",
+    "operationId": "runtime-settings.reset",
+    "spec": "admin",
+    "tag": "runtime-settings"
+  },
+  {
+    "command": "runtime-settings update",
+    "operationId": "runtime-settings.update",
+    "spec": "admin",
+    "tag": "runtime-settings"
+  },
+  {
+    "command": "sandbox auth-callback",
+    "operationId": "sandbox.auth-callback",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox auth-connect",
+    "operationId": "sandbox.auth-connect",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox connections",
+    "operationId": "sandbox.connections",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox oidc-discovery",
+    "operationId": "sandbox.oidc-discovery",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox oidc-jwks",
+    "operationId": "sandbox.oidc-jwks",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox oidc-token",
+    "operationId": "sandbox.oidc-token",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox reset",
+    "operationId": "sandbox.reset",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "sandbox self-serve-key",
+    "operationId": "sandbox.self-serve-key",
+    "spec": "public",
+    "tag": "sandbox"
+  },
+  {
+    "command": "schema-status list",
+    "operationId": "schema-status.list",
+    "spec": "admin",
+    "tag": "schema-status"
+  },
+  {
+    "command": "scim groups create",
+    "operationId": "scim.groups.create",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim groups delete",
+    "operationId": "scim.groups.delete",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim groups get",
+    "operationId": "scim.groups.get",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim groups list",
+    "operationId": "scim.groups.list",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim groups patch",
+    "operationId": "scim.groups.patch",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim service-provider-config",
+    "operationId": "scim.service-provider-config",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users create",
+    "operationId": "scim.users.create",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users delete",
+    "operationId": "scim.users.delete",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users get",
+    "operationId": "scim.users.get",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users list",
+    "operationId": "scim.users.list",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users patch",
+    "operationId": "scim.users.patch",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scim users replace",
+    "operationId": "scim.users.replace",
+    "spec": "admin",
+    "tag": "scim"
+  },
+  {
+    "command": "scope-groups create",
+    "operationId": "scope-groups.create",
+    "spec": "admin",
+    "tag": "scope-groups"
+  },
+  {
+    "command": "scope-groups delete",
+    "operationId": "scope-groups.delete",
+    "spec": "admin",
+    "tag": "scope-groups"
+  },
+  {
+    "command": "scope-groups list",
+    "operationId": "scope-groups.list",
+    "spec": "admin",
+    "tag": "scope-groups"
+  },
+  {
+    "command": "scope-groups update",
+    "operationId": "scope-groups.update",
+    "spec": "admin",
+    "tag": "scope-groups"
+  },
+  {
+    "command": "sql-access catalog",
+    "operationId": "sqlAccess.catalog",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access principals create",
+    "operationId": "sqlAccess.principals.create",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access principals list",
+    "operationId": "sqlAccess.principals.list",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access principals revoke",
+    "operationId": "sqlAccess.principals.revoke",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access principals rotate",
+    "operationId": "sqlAccess.principals.rotate",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access provision",
+    "operationId": "sqlAccess.provision",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access provision-script",
+    "operationId": "sqlAccess.provisionScript",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sql-access status",
+    "operationId": "sqlAccess.status",
+    "spec": "admin",
+    "tag": "sql-access"
+  },
+  {
+    "command": "sso acs",
+    "operationId": "sso.acs",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "sso callback",
+    "operationId": "sso.callback",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "sso handoff exchange",
+    "operationId": "sso.handoff.exchange",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "sso ldap-login",
+    "operationId": "sso.ldap-login",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "sso login",
+    "operationId": "sso.login",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "sso login-options",
+    "operationId": "sso.login-options",
+    "spec": "admin",
+    "tag": "sso"
+  },
+  {
+    "command": "superset dashboards list",
+    "operationId": "superset.dashboards.list",
+    "spec": "admin",
+    "tag": "superset"
+  },
+  {
+    "command": "superset dashboards update-sharing",
+    "operationId": "superset.dashboards.update-sharing",
+    "spec": "admin",
+    "tag": "superset"
+  },
+  {
+    "command": "superset guest-token create",
+    "operationId": "superset.guest-token.create",
+    "spec": "admin",
+    "tag": "superset"
+  },
+  {
+    "command": "superset status",
+    "operationId": "superset.status",
+    "spec": "admin",
+    "tag": "superset"
+  },
+  {
+    "command": "sync-jobs cancel",
+    "operationId": "sync-jobs.cancel",
+    "spec": "admin",
+    "tag": "sync-jobs"
+  },
+  {
+    "command": "sync-jobs create",
+    "operationId": "sync-jobs.create",
+    "spec": "admin",
+    "tag": "sync-jobs"
+  },
+  {
+    "command": "sync-jobs get",
+    "operationId": "sync-jobs.get",
+    "spec": "admin",
+    "tag": "sync-jobs"
+  },
+  {
+    "command": "sync-jobs list",
+    "operationId": "sync-jobs.list",
+    "spec": "admin",
+    "tag": "sync-jobs"
+  },
+  {
+    "command": "sync-jobs metrics",
+    "operationId": "sync-jobs.metrics",
+    "spec": "admin",
+    "tag": "sync-jobs"
+  },
+  {
+    "command": "tenants create",
+    "operationId": "tenants.create",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants delete",
+    "operationId": "tenants.delete",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants list",
+    "operationId": "tenants.list",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants tenant-domains create",
+    "operationId": "tenant-domains.create",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants tenant-domains delete",
+    "operationId": "tenant-domains.delete",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants tenant-domains get-public",
+    "operationId": "tenant-domains.get-public",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants tenant-domains list",
+    "operationId": "tenant-domains.list",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "tenants update",
+    "operationId": "tenants.update",
+    "spec": "admin",
+    "tag": "tenants"
+  },
+  {
+    "command": "users avatar delete",
+    "operationId": "users.avatar.delete",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users avatar put",
+    "operationId": "users.avatar.put",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users create",
+    "operationId": "users.create",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users delete",
+    "operationId": "users.delete",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users get",
+    "operationId": "users.get",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users list",
+    "operationId": "users.list",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "users update",
+    "operationId": "users.update",
+    "spec": "admin",
+    "tag": "users"
+  },
+  {
+    "command": "verticals list",
+    "operationId": "verticals.list",
+    "spec": "admin",
+    "tag": "verticals"
+  },
+  {
+    "command": "webhook-subs create",
+    "operationId": "webhook-subs.create",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs delete",
+    "operationId": "webhook-subs.delete",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs deliveries list",
+    "operationId": "webhook-subs.deliveries.list",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs deliveries replay",
+    "operationId": "webhook-subs.deliveries.replay",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs list",
+    "operationId": "webhook-subs.list",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs pause",
+    "operationId": "webhook-subs.pause",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs rotate-secret",
+    "operationId": "webhook-subs.rotate-secret",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs test",
+    "operationId": "webhook-subs.test",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subs update",
+    "operationId": "webhook-subs.update",
+    "spec": "admin",
+    "tag": "webhook-subs"
+  },
+  {
+    "command": "webhook-subscriptions create",
+    "operationId": "webhook-subscriptions.create",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions delete",
+    "operationId": "webhook-subscriptions.delete",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions deliveries",
+    "operationId": "webhook-subscriptions.deliveries",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions get",
+    "operationId": "webhook-subscriptions.get",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions list",
+    "operationId": "webhook-subscriptions.list",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions rotate-secret",
+    "operationId": "webhook-subscriptions.rotate-secret",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions set-paused",
+    "operationId": "webhook-subscriptions.set-paused",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions test",
+    "operationId": "webhook-subscriptions.test",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  },
+  {
+    "command": "webhook-subscriptions update",
+    "operationId": "webhook-subscriptions.update",
+    "spec": "public",
+    "tag": "webhook-subscriptions"
+  }
+]

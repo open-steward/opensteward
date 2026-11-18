@@ -1,0 +1,23 @@
+# Local HTTPS for OAuth providers that refuse an http:// redirect URI.
+#
+# Used by the `https` compose profile (docker-compose.yml → `caddy`). Serves
+# https://localhost with a certificate from Caddy's own local CA and proxies
+# everything to integration-server — so an adapter whose Redirect URI is
+# https://localhost/auth/{vertical}/{platform}/callback lands on the same
+# callback route as one on http://localhost:3010. Not for production: see
+# docs/deployment/custom-domain.md for a real domain and certificate.
+#
+# Trust the CA once with scripts/trust-local-https-ca.sh, or the browser
+# stops on a certificate warning halfway through the OAuth redirect.
+{
+	# Never ask a public ACME CA — nothing here is reachable from outside.
+	local_certs
+	# Caddy would try to install its root into the *container's* trust store,
+	# which trusts nothing that matters. The host's store is what the browser
+	# reads; the script above installs it there.
+	skip_install_trust
+}
+
+localhost {
+	reverse_proxy integration-server:3010
+}

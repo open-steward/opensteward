@@ -1,0 +1,188 @@
+<% layout('../layout', { title: 'API keys' }) -%>
+<%
+  const isAdmin = user && user.role === 'admin'
+  const fmtDate = (n) => n ? new Date(n).toLocaleString() : '—'
+%>
+
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Configure</div>
+    <h1 class="page-header__title">API keys</h1>
+    <p class="page-header__desc">
+      Tenant-scoped developer keys. Send as <span class="mono">Authorization: Bearer &lt;key&gt;</span> against
+      <span class="mono">/v1/customers</span> and the vertical resource APIs.
+    </p>
+  </div>
+  <% if (isAdmin) { %>
+  <div class="page-header__actions">
+    <a href="/api-keys/new" class="btn btn--primary btn--sm">Mint key</a>
+  </div>
+  <% } %>
+</header>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-6)"><%= error %></div>
+<% } %>
+
+<% if (typeof minted !== 'undefined' && minted) { %>
+<div class="card" style="margin-top: var(--space-6); border-color: var(--accent); background: color-mix(in srgb, var(--accent-muted) 50%, transparent)">
+  <h2 class="card__title" style="margin-top: 0">Save this key now</h2>
+  <p class="muted" style="margin: 0 0 var(--space-3)">
+    The plaintext is shown <strong>once</strong>. After you navigate away it cannot be recovered — revoke and mint a new one if lost.
+  </p>
+  <div class="code-copy code-copy--block" style="border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: var(--space-3); background: var(--surface-0)">
+    <pre style="margin: 0; padding-right: 64px; word-break: break-all; white-space: pre-wrap; font-size: var(--text-sm)"><code class="mono"><%= minted.plaintext %></code></pre>
+    <button type="button" class="code-copy__btn" data-copy="<%= minted.plaintext %>">
+      <i class="ph ph-copy" aria-hidden="true"></i> Copy
+    </button>
+  </div>
+  <% if (minted.oldKeyRevokeAt) { %>
+  <p class="muted" style="margin: var(--space-3) 0 0; font-size: var(--text-xs)">
+    This key replaces <span class="mono"><%= minted.rotatedFrom %></span>. The old key keeps working
+    until <strong><%= fmtDate(minted.oldKeyRevokeAt) %></strong>, then revokes itself — roll the new
+    key out before then.
+  </p>
+  <% } %>
+  <% if (minted.mode === 'test') { %>
+  <p class="muted" style="margin: var(--space-3) 0 0; font-size: var(--text-xs)">
+    This is a sandbox key. It works on <span class="mono">/test/v1/*</span> only and is refused on
+    <span class="mono">/v1/*</span>. Start with <span class="mono">GET /test/v1/connections</span>.
+  </p>
+  <% } %>
+  <p class="muted" style="margin: var(--space-3) 0 0; font-size: var(--text-xs)">
+    id <span class="mono"><%= minted.id %></span> ·
+    tenant <span class="mono"><%= minted.tenantId %></span><% if (minted.mode) { %> ·
+    mode <span class="badge"><%= minted.mode === 'test' ? 'Test' : 'Live' %></span><% } %><% if (minted.label) { %> · label <%= minted.label %><% } %>
+    · scopes
+    <% (minted.scopes || ['*']).forEach((s, i) => { %><% if (i > 0) { %>, <% } %><span class="mono"><%= s %></span><% }) %>
+  </p>
+</div>
+<% } %>
+
+<%
+  // The table (filter form + thead) renders unconditionally regardless of
+  // `keys.length` — fix-round-1, Critical 2: hiding it whenever the current
+  // filter matches nothing stranded an operator with no visible Clear
+  // control, and no way to change what they'd typed short of hand-editing
+  // the URL.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<div class="card" style="margin-top: var(--space-3); padding: 0">
+<div class="table-scroll">
+<table class="table">
+  <%- include('../_table-head', { tableSpec, tableState }) %>
+  <tbody>
+    <% if (keys.length === 0) { %>
+    <tr>
+      <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+        <% if (!hasFilters) { %>
+        <div class="empty-state">
+          <div class="empty-state__icon"><i class="ph ph-key"></i></div>
+          <h3 class="empty-state__title">No API keys yet</h3>
+          <p class="empty-state__body">Create one to start authenticating SDK calls against the developer API.</p>
+          <% if (isAdmin) { %>
+          <div class="empty-state__actions">
+            <a class="btn btn--primary" href="/api-keys/new">Generate key</a>
+            <a class="btn btn--ghost" href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/unified-api" target="_blank" rel="noopener">Read the API docs →</a>
+          </div>
+          <% } %>
+        </div>
+        <% } else { %>
+        <div class="empty-state empty-state--no-results">
+          <% if (tableState.filters.tenant) { %>
+          <h3 class="empty-state__title">No API keys for tenant <span class="mono"><%= tableState.filters.tenant %></span></h3>
+          <p class="empty-state__body">Either no keys have been minted for this tenant, or they've all been revoked.</p>
+          <% } else { %>
+          <h3 class="empty-state__title">No API keys match your filters</h3>
+          <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+          <% } %>
+          <div class="empty-state__actions">
+            <a class="btn btn--ghost" href="/api-keys">Clear filter</a>
+          </div>
+        </div>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const k of keys) { %>
+    <tr<% if (k.revokedAt) { %> class="muted"<% } %>>
+      <td class="mono" style="font-size: var(--text-xs)"><%= k.tenantId %></td>
+      <%# Which surface this key authenticates. Older admin-api deployments do
+          not send `mode`; those keys are live, which is what the store's own
+          NULL handling assumes too. %>
+      <td><span class="badge"><%= k.mode === 'test' ? 'Test' : 'Live' %></span></td>
+      <td class="mono" style="font-size: var(--text-xs)"><%= k.prefix %>…</td>
+      <td>
+        <%# The label is the way into the key: the full scope list, the id and
+            the revocation time have no column here and live on the detail
+            page. A key with no label is legal — the mint form requires one,
+            but keys minted straight against the API do not — so the prefix
+            stands in rather than a bare dash, which would give a screen
+            reader nothing to announce.
+            data-modal opens the detail page in a dialog when JS is available;
+            the href is what happens otherwise, and is a real page either way.
+            See public/js/resource-modal.js. %>
+        <a href="/api-keys/<%= k.id %>" data-modal style="font-weight: 500"><%= k.label || k.prefix %></a>
+      </td>
+      <%# One line, always. The recommended preset is sixteen scopes — one per
+          vertical plus the six shared ones — and printing each on its own
+          line would make a row taller than the screen, with two keys filling
+          it. The count is what is scannable at a glance; the names are one
+          click away on the detail page. Two or fewer still fit, and naming
+          them beats making the operator open a page to read two words. %>
+      <td style="font-size: var(--text-xs); white-space: nowrap">
+        <% const scopes = k.scopes && k.scopes.length ? k.scopes : ['*'] %>
+        <% if (scopes.length === 1 && scopes[0] === '*') { %>
+        <span class="badge">All access</span>
+        <% } else if (scopes.length <= 2) { %>
+        <% scopes.forEach((s, i) => { %><% if (i > 0) { %>, <% } %><span class="mono"><%= s %></span><% }) %>
+        <% } else { %>
+        <span class="badge"><%= scopes.length %> scopes</span>
+        <% } %>
+      </td>
+      <td>
+        <% if (k.revokedAt) { %>
+        <span class="badge">Revoked</span>
+        <% } else if (k.revokeAt) { %>
+        <%# Rotated: inside its grace window, still verifying, dies on its own. %>
+        <span class="badge badge--warning">Rotating out</span>
+        <% } else if (k.expiresAt && k.expiresAt <= Date.now()) { %>
+        <span class="badge">Expired</span>
+        <% } else { %>
+        <span class="badge badge--success">Active</span>
+        <% } %>
+      </td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= fmtDate(k.createdAt) %></td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= fmtDate(k.lastUsedAt) %></td>
+      <% if (isAdmin) { %>
+      <td>
+        <% if (!k.revokedAt) { %>
+        <% if (!k.revokeAt) { %>
+        <form method="POST" action="/api-keys/<%= k.id %>/rotate" style="display: inline"
+          onsubmit="return confirm('Rotate this API key? A replacement is minted now; the old key keeps working for 24 hours, then revokes itself.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--secondary btn--sm">Rotate</button>
+        </form>
+        <% } %>
+        <form method="POST" action="/api-keys/<%= k.id %>/revoke" style="display: inline"
+          onsubmit="return confirm('Revoke this API key? Any service using it will start receiving 401.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--danger btn--sm">Revoke</button>
+        </form>
+        <% } %>
+      </td>
+      <% } %>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>

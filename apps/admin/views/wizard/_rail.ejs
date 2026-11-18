@@ -1,0 +1,55 @@
+<%
+  // The rail's rows — slug, label, href, optional — come from
+  // WIZARD_RAIL_STEPS in src/core/routes/wizard-progress.ts, set on
+  // reply.locals.wizardSteps by the wizard's preHandler. The same table names
+  // the next step on the dashboard's "Finish setting up" card, so the two
+  // cannot disagree. Route handlers pass `current` (slug) and `dsMode`
+  // ('database' | 'passthrough' | 'external', or null when not yet known).
+  //
+  // Eight items: logos and tenants are both optional and both skipped as
+  // resume targets, so neither can strand an operator who does not want them;
+  // for non-external modes the webhook step gets an "(optional)" suffix.
+  //
+  // Every step here must be finishable by an admin alone — a step needing a
+  // third party (say, a customer completing an OAuth authorization) can never
+  // complete on a fresh deployment and would trap the resume logic forever.
+  // Connection health lives on /connections, which does that job better.
+  const WIZARD_STEPS = wizardSteps
+  const currentIdx = WIZARD_STEPS.findIndex((s) => s.slug === current)
+  const mode = (typeof dsMode !== 'undefined' && dsMode) ? dsMode : null
+  // Derived per-step done-ness, set on reply.locals by the wizard's preHandler.
+  // Absent (a route that renders the rail without it) falls back to the old
+  // position-only reading, so nothing breaks — it just shows less.
+  const done = (typeof wizardProgress !== 'undefined' && wizardProgress) ? wizardProgress.done : null
+%>
+<aside class="wizard-rail">
+  <div class="wizard-rail__eyebrow">Setup wizard</div>
+  <ol class="wizard-rail__list">
+    <% WIZARD_STEPS.forEach(function (step, i) { %>
+    <%
+      // The step in view reads as current even when it is also finished.
+      const isDone = done ? !!done[step.slug] : i < currentIdx
+      const status = i === currentIdx ? 'current' : isDone ? 'done' : 'upcoming'
+      // Logos and tenants are always optional; webhooks only outside external
+      // mode. This is the same set firstIncomplete skips.
+      const optional = step.optional === true || (step.slug === 'webhooks' && mode !== 'external')
+      // An optional step is linkable whatever its state, and that is not a
+      // nicety: not-yet-done is its resting state — most operators never touch
+      // logos or tenants — and it is skipped as a resume target, so a rail that
+      // will not link it leaves no way to reach it at all.
+      const isLink = status === 'done' || status === 'current' || optional
+      const tag = isLink ? 'a' : 'span'
+    %>
+    <li class="wizard-rail__item wizard-rail__item--<%= status %>">
+      <<%= tag %><% if (isLink) { %> href="<%= step.href %>"<% } %> class="wizard-rail__link">
+        <span class="wizard-rail__marker" aria-hidden="true">
+          <% if (status === 'done') { %><i class="ph ph-check"></i><% } else { %><%= i + 1 %><% } %>
+        </span>
+        <span class="wizard-rail__label">
+          <%= step.label %><% if (optional) { %> <span class="wizard-rail__opt">(optional)</span><% } %>
+        </span>
+      </<%= tag %>>
+    </li>
+    <% }) %>
+  </ol>
+</aside>

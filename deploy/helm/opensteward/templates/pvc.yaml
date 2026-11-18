@@ -1,0 +1,23 @@
+{{- $root := . -}}
+{{- if eq .Values.database.mode "sqlite" }}
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.stateful }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "opensteward.fullname" $root }}-{{ $name }}-data
+  labels:
+    {{- include "opensteward.serviceLabels" (dict "root" $root "name" $name) | nindent 4 }}
+spec:
+  accessModes:
+    - {{ $root.Values.database.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ $root.Values.database.persistence.size }}
+  {{- with $root.Values.database.persistence.storageClass }}
+  storageClassName: {{ . }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

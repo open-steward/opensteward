@@ -1,0 +1,29 @@
+{{- $root := . -}}
+{{- $full := include "opensteward.fullname" . -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $full }}-test-health
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    {{- include "opensteward.podSecurityContext" . | nindent 4 }}
+  containers:
+    - name: curl
+      image: curlimages/curl:8.11.1
+      securityContext:
+        {{- include "opensteward.containerSecurityContext" . | nindent 8 }}
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          set -eu
+          {{- range $name, $svc := .Values.services }}
+          echo "GET {{ $name }}/health"
+          curl -fsS --max-time 10 "http://{{ $full }}-{{ $name }}:{{ $svc.port }}/health" > /dev/null
+          {{- end }}
+          echo "all services healthy"

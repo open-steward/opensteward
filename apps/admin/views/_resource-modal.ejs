@@ -1,0 +1,12 @@
+<%# Resource modal shell — one per signed-in page, filled at click time by
+    public/js/resource-modal.js from a detail page's own HTML. Empty here on
+    purpose: a <dialog> without `open` renders nothing, so a browser with no
+    JS shows no trace of it and the marked links just navigate.
+    The script's header documents the pattern. -%>
+<dialog class="resource-modal" data-resource-modal>
+  <div class="resource-modal__bar">
+    <button type="button" class="resource-modal__close" data-resource-modal-close
+      title="Close" aria-label="Close"><i class="ph ph-x" aria-hidden="true"></i></button>
+  </div>
+  <div class="resource-modal__body" data-resource-modal-body></div>
+</dialog>

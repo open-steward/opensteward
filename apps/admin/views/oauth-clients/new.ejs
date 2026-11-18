@@ -1,0 +1,203 @@
+<% layout('../layout', { title: 'Register issuer' }) -%>
+<%
+  const d = defaults || {}
+  const mode = d.authorityMode || 'registry'
+%>
+<div style="max-width: 760px">
+  <header class="page-header">
+    <div class="page-header__group">
+      <div class="page-header__eyebrow"><a href="/oauth-clients">OAuth clients</a></div>
+      <h1 class="page-header__title">Register issuer</h1>
+      <p class="page-header__desc">
+        Point the deployment at an identity provider you already run. Verification needs only its
+        published public keys — there is no client secret to enter here.
+      </p>
+    </div>
+  </header>
+
+  <% if (error) { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-6)"><%= error %></div>
+  <% } %>
+  <% if (discovered) { %>
+  <div class="alert alert--success" style="margin-top: var(--space-6)">
+    Discovery succeeded. Signing keys at <span class="mono"><%= discovered.jwksUri %></span> — filled in below.
+  </div>
+  <% } %>
+
+  <form method="POST" action="/oauth-clients" class="stack" style="margin-top: var(--space-6)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="card">
+      <label class="field">
+        <span class="field__label">Name</span>
+        <input type="text" name="name" value="<%= d.name || '' %>" placeholder="Corp Keycloak" required>
+        <span class="field__hint">Shown in this list and in the audit log.</span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Vendor</span>
+        <select name="preset" id="preset" onchange="oiApplyPreset()">
+          <% for (const p of presets) { %>
+          <option value="<%= p.id %>"
+                  data-subject="<%= p.subjectClaim %>"
+                  data-scope="<%= p.scopeClaim %>"
+                  data-hint="<%= p.issuerHint %>"
+                  data-note="<%= p.note || '' %>"
+                  <%= (d.preset || 'generic') === p.id ? 'selected' : '' %>><%= p.label %></option>
+          <% } %>
+        </select>
+        <span class="field__hint" id="preset-note">
+          Only sets the claim names below — the verifier is identical for every issuer.
+        </span>
+      </label>
+
+      <label class="field">
+        <span class="field__label">Issuer URL</span>
+        <input type="text" name="issuer" id="issuer" value="<%= d.issuer || '' %>" placeholder="https://idp.example.com/realms/main" required>
+        <span class="field__hint">
+          The exact <span class="mono">iss</span> value tokens carry. Must match character for character —
+          Entra ID in particular reports <span class="mono">sts.windows.net</span> on v1.0 tokens even when the
+          v2.0 endpoint is configured.
+        </span>
+      </label>
+
+      <div class="row" style="gap: var(--space-3); align-items: flex-end">
+        <label class="field" style="flex: 1">
+          <span class="field__label">JWKS URI</span>
+          <input type="text" name="jwksUri" value="<%= d.jwksUri || '' %>" placeholder="Use Test to fill this in" required>
+          <span class="field__hint">Where the issuer publishes its signing keys.</span>
+        </label>
+        <button type="submit" class="btn btn--secondary" formaction="/oauth-clients/discover">Test</button>
+      </div>
+
+      <label class="field">
+        <span class="field__label">Audience</span>
+        <input type="text" name="audience" value="<%= d.audience || '' %>" placeholder="https://opensteward.internal" required>
+        <span class="field__hint">
+          <strong>Required.</strong> The <span class="mono">aud</span> value tokens must carry. Leave it out and
+          every token the issuer ever minted — for any application, including ID tokens — would authenticate here.
+        </span>
+      </label>
+
+      <div class="row" style="gap: var(--space-3)">
+        <label class="field" style="flex: 1">
+          <span class="field__label">Subject claim</span>
+          <input type="text" name="subjectClaim" id="subjectClaim" value="<%= d.subjectClaim || 'sub' %>" required>
+          <span class="field__hint">Which claim names the calling client.</span>
+        </label>
+        <label class="field" style="flex: 1">
+          <span class="field__label">Scope claim</span>
+          <input type="text" name="scopeClaim" id="scopeClaim" value="<%= d.scopeClaim || 'scope' %>" required>
+          <span class="field__hint">Dotted paths are read, e.g. <span class="mono">realm_access.roles</span>.</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="card__title" style="margin-top: 0">Where authority comes from</h2>
+      <p class="muted" style="margin: 0 0 var(--space-3); font-size: var(--text-sm)">
+        The token proves <em>who</em> is calling. This decides <em>what they may do</em>.
+      </p>
+
+      <div class="stack stack--sm">
+        <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+          <input type="radio" name="authorityMode" value="registry" <%= mode === 'registry' ? 'checked' : '' %> onchange="oiSyncMode()" style="margin-top: 4px">
+          <div>
+            <div>Registry <span class="muted" style="font-size: var(--text-xs)">— recommended</span></div>
+            <div class="muted" style="font-size: var(--text-xs)">
+              You register each service account here with a tenant and scopes. Deleting one cuts off a
+              still-valid token immediately, exactly like revoking an API key.
+            </div>
+          </div>
+        </label>
+        <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+          <input type="radio" name="authorityMode" value="intersect" <%= mode === 'intersect' ? 'checked' : '' %> onchange="oiSyncMode()" style="margin-top: 4px">
+          <div>
+            <div>Registry, narrowed by the token</div>
+            <div class="muted" style="font-size: var(--text-xs)">
+              The registered scopes are a ceiling; a token may ask for less. Never more. Revocation stays immediate.
+            </div>
+          </div>
+        </label>
+        <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+          <input type="radio" name="authorityMode" value="external" <%= mode === 'external' ? 'checked' : '' %> onchange="oiSyncMode()" style="margin-top: 4px">
+          <div>
+            <div>The token decides</div>
+            <div class="muted" style="font-size: var(--text-xs)">
+              Tenant and scopes come from claims; no service account is registered here.
+              <strong>A leaked token stays valid until it expires</strong> — the only kill switch is disabling
+              this issuer entirely.
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div id="external-fields" class="stack" style="margin-top: var(--space-4); <%= mode === 'external' ? '' : 'display: none' %>">
+        <label class="field">
+          <span class="field__label">Tenant claim</span>
+          <input type="text" name="tenantClaim" value="<%= d.tenantClaim || '' %>" placeholder="https://opensteward/tenant">
+          <span class="field__hint">
+            No default on purpose. The tenant now arrives inside the token, so which claim carries it has to
+            be stated rather than guessed.
+          </span>
+        </label>
+        <label class="field">
+          <span class="field__label">Allowed tenants</span>
+          <textarea name="allowedTenants" rows="3" placeholder="acme&#10;globex"><%= d.allowedTenants || '' %></textarea>
+          <span class="field__hint">
+            One per line. Only these values are accepted from the tenant claim.
+            <strong>Empty admits nobody</strong> — never everybody.
+          </span>
+        </label>
+        <label class="field">
+          <span class="field__label">Maximum token lifetime (seconds)</span>
+          <input type="number" name="maxTokenLifetimeS" value="<%= d.maxTokenLifetimeS || '3600' %>" min="1">
+          <span class="field__hint">
+            Refuses a token whose <span class="mono">exp - iat</span> is longer. The only lever there is over a
+            credential nothing can revoke.
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+      <input type="checkbox" name="enabled" <%= d.enabled === '' ? '' : 'checked' %>>
+      <span>Accept tokens from this issuer</span>
+    </label>
+
+    <div class="row" style="gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary">Register</button>
+      <a href="/oauth-clients" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Server-rendered state above is already correct without this; the script
+  // only keeps it correct as the operator changes their mind.
+  function oiSyncMode() {
+    var checked = document.querySelector('input[name="authorityMode"]:checked');
+    var mode = checked ? checked.value : 'registry';
+    var block = document.getElementById('external-fields');
+    if (block) block.style.display = mode === 'external' ? '' : 'none';
+  }
+  function oiApplyPreset() {
+    var select = document.getElementById('preset');
+    if (!select) return;
+    var option = select.options[select.selectedIndex];
+    if (!option) return;
+    var subject = document.getElementById('subjectClaim');
+    var scope = document.getElementById('scopeClaim');
+    if (subject) subject.value = option.getAttribute('data-subject') || 'sub';
+    if (scope) scope.value = option.getAttribute('data-scope') || 'scope';
+    var issuer = document.getElementById('issuer');
+    if (issuer) issuer.placeholder = option.getAttribute('data-hint') || 'https://…';
+    var note = document.getElementById('preset-note');
+    if (note) {
+      var text = option.getAttribute('data-note');
+      note.textContent = text
+        ? text
+        : 'Only sets the claim names below — the verifier is identical for every issuer.';
+    }
+  }
+</script>

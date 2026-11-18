@@ -1,0 +1,129 @@
+<% layout('../layout', { title: 'Edit dashboard' }) -%>
+<%
+  const action = dashboard ? '/dashboards/' + encodeURIComponent(dashboard.id) : '/dashboards'
+  const byId = Object.fromEntries(catalog.map((m) => [m.id, m]))
+  const granularityLabels = { day: 'Day', week: 'Week', month: 'Month' }
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/dashboards">Dashboards</a></div>
+    <h1 class="page-header__title"><%= dashboard ? 'Edit ' + dashboard.name : 'New dashboard' %></h1>
+    <p class="page-header__desc">Pick metrics from the catalog and how to draw them. Widgets fill a 12-column grid, left to right. Money is never added up across currencies: a widget follows the dashboard's currency filter, or can be pinned to one currency. Nothing is saved until you press Save.</p>
+  </div>
+</header>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)" role="alert"><%= error %></div>
+<% } %>
+
+<form method="POST" action="<%= action %>" class="stack" style="margin-top: var(--space-4)" data-dashboard-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <%# Enter in a text box submits with the FIRST submit button in the form —
+      without this it would be a row's ↑. Off-screen, not display:none, so it
+      stays the implicit-submission default. -%>
+  <button type="submit" name="action" value="save" tabindex="-1" aria-hidden="true" style="position: absolute; left: -9999px">Save</button>
+  <div class="card">
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4)">
+      <label class="field">
+        <span class="field__label">Name</span>
+        <input class="input" type="text" name="name" value="<%= draft.name %>" maxlength="100" required>
+      </label>
+    </div>
+    <label class="field" style="margin-top: var(--space-3)">
+      <span class="field__label">Description</span>
+      <input class="input" type="text" name="description" value="<%= draft.description || '' %>" maxlength="500">
+    </label>
+    <div style="margin-top: var(--space-3)">
+      <%- include('_sharing', { sharing: draft, tenantChoices, canShareAll, allowPrivate: true }) %>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 0">
+    <div class="table-scroll">
+    <table class="table" data-widget-rows>
+      <thead><tr><th scope="col">#</th><th scope="col">Metric</th><th scope="col">Chart</th><th scope="col">Options</th><th scope="col">Width (1–12)</th><th scope="col">Title (optional)</th><th scope="col"></th></tr></thead>
+      <tbody>
+        <% if (draft.widgets.length === 0) { %>
+        <tr><td colspan="7" class="muted">No widgets yet — add one below.</td></tr>
+        <% } %>
+        <% draft.widgets.forEach((w, i) => {
+             const m = byId[w.metricId]
+             const chartOptions = m && m.charts.length ? m.charts : [w.chart]
+        %>
+        <tr data-widget-row>
+          <td class="muted"><%= i + 1 %></td>
+          <td>
+            <input type="hidden" name="w_metric" value="<%= w.metricId %>">
+            <strong><%= m ? m.title : w.metricId %></strong>
+            <div class="muted mono" style="font-size: var(--text-xs)"><%= w.metricId %><%= m ? '' : ' — not in your catalog' %></div>
+            <% if (m && m.note) { %><div class="muted" style="font-size: var(--text-xs)"><%= m.note %></div><% } %>
+          </td>
+          <td>
+            <select class="select select--sm" name="w_chart" aria-label="Chart for widget <%= i + 1 %>">
+              <% for (const c of chartOptions) { %>
+              <option value="<%= c %>"<%= w.chart === c ? ' selected' : '' %>><%= chartLabels[c] || c %></option>
+              <% } %>
+            </select>
+            <% if (resetCharts.includes(i)) { %><div class="muted" style="font-size: var(--text-xs)" data-chart-reset>Reset to its default: the saved chart no longer fits this metric.</div><% } %>
+          </td>
+          <td>
+            <div class="stack" style="gap: var(--space-1)">
+            <% if (m && m.currencyAware) { %>
+            <select class="select select--sm" name="w_currency" aria-label="Currency for widget <%= i + 1 %>">
+              <option value=""<%= w.currency ? '' : ' selected' %>>Follow dashboard filter</option>
+              <% for (const c of currencies) { %><option value="<%= c %>"<%= w.currency === c ? ' selected' : '' %>>Only <%= c %></option><% } %>
+            </select>
+            <% } else { %>
+            <input type="hidden" name="w_currency" value="<%= w.currency || '' %>">
+            <% } %>
+            <% if (m && m.granular) { %>
+            <select class="select select--sm" name="w_granularity" aria-label="Time buckets for widget <%= i + 1 %>">
+              <option value=""<%= w.granularity && w.granularity !== 'auto' ? '' : ' selected' %>>Auto<%= m.defaultGranularity ? ' (' + granularityLabels[m.defaultGranularity].toLowerCase() + ')' : '' %></option>
+              <% for (const g of ['day', 'week', 'month']) { %><option value="<%= g %>"<%= w.granularity === g ? ' selected' : '' %>>By <%= granularityLabels[g].toLowerCase() %></option><% } %>
+            </select>
+            <% } else { %>
+            <input type="hidden" name="w_granularity" value="<%= w.granularity && w.granularity !== 'auto' ? w.granularity : '' %>">
+            <% } %>
+            <% if (m && m.comparable) { %>
+            <label class="row" style="gap: var(--space-1); font-size: var(--text-xs); align-items: center"><input type="checkbox" name="w_compare" value="<%= i %>"<%= w.compare ? ' checked' : '' %>> Compare with previous period</label>
+            <% } %>
+            <% if (!m || (!m.currencyAware && !m.granular && !m.comparable)) { %><span class="muted" style="font-size: var(--text-xs)">—</span><% } %>
+            </div>
+          </td>
+          <td><input class="input input--sm" type="number" name="w_width" min="1" max="12" value="<%= w.width %>" style="width: 5rem" aria-label="Width of widget <%= i + 1 %>"></td>
+          <td><input class="input input--sm" type="text" name="w_title" value="<%= w.title || '' %>" maxlength="80" aria-label="Title of widget <%= i + 1 %>"></td>
+          <td style="white-space: nowrap">
+            <button type="submit" name="action" value="up:<%= i %>" class="btn btn--ghost btn--sm" aria-label="Move widget <%= i + 1 %> up"<%= i === 0 ? ' disabled' : '' %>>↑</button>
+            <button type="submit" name="action" value="down:<%= i %>" class="btn btn--ghost btn--sm" aria-label="Move widget <%= i + 1 %> down"<%= i === draft.widgets.length - 1 ? ' disabled' : '' %>>↓</button>
+            <button type="submit" name="action" value="remove:<%= i %>" class="btn btn--ghost btn--sm" aria-label="Remove widget <%= i + 1 %>">Remove</button>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="gap: var(--space-3); flex-wrap: wrap; align-items: flex-end">
+      <label class="field" style="flex: 1; min-width: 260px">
+        <span class="field__label">Add a metric</span>
+        <select class="select" name="add_metric">
+          <% for (const group of catalogGroups) { %>
+          <optgroup label="<%= group.label %>">
+            <% for (const m of group.metrics) { %><option value="<%= m.id %>"><%= m.title %><%= m.money ? ' (per currency)' : '' %></option><% } %>
+          </optgroup>
+          <% } %>
+        </select>
+      </label>
+      <button type="submit" name="action" value="add" class="btn btn--secondary"<%= draft.widgets.length >= maxWidgets || catalog.length === 0 ? ' disabled' : '' %>>Add widget</button>
+    </div>
+    <p class="muted" style="font-size: var(--text-xs); margin-top: var(--space-2)">Up to <%= maxWidgets %> widgets. Metrics count and sum stored records; none of them reads personal data. A money metric is drawn once per currency unless it is pinned to one.</p>
+    <% if (currenciesUnavailable) { %><p class="muted" style="font-size: var(--text-xs)" data-currencies-unavailable>The currency list could not be loaded; currencies already pinned are kept.</p><% } %>
+  </div>
+
+  <div class="row" style="gap: var(--space-2)">
+    <button type="submit" name="action" value="save" class="btn btn--primary">Save</button>
+    <a class="btn btn--ghost" href="<%= dashboard ? '/dashboards/' + encodeURIComponent(dashboard.id) : '/dashboards' %>">Cancel</a>
+  </div>
+</form>

@@ -1,0 +1,71 @@
+{
+  "name": "@opensteward/license-token",
+  "version": "1.0.0-rc.1",
+  "description": "OpenSteward license token contract: PASETO v4.public (Ed25519) payload schema, feature vocabulary, KMS-ready signing input, token assembly and offline verification.",
+  "license": "Elastic-2.0",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/open-steward/opensteward.git",
+    "directory": "packages/license-token"
+  },
+  "homepage": "https://opensteward.dev",
+  "bugs": {
+    "url": "https://github.com/open-steward/opensteward/issues"
+  },
+  "keywords": [
+    "opensteward",
+    "license",
+    "paseto",
+    "ed25519"
+  ],
+  "scripts": {
+    "build": "tsc && node ../../scripts/build-stamp.mts",
+    "typecheck": "tsc --noEmit",
+    "typecheck:tests": "tsc -p tsconfig.test.json",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

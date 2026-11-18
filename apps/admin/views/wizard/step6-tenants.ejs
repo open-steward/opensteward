@@ -1,0 +1,65 @@
+<% layout('../layout', { title: 'Setup — step 6' }) -%>
+<%
+  const dsMode = (metrics && metrics.mode) || 'passthrough'
+  const extras = tenants.filter(function (t) { return t.id !== 'default' })
+%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'tenants', dsMode: dsMode }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 6 of 8 · optional</div>
+      <h1>Isolate teams with tenants</h1>
+      <p class="wizard-subtitle">
+        Most deployments never need more than one. Add tenants only if separate developers or
+        business units must not see each other's data.
+      </p>
+    </header>
+
+    <div class="wizard-body">
+      <%# The decision, before the forms. An operator who does not need this
+          should be able to tell within one paragraph and move on. %>
+      <div class="card">
+        <h2 class="card__title">Do you need this?</h2>
+        <div class="stack stack--sm" style="margin-top: var(--space-3)">
+          <p class="muted" style="margin: 0">
+            A tenant is the isolation boundary behind developer keys, customers and Connect Links.
+            A key minted for one tenant cannot read another's data, and a custom domain pointed at
+            this deployment resolves to whichever tenant owns it.
+          </p>
+          <p class="muted" style="margin: 0">
+            <strong>Skip this if</strong> one team runs the whole deployment — everything lands in
+            the seeded <span class="mono">default</span> tenant and nothing here changes that.
+            <strong>Use it if</strong> you are giving separate teams their own keys, or hosting
+            business units that must stay apart.
+          </p>
+          <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+            Nothing is permanent: tenants can be created any time from
+            <a href="/tenants">Tenants &amp; domains</a>. The only thing that gets easier by doing
+            it now is the next step — a key is minted <em>into</em> a tenant, and this is the
+            screen before it.
+          </p>
+        </div>
+      </div>
+
+      <%# The same partial /tenants renders. `returnTo` sends its forms back
+          here rather than to the standalone page. %>
+      <%- include('../tenants/_manage', { tenants, csrfToken, user, returnTo: 'wizard' }) %>
+    </div>
+
+    <footer class="wizard-footer">
+      <a href="/setup/wizard/configure" class="btn btn--ghost">&larr; Back</a>
+      <div class="wizard-footer__primary">
+        <% if (extras.length > 0) { %>
+        <a href="/setup/wizard/api-key" class="btn btn--primary">
+          Continue: dev API key &rarr;
+        </a>
+        <% } else { %>
+        <%# A plain link, never a form submit — passing through changes nothing. %>
+        <a href="/setup/wizard/api-key" class="btn btn--secondary"
+           title="Everything stays in the default tenant — add tenants later from Tenants &amp; domains">Skip for now</a>
+        <% } %>
+      </div>
+    </footer>
+  </div>
+</div>

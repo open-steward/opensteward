@@ -1,0 +1,305 @@
+<%
+  // Variable-specific UI policy. Keep here so the EJS stays declarative.
+  function variableName(key) {
+    const m = /^openapi\.servers\.(scheme|host|port|version)$/.exec(key)
+    return m ? m[1] : null
+  }
+  function inputHint(variable) {
+    switch (variable) {
+      case 'scheme':  return 'Either "http" or "https" — toggle via the checkboxes.'
+      case 'host':    return 'Hostname only (no scheme, no port). e.g. oi.acme.com or localhost.'
+      case 'port':    return 'Integer 1–65535, as a string. e.g. 443, 3010.'
+      case 'version': return 'URL-path version. Format: v<digits>, e.g. v1, v2.'
+      default:        return ''
+    }
+  }
+-%>
+<div class="oi-editors">
+  <% for (const row of rows) { %>
+    <%
+      const variable = variableName(row.key)
+      const current = row.value || { default: '', enum: [] }
+      const seeded = row.defaultValue || { default: '', enum: [] }
+    -%>
+    <article
+      class="oi-editor"
+      data-variable="<%= variable %>"
+      data-initial="<%= JSON.stringify(current) %>"
+    >
+      <header class="oi-editor__head">
+        <div>
+          <code class="mono oi-editor__key"><%= row.key %></code>
+          <div class="oi-editor__desc"><%= row.description %></div>
+        </div>
+        <% if (row.isDefault) { %>
+          <span class="badge badge--muted">default</span>
+        <% } else { %>
+          <span class="badge">admin</span>
+        <% } %>
+      </header>
+
+      <div class="oi-editor__body">
+        <div class="oi-editor__form">
+          <% if (variable === 'scheme') { %>
+            <div class="oi-editor__label">Allowed schemes</div>
+            <div class="oi-editor__choices" data-role="scheme-choices">
+              <% for (const s of ['http', 'https']) { %>
+                <label class="oi-editor__choice">
+                  <input type="checkbox" value="<%= s %>" data-role="scheme-toggle"
+                    <%= (current.enum || []).includes(s) ? 'checked' : '' %>>
+                  <span><%= s %></span>
+                </label>
+              <% } %>
+            </div>
+          <% } else { %>
+            <div class="oi-editor__label">Values</div>
+            <div class="oi-editor__values" data-role="values"></div>
+            <div class="oi-editor__add">
+              <input type="text" data-role="add-input" class="input oi-editor__input"
+                placeholder="Add a value..."
+                <% if (variable === 'port') { %>inputmode="numeric"<% } %>>
+              <button type="button" class="btn btn--sm btn--secondary" data-role="add-btn">Add</button>
+            </div>
+            <div class="oi-editor__error muted" data-role="error"></div>
+          <% } %>
+
+          <div class="oi-editor__label" style="margin-top: var(--space-3)">Default</div>
+          <div class="oi-editor__default" data-role="default"></div>
+
+          <div class="oi-editor__hint muted"><%= inputHint(variable) %></div>
+        </div>
+
+        <div class="oi-editor__preview">
+          <div class="oi-editor__label">Generated JSON</div>
+          <pre class="mono oi-editor__json" data-role="preview"></pre>
+          <div class="oi-editor__actions">
+            <form method="POST" action="/settings/update" style="display: inline-flex; gap: 6px">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="key" value="<%= row.key %>">
+              <input type="hidden" name="valueType" value="json">
+              <input type="hidden" name="value" data-role="value-field">
+              <button type="submit" class="btn btn--primary btn--sm" data-role="save-btn">Save</button>
+            </form>
+            <% if (!row.isDefault) { %>
+              <form method="POST" action="/settings/<%= encodeURIComponent(row.key) %>/reset" style="display: inline-flex">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn--ghost btn--sm" title="Reset to seeded default">Reset</button>
+              </form>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </article>
+  <% } %>
+</div>
+
+<style>
+  .oi-editors { display: flex; flex-direction: column; gap: var(--space-4) }
+  .oi-editor {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--space-4) var(--space-5);
+    background: var(--surface-1, transparent);
+  }
+  .oi-editor__head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: var(--space-3); margin-bottom: var(--space-3);
+  }
+  .oi-editor__key { font-size: var(--text-sm); color: var(--fg-1); font-weight: 500 }
+  .oi-editor__desc { font-size: var(--text-xs); color: var(--fg-3); margin-top: 4px; line-height: 1.5; max-width: 60ch }
+  .oi-editor__body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-5); align-items: start }
+  @media (max-width: 720px) { .oi-editor__body { grid-template-columns: minmax(0, 1fr) } }
+  .oi-editor__form { display: flex; flex-direction: column; gap: var(--space-2) }
+  .oi-editor__label { font-size: var(--text-xs); color: var(--fg-3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em }
+  .oi-editor__choices { display: flex; gap: var(--space-2); flex-wrap: wrap }
+  .oi-editor__choice {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border: 1px solid var(--border-subtle);
+    border-radius: 999px; font-size: var(--text-xs); cursor: pointer;
+  }
+  .oi-editor__choice input { margin: 0 }
+  .oi-editor__values { display: flex; gap: 6px; flex-wrap: wrap; min-height: 28px }
+  .oi-editor__chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 4px 3px 10px; border: 1px solid var(--border-subtle);
+    border-radius: 999px; font-size: var(--text-xs); font-family: var(--font-mono);
+  }
+  .oi-editor__chip[data-default="true"] {
+    border-color: var(--accent, currentColor); color: var(--fg-1); font-weight: 500;
+  }
+  .oi-editor__chip-remove {
+    border: none; background: transparent; cursor: pointer; padding: 0 4px;
+    color: var(--fg-3); font-size: 14px; line-height: 1;
+  }
+  .oi-editor__chip-remove:hover { color: var(--fg-1) }
+  .oi-editor__add { display: flex; gap: 6px; margin-top: 6px }
+  .oi-editor__input { flex: 1; font-size: var(--text-xs); font-family: var(--font-mono) }
+  .oi-editor__input[aria-invalid="true"] { border-color: var(--danger, #c33) }
+  .oi-editor__error { font-size: var(--text-xs); color: var(--danger, #c33); min-height: 1em }
+  .oi-editor__default { display: flex; gap: 6px; flex-wrap: wrap }
+  .oi-editor__default label {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: var(--text-xs); font-family: var(--font-mono); cursor: pointer;
+  }
+  .oi-editor__hint { font-size: var(--text-2xs, 11px); margin-top: 6px; line-height: 1.5 }
+  .oi-editor__preview {
+    display: flex; flex-direction: column; gap: var(--space-2);
+  }
+  .oi-editor__json {
+    background: var(--surface-2, var(--bg-2, rgba(0,0,0,0.04)));
+    padding: var(--space-3); border-radius: var(--radius-sm, 4px);
+    font-size: var(--text-xs); line-height: 1.5; margin: 0;
+    overflow-x: auto; min-height: 6em;
+  }
+  .oi-editor__actions { display: inline-flex; gap: 6px }
+</style>
+
+<script>
+  (function () {
+    const RULES = {
+      scheme:  { test: (v) => v === 'http' || v === 'https', msg: 'Only "http" or "https" are valid.' },
+      host:    { test: (v) => /^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$/.test(v) || v === 'localhost',
+                 msg: 'Hostname must match RFC 1123 (letters, digits, hyphen, dot). No scheme, no port.' },
+      port:    { test: (v) => /^[0-9]+$/.test(v) && Number(v) >= 1 && Number(v) <= 65535,
+                 msg: 'Port must be an integer between 1 and 65535.' },
+      version: { test: (v) => /^v[0-9]+$/.test(v), msg: 'Version must match v<digits>, e.g. v1, v2.' },
+    }
+
+    function el(tag, attrs, ...children) {
+      const node = document.createElement(tag)
+      if (attrs) for (const [k, v] of Object.entries(attrs)) {
+        if (k === 'class') node.className = v
+        else if (k.startsWith('data-')) node.setAttribute(k, v)
+        else if (k === 'onclick') node.addEventListener('click', v)
+        else node[k] = v
+      }
+      for (const c of children) {
+        if (c == null) continue
+        node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c)
+      }
+      return node
+    }
+
+    function init(root) {
+      const variable = root.dataset.variable
+      const rule = RULES[variable]
+      const initial = JSON.parse(root.dataset.initial || '{}')
+      const state = {
+        values: Array.isArray(initial.enum) ? [...initial.enum] : [],
+        default: typeof initial.default === 'string' ? initial.default : '',
+      }
+      const $ = (role) => root.querySelector('[data-role="' + role + '"]')
+      const preview = $('preview')
+      const valueField = $('value-field')
+      const errorBox = $('error')
+
+      function renderValues() {
+        const host = $('values')
+        if (!host) return // scheme variant uses checkboxes
+        host.innerHTML = ''
+        for (const v of state.values) {
+          const chip = el('span',
+            { class: 'oi-editor__chip', 'data-default': String(v === state.default) },
+            v,
+            el('button', { type: 'button', class: 'oi-editor__chip-remove', title: 'Remove', onclick: () => {
+              state.values = state.values.filter((x) => x !== v)
+              if (state.default === v) state.default = state.values[0] || ''
+              renderAll()
+            } }, '×'),
+          )
+          host.appendChild(chip)
+        }
+      }
+
+      function renderSchemeChoices() {
+        // Sync state.values from current checkbox state.
+        const boxes = root.querySelectorAll('[data-role="scheme-toggle"]')
+        boxes.forEach((b) => {
+          b.onchange = () => {
+            const checked = Array.from(boxes).filter((x) => x.checked).map((x) => x.value)
+            if (checked.length === 0) {
+              // Don't let the user uncheck both — undo.
+              b.checked = true
+              return
+            }
+            state.values = checked
+            if (!state.values.includes(state.default)) state.default = state.values[0]
+            renderAll()
+          }
+        })
+      }
+
+      function renderDefault() {
+        const host = $('default')
+        host.innerHTML = ''
+        if (state.values.length === 0) {
+          host.appendChild(el('span', { class: 'muted' }, '(add at least one value)'))
+          return
+        }
+        for (const v of state.values) {
+          const id = 'def-' + variable + '-' + v.replace(/[^a-z0-9]+/gi, '_')
+          host.appendChild(el('label', {},
+            el('input', { type: 'radio', name: 'default-' + variable, id,
+              checked: v === state.default,
+              onclick: () => { state.default = v; renderAll() },
+            }),
+            v,
+          ))
+        }
+      }
+
+      function renderPreview() {
+        const json = { default: state.default, enum: state.values }
+        preview.textContent = JSON.stringify(json, null, 2)
+        valueField.value = JSON.stringify(json)
+        const saveBtn = root.querySelector('[data-role="save-btn"]')
+        if (saveBtn) saveBtn.disabled = state.values.length === 0 || !state.default
+      }
+
+      function renderAll() {
+        if (variable !== 'scheme') renderValues()
+        renderDefault()
+        renderPreview()
+      }
+
+      // Add-input handler (host / port / version).
+      const addInput = $('add-input')
+      const addBtn = $('add-btn')
+      if (addInput && addBtn) {
+        const attempt = () => {
+          const raw = addInput.value.trim()
+          if (!raw) return
+          if (!rule.test(raw)) {
+            addInput.setAttribute('aria-invalid', 'true')
+            errorBox.textContent = rule.msg
+            return
+          }
+          if (state.values.includes(raw)) {
+            addInput.setAttribute('aria-invalid', 'true')
+            errorBox.textContent = '"' + raw + '" is already in the list.'
+            return
+          }
+          state.values.push(raw)
+          if (!state.default) state.default = raw
+          addInput.value = ''
+          addInput.removeAttribute('aria-invalid')
+          errorBox.textContent = ''
+          renderAll()
+        }
+        addBtn.addEventListener('click', attempt)
+        addInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') { e.preventDefault(); attempt() }
+        })
+        addInput.addEventListener('input', () => {
+          addInput.removeAttribute('aria-invalid')
+          errorBox.textContent = ''
+        })
+      }
+
+      if (variable === 'scheme') renderSchemeChoices()
+      renderAll()
+    }
+
+    document.querySelectorAll('.oi-editor').forEach(init)
+  })()
+</script>

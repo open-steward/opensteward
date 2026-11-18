@@ -1,0 +1,20 @@
+/**
+ * PagSeguro/PagBank Connect API constants.
+ *
+ * PagBank uses OAuth2 authorization-code flow with a partner Connect flow.
+ *
+ * Docs: https://dev.pagbank.uol.com.br
+ */
+
+export const API_BASE_URL = 'https://api.pagseguro.com'
+export const OAUTH_AUTHORIZE_URL = 'https://connect.pagbank.com.br/oauth2/authorize'
+export const OAUTH_TOKEN_URL = 'https://api.pagseguro.com/oauth2/token'
+
+export const DEFAULT_PAGE_SIZE = 50
+export const MAX_PAGE_SIZE = 100
+
+export const DEFAULT_SCOPES = [
+  'payments.read',
+  'payments.create',
+  'accounts.read',
+]

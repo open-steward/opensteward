@@ -1,0 +1,28 @@
+{
+  "$comment": [
+    "CLA signature ledger. See CLA.md for the agreement and what it does and does not grant.",
+    "",
+    "To sign: add an entry to `signatures` in the same pull request as your first",
+    "contribution, then keep contributing. Your commit authorship is the signature —",
+    "it records that you, under your own GitHub account, agreed to CLA.md.",
+    "",
+    "  { \"username\": \"your-github-username\", \"name\": \"Your Name\", \"signedAt\": \"YYYY-MM-DD\" }",
+    "",
+    "`username` must match your GitHub login exactly and is compared case-insensitively.",
+    "Validated by `pnpm check:cla`, enforced by .github/workflows/cla.yml.",
+    "",
+    "Entries are append-only. Removing one revokes nothing already granted — the CLA",
+    "licence is irrevocable by its own terms — it just breaks the audit trail."
+  ],
+  "claDocument": "CLA.md",
+  "claVersion": 1,
+  "exempt": ["dependabot[bot]", "github-actions[bot]"],
+  "signatures": [
+    {
+      "username": "mattsfalco",
+      "name": "Matthew Falco",
+      "signedAt": "2026-08-25",
+      "note": "Project maintainer for Falco Consulting AB, the copyright holder. Sole author of all commits prior to this ledger."
+    }
+  ]
+}

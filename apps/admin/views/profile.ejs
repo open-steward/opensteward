@@ -1,0 +1,48 @@
+<% layout('layout', { title: 'My profile' }) -%>
+<%# The signed-in user's own profile. Every role reaches it from the header.
+    Plain forms, no JS: the picture posts as multipart/form-data to
+    routes/user-profile.ts, which forwards it to admin-api for the session's
+    own account. The email is shown, not edited — an admin sets it, or the
+    identity provider does. %>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Account</div>
+    <h1 class="page-header__title">My profile</h1>
+  </div>
+</header>
+
+<div class="card" style="margin-top: var(--space-4); max-width: 720px">
+  <div class="profile-card">
+    <%- avatar(me, 'lg', me.avatarVersion ? 'Your picture' : 'No picture — your initials') %>
+    <div class="profile-card__forms stack">
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+        <div class="stack stack--sm">
+          <span class="eyebrow">Username</span>
+          <span><%= me.username %></span>
+        </div>
+        <div class="stack stack--sm">
+          <span class="eyebrow">Email</span>
+          <span><% if (me.email) { %><%= me.email %><% } else { %><span class="muted">—</span><% } %></span>
+        </div>
+      </div>
+      <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+        Your email is set by an admin or by your identity provider.
+      </p>
+
+      <form method="POST" action="/profile/avatar" enctype="multipart/form-data" class="stack stack--sm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="field__label" for="my-avatar">Picture</label>
+        <input class="input" type="file" id="my-avatar" name="avatar" accept="image/png,image/jpeg,image/webp" required>
+        <span class="field__hint">PNG, JPEG or WebP, up to 512 KB. An uploaded picture replaces one from your identity provider.</span>
+        <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Upload picture</button>
+      </form>
+      <% if (me.avatarVersion) { %>
+      <form method="POST" action="/profile/avatar/delete"
+        onsubmit="return confirm('Remove your picture? The console shows your initials instead.')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn btn--ghost btn--sm">Remove picture</button>
+      </form>
+      <% } %>
+    </div>
+  </div>
+</div>

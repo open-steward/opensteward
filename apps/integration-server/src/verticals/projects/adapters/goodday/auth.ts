@@ -1,0 +1,22 @@
+import type { Credentials, CredentialField } from '@opensteward/shared'
+
+export function getAuthUrlUnsupported(): never {
+  throw new Error('GoodDay uses static API key auth; use credentialFields() instead')
+}
+
+export function credentialFields(): CredentialField[] {
+  return [
+    {
+      name: 'apiToken',
+      label: 'API Token',
+      type: 'password',
+      required: true,
+    },
+  ]
+}
+
+export async function exchangeCredentials(fields: Record<string, string>): Promise<Credentials> {
+  const apiToken = fields['apiToken']
+  if (!apiToken) throw new Error('GoodDay credentials require apiToken')
+  return { accessToken: apiToken, extra: {} }
+}

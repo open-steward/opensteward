@@ -1,0 +1,282 @@
+<% layout('../layout', { title: 'Setup — step 7' }) -%>
+<%
+  const SCOPE_GROUPS = [
+    { eyebrow: 'Customers', items: [
+      { value: 'customers:read', label: 'Read customers', hint: 'GET /v1/customers' },
+      { value: 'customers:write', label: 'Write customers', hint: 'POST/PATCH/DELETE /v1/customers' },
+      { value: 'customers:read_pii', label: 'Reveal PII', hint: 'Allows ?include_pii=true on customer reads.' },
+    ]},
+    { eyebrow: 'Connect Links & Connections', items: [
+      { value: 'connect-links:write', label: 'Create connect link', hint: 'POST /v1/customers/:id/connect-links' },
+      { value: 'connections:read', label: 'Read connections', hint: 'GET /v1/connections' },
+      { value: 'connections:write', label: 'Write connections', hint: 'PATCH/DELETE /v1/connections/:id' },
+    ]},
+    { eyebrow: 'Verticals — touch axis', items: [
+      // One entry per known vertical, supplied by the route.
+      ...knownVerticals.map(v => ({ value: 'vertical:' + v.name, label: v.label, hint: 'Resource calls under /v1/' + v.name + '/* (read by default)' })),
+      { value: 'vertical:read', label: 'Read all verticals', hint: 'Cross-vertical convenience — GETs on every /v1/{vertical}/*.' },
+    ]},
+    { eyebrow: 'Verticals — verb axis (write gate)', items: [
+      { value: 'vertical:write', label: 'Write to verticals', hint: 'Required for POST/PATCH/PUT/DELETE on any /v1/{vertical}/*. Off by default — opt in only when the consuming app needs to push data back upstream.' },
+    ]},
+  ]
+  const selectedSet = new Set(defaults.scopes || [])
+  const minted = (typeof mintedKey !== 'undefined' && mintedKey) ? mintedKey : null
+  const mintedMcp = (typeof mintedMcpKey !== 'undefined' && mintedMcpKey) ? mintedMcpKey : null
+  const wizardTenantId = (defaults && defaults.tenantId) || 'default'
+  // A key is minted INTO a tenant, and step 6 is where they get created — so
+  // this is the one screen where the choice matters. Only offered when there is
+  // a choice to make: a single-tenant deployment keeps the hidden field and
+  // sees nothing new.
+  const tenantChoices = (typeof tenants !== 'undefined' && tenants) || []
+  const pickTenant = tenantChoices.length > 1
+%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'api-key', dsMode: dsMode }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 7 of 8</div>
+      <h1>Mint your first dev API key</h1>
+      <p class="wizard-subtitle">
+        Without a key, your application can't call <code class="mono">/v1/*</code> from outside the admin UI. Mint one now and you'll be ready to paste it into your app's <code class="mono">.env</code>.
+      </p>
+    </header>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert--danger"><%= error %></div>
+    <% } %>
+
+    <% if (mintedMcp) { %>
+    <div class="wizard-body">
+      <div class="alert alert--success">
+        <strong>MCP read-only key minted.</strong> Copy it now — the plaintext is shown only on this page.
+      </div>
+
+      <div class="card stack">
+        <div>
+          <div class="eyebrow">Plaintext key</div>
+          <code id="minted-key" class="input mono" style="user-select: all; word-break: break-all; padding: var(--space-3); display: block; margin-top: var(--space-2)"><%= mintedMcp.plaintext %></code>
+        </div>
+        <button type="button" class="btn btn--secondary" onclick="oiCopyKey()">
+          <i class="ph ph-copy"></i> Copy to clipboard
+        </button>
+        <p class="muted" style="font-size: var(--text-sm); margin: 0">
+          id <span class="mono"><%= mintedMcp.id %></span> ·
+          tenant <span class="mono"><%= mintedMcp.tenantId %></span><% if (mintedMcp.label) { %> · label <%= mintedMcp.label %><% } %><br>
+          scopes: <% (mintedMcp.scopes || ['*']).forEach((s, i) => { %><% if (i > 0) { %>, <% } %><span class="mono"><%= s %></span><% }) %>
+        </p>
+      </div>
+
+      <div class="alert alert--info">
+        Paste this key into the <code class="mono">OPENSTEWARD_MCP_KEY</code> env var of your MCP client config
+        (Claude Desktop, Cursor, …). See <a href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/guides/mcp" target="_blank" rel="noopener">the MCP guide</a> for client snippets.
+        Your primary developer key (shown previously) stays unaffected.
+      </div>
+
+      <div class="alert alert--warning">
+        <strong>Save it before navigating away.</strong> The plaintext cannot be retrieved later — if lost, revoke this key from <a href="/api-keys">/api-keys</a> and mint a new one.
+      </div>
+    </div>
+
+    <footer class="wizard-footer">
+      <a href="/setup/wizard/api-key" class="btn btn--ghost">&larr; Back to step 7</a>
+      <div class="wizard-footer__primary">
+        <a href="/setup/wizard/webhooks" class="btn btn--primary">I've copied it, continue &rarr;</a>
+      </div>
+    </footer>
+
+    <script>
+      function oiCopyKey() {
+        var el = document.getElementById('minted-key')
+        if (!el || !navigator.clipboard) return
+        navigator.clipboard.writeText(el.textContent || '')
+      }
+    </script>
+
+    <% } else if (minted) { %>
+    <div class="wizard-body">
+      <div class="alert alert--success">
+        <strong>Key minted.</strong> Copy it now — the plaintext is shown only on this page.
+      </div>
+
+      <div class="card stack">
+        <div>
+          <div class="eyebrow">Plaintext key</div>
+          <code id="minted-key" class="input mono" style="user-select: all; word-break: break-all; padding: var(--space-3); display: block; margin-top: var(--space-2)"><%= minted.plaintext %></code>
+        </div>
+        <button type="button" class="btn btn--secondary" onclick="oiCopyKey()">
+          <i class="ph ph-copy"></i> Copy to clipboard
+        </button>
+        <p class="muted" style="font-size: var(--text-sm); margin: 0">
+          id <span class="mono"><%= minted.id %></span> ·
+          tenant <span class="mono"><%= minted.tenantId %></span><% if (minted.label) { %> · label <%= minted.label %><% } %><br>
+          scopes: <% (minted.scopes || ['*']).forEach((s, i) => { %><% if (i > 0) { %>, <% } %><span class="mono"><%= s %></span><% }) %>
+        </p>
+      </div>
+
+      <div class="alert alert--warning">
+        <strong>Save it before navigating away.</strong> The plaintext cannot be retrieved later — if lost, revoke this key from <a href="/api-keys">/api-keys</a> and mint a new one.
+      </div>
+
+      <div class="card stack" style="border: 1px solid var(--border-subtle)">
+        <div>
+          <div class="eyebrow">Also need MCP read access?</div>
+          <p style="margin: var(--space-2) 0 0">
+            The <code class="mono">mcp:read</code> scope can't coexist with any <code class="mono">*:write</code> scope on the
+            same key — OpenSteward enforces this at mint time. Mint a second, read-only key for AI agents
+            (Claude Desktop, Cursor, …) here. Skip if you don't plan to ship MCP yet — you can always mint
+            one later from <a href="/api-keys">/api-keys</a>.
+          </p>
+        </div>
+        <form method="POST" action="/setup/wizard/api-key/mcp" style="display: flex; gap: var(--space-2); align-items: center">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <%# Mirrors whatever the main form is set to, so the two keys minted
+              on this screen cannot end up in different tenants. %>
+          <input type="hidden" name="tenantId" value="<%= wizardTenantId %>">
+          <button type="submit" class="btn btn--primary btn--sm">
+            <i class="ph ph-key"></i> Mint MCP key
+          </button>
+          <span class="muted" style="font-size: var(--text-xs)">
+            scopes: <span class="mono">mcp:read, customers:read, vertical:read</span> · tenant <span class="mono"><%= wizardTenantId %></span>
+          </span>
+        </form>
+      </div>
+    </div>
+
+    <footer class="wizard-footer">
+      <a href="/setup/wizard/tenants" class="btn btn--ghost">&larr; Back</a>
+      <div class="wizard-footer__primary">
+        <a href="/setup/wizard/webhooks" class="btn btn--primary">I've copied it, continue &rarr;</a>
+      </div>
+    </footer>
+
+    <script>
+      function oiCopyKey() {
+        var el = document.getElementById('minted-key')
+        if (!el || !navigator.clipboard) return
+        navigator.clipboard.writeText(el.textContent || '')
+      }
+    </script>
+
+    <% } else { %>
+    <form method="POST" action="/setup/wizard/api-key">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <%# `wizardTenantId`, not a hardcoded "default": the POST echoes the
+          submitted tenant back through `defaults` on a validation error, and
+          a hardcoded value would throw that away and silently re-mint into
+          the default tenant. %>
+      <% if (!pickTenant) { %>
+      <input type="hidden" name="tenantId" value="<%= wizardTenantId %>">
+      <% } %>
+
+      <div class="wizard-body">
+        <%# Information, not a gate: a key is worth minting before any
+            customer has connected, and setup must be finishable on a
+            deployment where none ever has. Guarded with typeof because the
+            POST re-render paths do not carry the local. %>
+        <% if (typeof connectionCount !== 'undefined' && connectionCount === 0) { %>
+        <div class="alert alert--info">
+          <div>
+            <strong>No customer connections yet.</strong>
+            A key minted now is valid, but reads will come back empty until a customer
+            authorizes a platform through a Connect Link. They appear on
+            <a href="/connections">Connections</a> as they arrive.
+          </div>
+        </div>
+        <% } %>
+        <div class="card stack">
+          <% if (pickTenant) { %>
+          <div class="field">
+            <label class="field__label" for="tenantId">Tenant</label>
+            <select class="select" name="tenantId" id="tenantId">
+              <% for (const t of tenantChoices) { %>
+              <option value="<%= t.id %>"<%= t.id === wizardTenantId ? ' selected' : '' %>><%= t.name %> (<%= t.id %>)</option>
+              <% } %>
+            </select>
+            <span class="field__hint">
+              The isolation boundary this key reads within. A key cannot see another tenant's
+              customers or connections. Mint one key per tenant from <a href="/api-keys">/api-keys</a>.
+            </span>
+          </div>
+          <% } %>
+          <div class="field">
+            <label class="field__label" for="label">Label *</label>
+            <input class="input" name="label" id="label" value="<%= defaults.label || '' %>" placeholder="e.g. acme-prod-server" required>
+            <span class="field__hint">Names the key in the list. Required, because a key you cannot identify is one you cannot safely revoke. Tenant id is <code class="mono">default</code> — multi-tenant setups can mint additional keys from <a href="/api-keys">/api-keys</a>.</span>
+          </div>
+
+          <div class="field">
+            <span class="field__label">Scopes</span>
+            <div class="stack stack--sm" style="margin-top: var(--space-2)">
+              <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+                <input type="radio" name="scopeMode" value="safe-default" <%= defaults.scopeMode === 'safe-default' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+                <strong>Safe default</strong>
+                <span class="muted" style="font-size: var(--text-xs)">— recommended. Read everywhere + manage customers/connect-links/connections. <strong>No vertical writes</strong> until you opt in.</span>
+              </label>
+              <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+                <input type="radio" name="scopeMode" value="all" <%= defaults.scopeMode === 'all' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+                <strong>All access</strong>
+                <span class="muted" style="font-size: var(--text-xs)">— scope <span class="mono">*</span>, every endpoint, including vertical writes</span>
+              </label>
+              <label class="row" style="gap: var(--space-2); align-items: center; cursor: pointer">
+                <input type="radio" name="scopeMode" value="custom" <%= defaults.scopeMode === 'custom' ? 'checked' : '' %> onchange="oiRefreshScopes()">
+                <strong>Custom</strong>
+                <span class="muted" style="font-size: var(--text-xs)">— pick exactly which endpoints the key may call</span>
+              </label>
+            </div>
+            <div id="scope-grid" class="stack" style="margin-top: var(--space-4)">
+              <% for (const group of SCOPE_GROUPS) { %>
+              <div>
+                <div class="eyebrow" style="margin-bottom: var(--space-2)"><%= group.eyebrow %></div>
+                <div class="stack stack--sm">
+                  <% for (const item of group.items) { %>
+                  <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+                    <input type="checkbox" name="scopes" value="<%= item.value %>" <%= selectedSet.has(item.value) ? 'checked' : '' %> style="margin-top: 4px">
+                    <div>
+                      <div><%= item.label %> <span class="mono muted" style="font-size: var(--text-xs)">(<%= item.value %>)</span></div>
+                      <div class="muted" style="font-size: var(--text-xs)"><%= item.hint %></div>
+                    </div>
+                  </label>
+                  <% } %>
+                </div>
+              </div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer class="wizard-footer">
+        <a href="/setup/wizard/tenants" class="btn btn--ghost">&larr; Back</a>
+        <div class="wizard-footer__primary">
+          <a href="/setup/wizard/webhooks" class="btn btn--secondary">Skip for now</a>
+          <button type="submit" class="btn btn--primary">Mint key</button>
+        </div>
+      </footer>
+    </form>
+
+    <script>
+      // Serialised from the server's SAFE_DEFAULT_SCOPES — the preset shown
+      // must be the preset minted.
+  var OST_SAFE_DEFAULT_SCOPES = new Set(<%- jsonForScript(safeDefaultScopes) %>)
+      function oiRefreshScopes() {
+        var mode = (document.querySelector('input[name="scopeMode"]:checked') || {}).value || 'safe-default'
+        var grid = document.getElementById('scope-grid')
+        if (!grid) return
+        var editable = mode === 'custom'
+        grid.style.opacity = editable ? '1' : '0.55'
+        grid.querySelectorAll('input[name="scopes"]').forEach(function (cb) {
+          cb.disabled = !editable
+          if (mode === 'safe-default') {
+            cb.checked = OST_SAFE_DEFAULT_SCOPES.has(cb.value)
+          } else if (mode === 'all') {
+            cb.checked = true
+          }
+        })
+      }
+      oiRefreshScopes()
+    </script>
+    <% } %>
+  </div>
+</div>

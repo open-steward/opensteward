@@ -1,0 +1,101 @@
+<% layout('../layout', { title: 'Setup — step 8' }) -%>
+<%
+  const isExternal = dsMode === 'external'
+  const created = (typeof createdSub !== 'undefined' && createdSub) ? createdSub : null
+  // A subscription only ever receives its own tenant's events — `matching()`
+  // filters on tenant_id — so pinning this to `default` meant a subscription
+  // created during setup could never serve a tenant made on step 6, one screen
+  // earlier. Offered only when there is a choice: a single-tenant deployment
+  // keeps the hidden field and sees nothing new.
+  const tenantChoices = (typeof tenants !== 'undefined' && tenants) || []
+  const pickTenant = tenantChoices.length > 1
+  const wizardTenantId = (defaults && defaults.tenantId) || 'default'
+%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'webhooks', dsMode: dsMode }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 8 of 8<% if (!isExternal) { %> · optional<% } %></div>
+      <h1>Register a webhook subscription</h1>
+      <p class="wizard-subtitle">
+        <% if (isExternal) { %>
+        You're running <strong>external</strong> mode. Subscribe an endpoint to <code class="mono">resource.*</code> events so your downstream app can mirror cached state.
+        <% } else { %>
+        Optional but useful — get notified when customers are created, connect links are consumed, or anything else interesting happens. Skip if you don't have a webhook receiver ready.
+        <% } %>
+      </p>
+    </header>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert--danger"><%= error %></div>
+    <% } %>
+
+    <% if (created) { %>
+    <div class="wizard-body">
+      <div class="alert alert--success">
+        <strong>Subscription created.</strong> Events will start firing immediately.
+      </div>
+
+      <%# The same panel /webhooks renders after a create or a rotate. %>
+      <%- include('../webhooks/_secret-once', {
+        heading: 'Webhook signing secret — save it now',
+        intro: 'The plaintext is shown once, on this page only.',
+        secret: created.secret,
+        sub: created,
+      }) %>
+    </div>
+
+    <footer class="wizard-footer">
+      <a href="/setup/wizard/api-key" class="btn btn--ghost">&larr; Back</a>
+      <div class="wizard-footer__primary">
+        <a href="/?wizard=complete" class="btn btn--primary">Finish setup</a>
+      </div>
+    </footer>
+
+    <% } else { %>
+    <form method="POST" action="/setup/wizard/webhooks">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (!pickTenant) { %>
+      <input type="hidden" name="tenantId" value="<%= wizardTenantId %>">
+      <% } %>
+
+      <div class="wizard-body">
+        <div class="card stack">
+          <% if (pickTenant) { %>
+          <div class="field">
+            <label class="field__label" for="wh-tenant">Tenant</label>
+            <select class="select" name="tenantId" id="wh-tenant">
+              <% for (const t of tenantChoices) { %>
+              <option value="<%= t.id %>"<%= t.id === wizardTenantId ? ' selected' : '' %>><%= t.name %> (<%= t.id %>)</option>
+              <% } %>
+            </select>
+            <span class="field__hint">This subscription receives only this tenant's events.</span>
+          </div>
+          <% } %>
+          <%# The same partial /webhooks/new renders — see
+              views/webhooks/_subscription-fields.ejs. The wizard variant folds
+              the payload format and headers into a <details> so the default
+              path stays two fields, without hiding them from anyone who needs
+              to point this at Slack on day one. %>
+          <%- include('../webhooks/_subscription-fields', { defaults, variant: 'wizard' }) %>
+        </div>
+
+        <% if (isExternal) { %>
+        <div class="alert alert--info">
+          <strong>External mode tip:</strong> the wizard pre-selected <code class="mono">resource.*</code> events. Subscribe a real endpoint or skip and add one later from <a href="/webhooks">/webhooks</a>.
+        </div>
+        <% } %>
+      </div>
+
+      <footer class="wizard-footer">
+        <a href="/setup/wizard/api-key" class="btn btn--ghost">&larr; Back</a>
+        <div class="wizard-footer__primary">
+          <a href="/?wizard=complete" class="btn btn--secondary">Skip for now</a>
+          <button type="submit" class="btn btn--primary">Create subscription</button>
+        </div>
+      </footer>
+    </form>
+    <% } %>
+  </div>
+</div>

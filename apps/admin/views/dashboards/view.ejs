@@ -1,0 +1,148 @@
+<% layout('../layout', { title: 'Dashboard' }) -%>
+<%
+  const base = '/dashboards/' + encodeURIComponent(dashboard.id)
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/dashboards">Dashboards</a><%= dashboard.builtin ? ' · built in' : ' · ' + audienceText %></div>
+    <h1 class="page-header__title"><%= dashboard.name %></h1>
+    <% if (dashboard.description) { %><p class="page-header__desc"><%= dashboard.description %></p><% } %>
+    <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 0" data-data-from>Data from: <%= dataFrom %></p>
+  </div>
+  <div class="page-header__actions">
+    <%# Switch dashboard: a GET to /dashboards/open, submitted on change by
+        dashboard.js ([data-autosubmit]); the Open button covers no script.
+        Absent when the list could not be loaded. %>
+    <% if (switcher && switcher.length) { %>
+    <% const listed = switcher.some((g) => g.rows.some((d) => d.id === dashboard.id)) %>
+    <form method="GET" action="/dashboards/open" class="dash-switcher" data-dashboard-switcher>
+      <label class="dash-switcher__label" for="dash-switch">Switch dashboard</label>
+      <select class="select select--sm" id="dash-switch" name="id" data-autosubmit>
+        <% if (!listed) { %><option value="<%= dashboard.id %>" selected><%= dashboard.name %></option><% } %>
+        <% for (const g of switcher) { %>
+        <optgroup label="<%= g.label %>">
+          <% for (const d of g.rows) { %><option value="<%= d.id %>"<%= d.id === dashboard.id ? ' selected' : '' %>><%= d.name %></option><% } %>
+        </optgroup>
+        <% } %>
+      </select>
+      <noscript><button class="btn btn--secondary btn--sm" type="submit">Open</button></noscript>
+    </form>
+    <% } %>
+    <% if (canEdit) { %>
+    <a href="<%= base %>/edit" class="btn btn--secondary btn--sm">Edit</a>
+    <form method="POST" action="<%= base %>/delete" style="display: inline" data-confirm="Delete this dashboard? This cannot be undone.">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn--danger btn--sm">Delete</button>
+    </form>
+    <% } %>
+  </div>
+</header>
+
+<%# Range and currency filter — one row, above the charts. Presets are links
+    (carrying the currency and the connection filter); the custom range and
+    the currency are one GET form. Money is never combined across currencies:
+    with no currency chosen, each widget draws every currency separately. %>
+<div class="row" style="gap: var(--space-3); flex-wrap: wrap; align-items: flex-end; margin-top: var(--space-4)">
+  <div class="segmented" role="group" aria-label="Date range">
+    <% for (const p of presets) { %>
+    <a class="segmented__btn" href="<%= link({ days: p }) %>" aria-pressed="<%= range.days === p ? 'true' : 'false' %>" style="text-decoration: none"><%= p === 365 ? '1 year' : p + ' days' %></a>
+    <% } %>
+  </div>
+  <form method="GET" action="<%= base %>" class="row" style="gap: var(--space-2); align-items: flex-end; flex-wrap: wrap" data-dashboard-filter>
+    <% if (applied.platform) { %><input type="hidden" name="platform" value="<%= applied.platform %>"><% } %>
+    <% if (applied.connection) { %><input type="hidden" name="connection" value="<%= applied.connection %>"><% } %>
+    <label class="field"><span class="field__label">From</span><input class="input input--sm" type="date" name="from" value="<%= range.from %>"></label>
+    <label class="field"><span class="field__label">To</span><input class="input input--sm" type="date" name="to" value="<%= range.to %>"></label>
+    <label class="field"><span class="field__label">Currency</span>
+      <select class="select select--sm" name="currency" data-autosubmit>
+        <option value=""<%= range.currency ? '' : ' selected' %>>All currencies (each separately)</option>
+        <% for (const c of currencies) { %><option value="<%= c %>"<%= range.currency === c ? ' selected' : '' %>><%= c %></option><% } %>
+      </select>
+    </label>
+    <button type="submit" class="btn btn--ghost btn--sm">Apply</button>
+  </form>
+  <% if (currenciesUnavailable) { %><p class="muted" style="font-size: var(--text-xs); margin: 0" data-currencies-unavailable>The currency list could not be loaded.</p><% } %>
+</div>
+
+<% if (filter) { %>
+<%# Connection and adapter filter — vertical dashboards only, for users who
+    may read connections. The text box searches the datalist natively (value
+    = id, text = label · adapter · id), so a label or an id fragment narrows
+    the suggestions with no script; on submit the server resolves the text.
+    It carries the range and currency, and the range form carries it back. %>
+<form method="GET" action="<%= base %>" class="filterbar" style="flex-wrap: wrap; align-items: flex-end; margin-top: var(--space-3)" data-connection-filter>
+  <% if (range.days !== null) { %><input type="hidden" name="days" value="<%= range.days %>"><% } else { %><input type="hidden" name="from" value="<%= range.from %>"><input type="hidden" name="to" value="<%= range.to %>"><% } %>
+  <% if (range.currency) { %><input type="hidden" name="currency" value="<%= range.currency %>"><% } %>
+  <label class="field"><span class="field__label">Adapter</span>
+    <select class="select select--sm" name="platform" data-autosubmit>
+      <option value=""<%= filter.platform ? '' : ' selected' %>>All adapters</option>
+      <% for (const p of filter.platforms) { %><option value="<%= p.slug %>"<%= filter.platform === p.slug ? ' selected' : '' %>><%= p.name %><%= p.count === null ? '' : ' (' + p.count + ')' %></option><% } %>
+    </select>
+  </label>
+  <label class="field"><span class="field__label">Connection</span>
+    <input class="input input--sm" type="search" name="connection" value="<%= filter.input %>" list="dash-connections" placeholder="Label or id" maxlength="200" autocomplete="off" spellcheck="false" style="min-width: 18rem" data-connection-input data-connections-url="<%= base %>/connections"<%= filter.optionsTotal > filter.options.length ? ' data-more' : '' %>>
+  </label>
+  <datalist id="dash-connections"><% for (const c of filter.options) { %><option value="<%= c.id %>"><%= c.text %></option><% } %></datalist>
+  <button type="submit" class="btn btn--ghost btn--sm">Apply</button>
+  <% if (filter.connection) { %>
+  <span class="badge badge--accent" data-connection-chip title="Connection <%= filter.connection.id %>"><%= filter.connection.chip %> <a href="<%= link({ connection: null }) %>" data-connection-clear aria-label="Clear the connection filter" style="color: inherit">×</a></span>
+  <% } %>
+  <p class="muted" style="flex-basis: 100%; font-size: var(--text-xs); margin: 0">
+    Applies to every chart on this dashboard, system charts included.<% if (filter.optionsTotal > filter.options.length) { %> Suggestions show <%= filter.options.length %> of <%= filter.optionsTotal %> connections: type more of a name or id.<% } %>
+  </p>
+</form>
+<% if (filter.unavailable) { %><p class="muted" style="font-size: var(--text-xs); margin: var(--space-2) 0 0" data-connections-unavailable>The connection list could not be loaded.</p><% } %>
+<% if (filter.suggestions.length > 0) { %>
+<div class="alert alert--info" style="flex-direction: column; gap: var(--space-1); margin-top: var(--space-3)" data-connection-suggestions>
+  <strong>Did you mean</strong>
+  <ul style="margin: 0; padding-left: var(--space-4)">
+    <% for (const c of filter.suggestions) { %><li><a href="<%= link({ connection: c.id }) %>"><%= c.text %></a></li><% } %>
+  </ul>
+  <% if (filter.suggestionsMore > 0) { %><span>and <%= filter.suggestionsMore %> more — type more of a name or id.</span><% } %>
+</div>
+<% } %>
+<% if (filter.notFound) { %>
+<div class="alert alert--warning" style="margin-top: var(--space-3)" data-connection-none>No connection matches “<%= filter.notFound %>”<%= filter.platform ? ' among this adapter’s connections' : '' %>, so the charts are not filtered by connection.</div>
+<% } %>
+<% } %>
+
+<% if (dashboard.widgets.length === 0) { %>
+<div class="card" style="margin-top: var(--space-4)">
+  <div class="empty-state">
+    <div class="empty-state__icon"><i class="ph ph-chart-line"></i></div>
+    <h3 class="empty-state__title">No charts yet</h3>
+    <% if (canEdit) { %><div class="empty-state__actions"><a class="btn btn--primary" href="<%= base %>/edit">Add charts</a></div><% } %>
+  </div>
+</div>
+<% } %>
+
+<div class="dash-grid" data-dashboard data-dashboard-id="<%= dashboard.id %>" data-from="<%= range.from %>" data-to="<%= range.to %>">
+  <% dashboard.widgets.forEach((w, i) => {
+       const m = metrics[w.metricId]
+       // A stored chart the metric no longer offers draws the metric's default.
+       const chart = m && m.charts.length && !m.charts.includes(w.chart) ? m.charts[0] : w.chart
+       // Precedence: the widget's pin, then the view's filter, then every currency separately.
+       const currency = w.currency || range.currency || ''
+       const pinned = !!w.currency
+       const granularity = w.granularity && w.granularity !== 'auto' ? w.granularity : ''
+  %>
+  <section class="card dash-widget" style="grid-column: span <%= w.width %>" data-widget
+    data-metric-id="<%= w.metricId %>" data-chart="<%= chart %>" data-currency="<%= currency %>"
+    data-granularity="<%= granularity %>" data-compare="<%= w.compare ? '1' : '' %>" data-connection="<%= applied.connection %>" data-platform="<%= applied.platform %>" data-vertical="<%= applied.vertical %>" aria-labelledby="w<%= i %>-title">
+    <div class="dash-widget__head">
+      <h2 class="dash-widget__title" id="w<%= i %>-title"><%= w.title || (m ? m.title : w.metricId) %></h2>
+      <% if (m && m.currencyAware && currency) { %><span class="dash-widget__chip" title="<%= pinned ? 'This widget always shows ' + currency : 'Filtered to ' + currency %>" data-widget-currency><%= currency %><%= pinned ? ' · pinned' : '' %></span><% } %>
+    </div>
+    <% if (m) { %><p class="dash-widget__desc"><%= m.description %></p><% } %>
+    <div class="dash-widget__body<%= chart === 'number' ? ' dash-widget__body--number' : '' %>" data-widget-body>
+      <% if (m) { %>
+      <p class="dash-widget__state" data-widget-state>Loading…</p>
+      <% } else { %>
+      <p class="dash-widget__state" data-widget-state data-unavailable>This metric is not available to you.</p>
+      <% } %>
+    </div>
+  </section>
+  <% }) %>
+</div>
+<script src="/vendor/echarts.min.js" defer></script>
+<script src="/public/js/dashboard.js" defer></script>

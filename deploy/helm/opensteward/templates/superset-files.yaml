@@ -1,0 +1,17 @@
+{{- include "opensteward.validateAnalytics" . }}
+{{- if .Values.superset.enabled }}
+# OpenSteward's Superset settings and role bootstrap, mounted into every
+# Superset pod at /app/opensteward (superset.extraVolumes). Copies of
+# deploy/superset/{superset_config.py,bootstrap-roles.py}.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opensteward-superset-files
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+data:
+  superset_config.py: |-
+{{ .Files.Get "files/superset/superset_config.py" | indent 4 }}
+  bootstrap-roles.py: |-
+{{ .Files.Get "files/superset/bootstrap-roles.py" | indent 4 }}
+{{- end }}

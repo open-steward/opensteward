@@ -1,0 +1,53 @@
+<%
+  /* Both header rows: sort links, then the filter row.
+     Sort controls are plain links — no-interpolation-in-inline-js.test.ts bans
+     an `on*` handler carrying EJS output, and a GET navigation should be
+     bookmarkable anyway. */
+  const hasFilters = tableSpec.columns.some((c) => c.filter)
+-%>
+<thead>
+  <tr class="table__headers<%= hasFilters ? ' table__headers--with-filters' : '' %>">
+    <% for (const col of tableSpec.columns) { if (col.hidden) continue; %>
+    <th scope="col"<%- col.thAttrs ? ' ' + col.thAttrs : '' %><%- tableState.sort === col.key ? ' aria-sort="' + (tableState.dir === 'desc' ? 'descending' : 'ascending') + '"' : '' %>>
+      <% if (col.sortable && col.header) { %>
+      <a class="table__sort" href="<%= sortHref(tableState, tableSpec, col.key) %>"><%= col.header %><% if (tableState.sort === col.key) { %><span class="table__sort-ind" aria-hidden="true"><%= tableState.dir === 'desc' ? '▼' : '▲' %></span><% } %></a>
+      <% } else { %><%= col.header %><% } %>
+    </th>
+    <% } %>
+  </tr>
+  <% if (hasFilters) { %>
+  <tr class="table__filters">
+    <% for (const col of tableSpec.columns) { if (col.hidden) continue; %>
+    <th>
+      <% if (col.filter === 'text') { %>
+      <%# size="1" plus min-width:0 lets a column shrink; without it seven or
+          more controls push the table's intrinsic width past the viewport. -%>
+      <input class="input input--sm" type="search" size="1" form="<%= tableSpec.id %>"
+        name="f_<%= col.key %>" value="<%= tableState.filters[col.key] || '' %>"
+        aria-label="Filter by <%= col.header %>">
+      <% } else if (col.filter && col.filter.type === 'enum') { %>
+      <select class="select select--sm" form="<%= tableSpec.id %>" name="f_<%= col.key %>"
+        aria-label="Filter by <%= col.header %>">
+        <option value="">All</option>
+        <%# An active value the option list does not carry — a retired audit
+            action, a tenant deleted since the bookmark was made — is added
+            back as its own selected option. Without this the select renders
+            as "All" while the filter is still applied: the table shows a
+            narrowed set and the only control on screen says it is not
+            narrowed, and the next submit posts an empty value and silently
+            widens the result. Same scope-misreporting class as the tenant
+            picker defect. -%>
+        <% const active = tableState.filters[col.key]
+           if (active && !col.filter.options.some((o) => o.value === active)) { %>
+        <option value="<%= active %>" selected><%= active %></option>
+        <% } %>
+        <% for (const o of col.filter.options) { %>
+        <option value="<%= o.value %>"<%= tableState.filters[col.key] === o.value ? ' selected' : '' %>><%= o.label %></option>
+        <% } %>
+      </select>
+      <% } %>
+    </th>
+    <% } %>
+  </tr>
+  <% } %>
+</thead>

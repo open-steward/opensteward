@@ -1,0 +1,44 @@
+name: codeql
+
+# Static security analysis. CodeQL is free for public repositories; on a private
+# repo it requires GitHub Advanced Security. Effective once the repo is public.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly, so newly-disclosed query packs catch latent issues.
+    - cron: "27 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    # Free CodeQL is public-repo-only; on a private repo without Advanced Security the
+    # action errors. Gate on visibility so this skips cleanly (green) while private and
+    # activates automatically on the public flip.
+    if: github.event.repository.visibility == 'public'
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      # No build step: the monorepo is TypeScript, which CodeQL analyzes from source.
+      - name: Analyze
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:javascript-typescript"

@@ -1,0 +1,218 @@
+<% layout('../layout', { title: customer.email }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<%
+  const sessions = (customer.sessions || (typeof masked !== 'undefined' && masked && masked.sessions) || [])
+  const connections = (customer.connections || (typeof masked !== 'undefined' && masked && masked.connections) || [])
+  const piiObj = (typeof pii !== 'undefined' && pii) ? pii : null
+%>
+<div class="row row--between" style="align-items: flex-start">
+  <div>
+    <div class="eyebrow">Customer</div>
+    <h1 style="margin: var(--space-1) 0 var(--space-1)"><%= customer.email %></h1>
+    <p class="muted" style="margin: 0"><%= customer.displayName || '— no display name —' %><% if (customer.externalReference) { %> · ref <span class="mono"><%= customer.externalReference %></span><% } %></p>
+    <%# The tenant decides which Connect Links may name this customer and which
+        tenant owns the connections they authorise. Read-only: it is chosen once
+        at creation and cannot change, so there is no edit control. Name plus id
+        because the id is what appears on keys, links and tenant_id filters. -%>
+    <% if (customer.tenantId) { %>
+      <% const ten = (typeof tenants !== 'undefined' ? tenants : []).find((x) => x.id === customer.tenantId) %>
+      <p class="muted" style="margin: var(--space-1) 0 0; font-size: var(--text-xs)">
+        Tenant: <% if (ten) { %><%= ten.name %> <% } %><span class="mono"><%= customer.tenantId %></span>
+      </p>
+    <% } %>
+  </div>
+  <%# Admin, not canAct: the admin-api endpoint behind this is adminOnly, so an
+      operator clicking it only ever gets a 403. %>
+  <% if (user && user.role === 'admin') { %><form method="POST" action="/customers/<%= customer.id %>/delete" onsubmit="return confirm('Delete this customer? Sessions stay for audit but are detached.')">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn--danger btn--sm">Delete customer</button>
+  </form><% } %>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+<% } %>
+
+<!-- Identity + PII edit -->
+<div class="card" style="margin-top: var(--space-6)">
+  <h2 class="card__title">Identity</h2>
+  <% if (canAct) { %><form method="POST" action="/customers/<%= customer.id %>" class="stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <span class="field__label">Display name</span>
+      <input class="input" name="displayName" value="<%= customer.displayName || '' %>">
+    </div>
+    <div class="field">
+      <span class="field__label">External reference</span>
+      <input class="input" name="externalReference" value="<%= customer.externalReference || '' %>">
+    </div>
+
+    <details<% if (piiObj) { %> open<% } %> style="margin-top: var(--space-4)">
+      <summary style="cursor: pointer; font-weight: 500">Personal information</summary>
+      <% if (!piiObj) { %>
+        <p class="muted" style="margin-top: var(--space-3)">PII is encrypted at rest and not loaded by default.
+          <a href="/customers/<%= customer.id %>?reveal=true">Reveal</a> to view (writes an audit entry).</p>
+      <% } %>
+      <div class="stack" style="margin-top: var(--space-4)">
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">First name</span>
+            <input class="input" name="firstName" value="<%= (piiObj && piiObj.firstName) || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Last name</span>
+            <input class="input" name="lastName" value="<%= (piiObj && piiObj.lastName) || '' %>">
+          </div>
+        </div>
+        <div class="field">
+          <span class="field__label">Phone</span>
+          <input class="input" name="phone" value="<%= (piiObj && piiObj.phone) || '' %>">
+        </div>
+        <div class="field">
+          <span class="field__label">Personal ID number</span>
+          <input class="input" name="personalIdNumber" value="<%= (piiObj && piiObj.personalIdNumber) || '' %>">
+          <span class="field__hint">Masked outside the Reveal flow. Editing while not revealed will overwrite the stored value.</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Address line 1</span>
+          <input class="input" name="addressLine1" value="<%= (piiObj && piiObj.address && piiObj.address.line1) || '' %>">
+        </div>
+        <div class="field">
+          <span class="field__label">Address line 2</span>
+          <input class="input" name="addressLine2" value="<%= (piiObj && piiObj.address && piiObj.address.line2) || '' %>">
+        </div>
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">City</span>
+            <input class="input" name="city" value="<%= (piiObj && piiObj.address && piiObj.address.city) || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Region</span>
+            <input class="input" name="region" value="<%= (piiObj && piiObj.address && piiObj.address.region) || '' %>">
+          </div>
+        </div>
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">Postal code</span>
+            <input class="input" name="postalCode" value="<%= (piiObj && piiObj.address && piiObj.address.postalCode) || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Country</span>
+            <input class="input" name="country" maxlength="2" value="<%= (piiObj && piiObj.address && piiObj.address.country) || '' %>">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary">Save</button>
+    </div>
+  </form><% } %>
+</div>
+
+<!-- Connections -->
+<div class="card" style="margin-top: var(--space-6)">
+  <h2 class="card__title">Connections</h2>
+  <% if (connections.length === 0) { %>
+    <p class="muted">No connections yet. They appear here once this customer completes a connect link.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Platform</th>
+        <th>Vertical</th>
+        <th>Status</th>
+        <th>Created</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const c of connections) { %>
+      <tr>
+        <td>
+          <%# Same link + fallback as /connections: label when named, otherwise
+              the id's first block. The detail route needs the vertical, which
+              these rows carry. %>
+          <a href="/connections/<%= c.vertical %>/<%= c.id %>" style="font-weight: 500"><%= c.label || String(c.id).slice(0, 8) %></a>
+        </td>
+        <td class="muted"><%= c.platform %></td>
+        <td><span class="badge" style="text-transform: capitalize"><%= c.vertical || '—' %></span></td>
+        <td><%- statusPill(c.status) %></td>
+        <td class="muted"><%= c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—' %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+  <p class="muted" style="margin-top: var(--space-3); font-size: var(--text-xs)">
+    Derived from this customer's connect links, so a connection created another way will not appear here.
+    The full list is on <a href="/connections">Connections</a>.
+  </p>
+  <% } %>
+</div>
+
+<!-- Connect links. Named for what it lists: this table is connect-link
+     sessions, not activity in general. -->
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="row row--between" style="align-items: center">
+    <h2 class="card__title" style="margin: 0">Connect links</h2>
+    <%# Carries the customer through, so the form arrives with them already
+        chosen rather than asking the operator to find someone they just had
+        open. %>
+    <% if (canAct) { %>
+    <a href="/connect-links/new?customer=<%= customer.id %>" class="btn btn--primary btn--sm">
+      <i class="ph ph-link" aria-hidden="true"></i> New connect link
+    </a>
+    <% } %>
+  </div>
+  <% if (sessions.length === 0) { %>
+    <p class="muted" style="margin-top: var(--space-3)">No connect links sent to this customer yet.</p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Label</th>
+        <th>Status</th>
+        <th>Connection</th>
+        <th>Created</th>
+        <th>Expires</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% for (const s of sessions) { %>
+      <tr>
+        <td style="font-weight: 500"><%= s.label %></td>
+        <td>
+          <%# statusPill() knows active/consumed and falls through to a neutral
+              pill with the raw label. The local mapping this replaces printed
+              "Expired" for every other value, including revoked. %>
+          <%- statusPill(s.status) %>
+        </td>
+        <td class="mono" style="font-size: var(--text-xs)">
+          <%# A session knows the connection id but not its vertical, and the
+              detail route needs both — so look the vertical up in the
+              connections above. %>
+          <% const linked = s.connectionId ? connections.find((c) => c.id === s.connectionId) : null %>
+          <% if (linked && linked.vertical) { %>
+          <a href="/connections/<%= linked.vertical %>/<%= linked.id %>"><%= s.connectionId.slice(0, 8) %></a>
+          <% } else { %>
+          <%= s.connectionId ? s.connectionId.slice(0, 8) : '—' %>
+          <% } %>
+        </td>
+        <td class="muted"><%= new Date(s.createdAt).toLocaleDateString() %></td>
+        <td class="muted"><%= new Date(s.expiresAt).toLocaleDateString() %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</div>
+
+<!-- MCP tokens -->
+<%- include('_mcp-tokens', { customer, mcpTokens, mintedPlaintext, csrfToken }) %>
+<% if (!canAct) { %>
+<p class="muted" style="margin-top: var(--space-3); font-size: var(--text-xs)">Read-only — changing this needs the operator role.</p>
+<% } %>

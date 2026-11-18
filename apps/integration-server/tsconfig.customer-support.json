@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-customer-support"
+  },
+  "include": [
+    "src/verticals/customer-support/**/*",
+    "src/types/**/*"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    }
+  ]
+}

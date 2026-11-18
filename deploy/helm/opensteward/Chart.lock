@@ -1,0 +1,6 @@
+dependencies:
+- name: superset
+  repository: https://apache.github.io/superset
+  version: 0.22.7
+digest: sha256:ba8c4a86fe62bf93ccaa18fd14fc317c046041e5fd25646b306dad5811548fbe
+generated: "2026-09-29T12:24:13.395488162Z"

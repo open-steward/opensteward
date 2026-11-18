@@ -1,0 +1,58 @@
+# AI context exclusions.
+#
+# Patterns follow gitignore syntax. Tools that respect this file (Continue,
+# Cursor via .cursorignore symlink, custom agent harnesses) will skip these
+# paths when building context. `.gitignore` covers build output and runtime
+# junk; this file covers TRACKED files that AI agents shouldn't need.
+#
+# Re-measure after changes:
+#   git ls-files | grep -vFf <(grep -vE '^\s*(#|$)' .aiignore | sed 's:^/::; s:/$::') | xargs wc -c | tail -1
+
+# ── Already-tracked binaries (variable fonts, logos, raster images) ─────────
+# 1.4M tokens of SVG brand logos; agents working on the API don't need them.
+docs/platforms/logos/
+
+# Variable fonts: text-tokenizable but pure noise.
+**/*.ttf
+**/*.otf
+**/*.woff
+**/*.woff2
+
+# Raster + vector images outside the logo dir.
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.ico
+**/*.webp
+**/*.pdf
+
+# ── Generated artifacts regen-able from source ──────────────────────────────
+# openapi.yaml is the canonical generated spec; json is the same content in
+# a different serialization. Keep yaml in context, drop json.
+docs/openapi/openapi.json
+docs/openapi/platform-slugs.json
+
+# Postman collection is derived from openapi.yaml.
+docs/postman/
+
+# Platforms catalog is regenerated from each vertical's PLATFORMS metadata.
+docs/platforms/platforms.json
+docs/platforms/platforms.md
+
+# Api-reference markdown is regenerated from openapi.yaml.
+docs/api-reference/api-reference.md
+
+# Built docs-server search index.
+apps/docs-server/dist/
+
+# ── Lockfiles ──────────────────────────────────────────────────────────────
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# ── Snapshot/fixture trees the agent rarely needs in full ───────────────────
+# Uncomment if your agent runs hit token limits; these are legitimate but
+# bulky. Leave commented so they stay in context by default.
+# **/__snapshots__/
+# docs/integrate/

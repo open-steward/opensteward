@@ -1,0 +1,52 @@
+<% layout('../layout', { title: 'New SQL login' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/sql-access">SQL access</a></div>
+    <h1 class="page-header__title">New SQL login</h1>
+    <p class="page-header__desc">A read-only Postgres login. Its password is shown once, on the next page — store it in your BI tool or secret manager straight away.</p>
+  </div>
+</header>
+
+<% if (error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)" role="alert" data-form-error>
+  <strong><%= error.message %></strong><% if (error.code) { %> <span class="mono muted">(<%= error.code %>)</span><% } %>
+</div>
+<% } %>
+
+<form method="POST" action="/sql-access/principals" class="stack" style="margin-top: var(--space-4)" data-principal-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="card stack stack--sm">
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4)">
+      <label class="field">
+        <span class="field__label">Label <span class="muted">(required)</span></span>
+        <input class="input" type="text" name="label" value="<%= form.label %>" maxlength="100" required placeholder="e.g. Metabase prod">
+        <span class="field__hint">Becomes part of the username.</span>
+      </label>
+      <label class="field">
+        <span class="field__label">Expires</span>
+        <input class="input" type="date" name="expires" value="<%= form.expires %>">
+        <span class="field__hint">Optional. Postgres refuses the login after this day (UTC).</span>
+      </label>
+      <label class="field">
+        <span class="field__label">Connection limit</span>
+        <input class="input" type="number" name="connection_limit" min="1" max="100" value="<%= form.connectionLimit %>">
+      </label>
+    </div>
+  </div>
+
+  <div class="card stack stack--sm">
+    <h2 class="card__title">What it can read</h2>
+    <%- include('../_scope-picker', { picker, selected }) %>
+    <% if (canReadPii) { %>
+    <label class="row" style="gap: var(--space-2); margin-top: var(--space-3)" data-pii-option>
+      <input type="checkbox" name="pii" <%= form.pii ? 'checked' : '' %>>
+      <span>Unmasked: read personal data in clear (<code class="mono">os_analytics_pii</code>). Only for tools that need it.</span>
+    </label>
+    <% } %>
+  </div>
+
+  <div class="row" style="gap: var(--space-2)">
+    <button type="submit" class="btn btn--primary">Create login</button>
+    <a href="/sql-access" class="btn btn--ghost">Cancel</a>
+  </div>
+</form>

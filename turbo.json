@@ -1,0 +1,50 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "agentGuidance": false,
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "tsconfig.json",
+        "../../tsconfig.base.json",
+        "package.json",
+        "../../scripts/build-stamp.mts"
+      ],
+      "outputs": ["dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tsconfig.json", "../../tsconfig.base.json"]
+    },
+    "lint": {
+      "inputs": ["src/**", ".eslintrc.json", "../../.eslintrc.json"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "vitest.config.ts", "vitest.global-setup.ts"],
+      "env": ["TEST_DATABASE_URL"]
+    },
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "tests/**", "vitest.integration.config.ts"]
+    },
+    "generate-openapi": {
+      "dependsOn": ["^build"],
+      "outputs": ["docs/openapi.json", "docs/openapi.yaml"]
+    },
+    "generate-sdk": {
+      "dependsOn": ["generate-openapi"],
+      "outputs": ["sdk/types.ts"]
+    },
+    "generate:all": {
+      "dependsOn": ["generate-openapi"],
+      "outputs": [
+        "docs/platforms.md",
+        "docs/environment-variables.md",
+        ".env.example"
+      ]
+    }
+  }
+}

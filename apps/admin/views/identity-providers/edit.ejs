@@ -1,0 +1,214 @@
+<% layout('../layout', { title: provider.name }) -%>
+<%
+  // Role picker for mapping rules: built-ins plus custom roles, falling back to
+  // the built-ins when /api/roles could not be read.
+  const roleList = (typeof roles !== 'undefined' && roles && roles.length)
+    ? roles
+    : ['admin', 'operator', 'viewer'].map((id) => ({ id, name: id, isBuiltin: true, baseRole: id }))
+  const scopeRuleList = typeof scopeRules !== 'undefined' ? scopeRules : null
+%>
+<% const cfg = provider.config || {} -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/identity-providers">SSO &amp; identity</a></div>
+    <h1 class="page-header__title"><%= provider.name %></h1>
+    <p class="page-header__desc"><span class="badge badge--info"><%= provider.protocol.toUpperCase() %></span> &middot; slug <code><%= provider.slug %></code></p>
+  </div>
+</header>
+
+<% if (mintedToken) { %>
+<div class="alert alert--info" style="margin-top: var(--space-4)">
+  <strong>New SCIM token (copy now — shown once):</strong>
+  <code style="display:block; word-break:break-all; margin-top: var(--space-2)"><%= mintedToken %></code>
+</div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 760px">
+  <h2>Configuration</h2>
+  <form method="POST" action="/identity-providers/<%= provider.id %>" class="stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field"><label class="field__label">Display name</label><input class="input" name="name" value="<%= provider.name %>" required></div>
+    <div class="field"><label class="field__label">Slug</label><input class="input" name="slug" value="<%= provider.slug %>" pattern="[a-z0-9-]+" required></div>
+
+    <% if (provider.protocol === 'oidc') { %>
+      <div class="field"><label class="field__label">Issuer URL</label><input class="input" name="issuer" value="<%= cfg.issuer || '' %>"></div>
+      <div class="field"><label class="field__label">Client ID</label><input class="input" name="clientId" value="<%= cfg.clientId || '' %>"></div>
+      <div class="field"><label class="field__label">Client secret <%= provider.hasSecret ? '(set — leave blank to keep)' : '' %></label><input class="input" type="password" name="clientSecret" autocomplete="new-password"></div>
+      <div class="field"><label class="field__label">Scopes</label><input class="input" name="scopes" value="<%= cfg.scopes || 'openid profile email' %>"></div>
+      <div class="field"><label class="field__label">Groups claim</label><input class="input" name="groupsClaim" value="<%= cfg.groupsClaim || 'groups' %>"></div>
+      <p class="muted" style="font-size: var(--text-xs)">Redirect URI to register at the IdP: <code><%= scimBase.replace('/scim/v2','') %>/api/sso/<%= provider.slug %>/callback</code></p>
+    <% } else if (provider.protocol === 'saml') { %>
+      <div class="field"><label class="field__label">IdP SSO URL (entryPoint)</label><input class="input" name="entryPoint" value="<%= cfg.entryPoint || '' %>"></div>
+      <div class="field"><label class="field__label">IdP issuer / entityID</label><input class="input" name="idpIssuer" value="<%= cfg.idpIssuer || '' %>"></div>
+      <div class="field"><label class="field__label">SP entityID (audience)</label><input class="input" name="spEntityId" value="<%= cfg.spEntityId || '' %>"></div>
+      <div class="field"><label class="field__label">IdP signing certificate (PEM) <%= provider.hasSecret ? '(set — leave blank to keep)' : '' %></label><textarea class="input" name="idpCert" rows="4"></textarea></div>
+      <div class="field"><label class="field__label">Groups attribute</label><input class="input" name="groupsAttribute" value="<%= cfg.groupsAttribute || 'groups' %>"></div>
+      <div class="field"><label class="field__label">Email attribute</label><input class="input" name="emailAttribute" value="<%= cfg.emailAttribute || 'email' %>"></div>
+      <div class="field"><label class="field__label">Picture attribute <span class="muted" style="font-weight: 400">(optional)</span></label><input class="input" name="pictureAttribute" value="<%= cfg.pictureAttribute || '' %>" placeholder="picture, photo, photoUrl or avatar"><span class="field__hint">An https URL of the user's picture. Left empty, the common names are tried.</span></div>
+      <p class="muted" style="font-size: var(--text-xs)">ACS URL: <code><%= scimBase.replace('/scim/v2','') %>/api/sso/<%= provider.slug %>/acs</code></p>
+    <% } else { %>
+      <div class="field"><label class="field__label">LDAP URL</label><input class="input" name="url" value="<%= cfg.url || '' %>"></div>
+      <div class="field"><label class="field__label">Bind DN</label><input class="input" name="bindDn" value="<%= cfg.bindDn || '' %>"></div>
+      <div class="field"><label class="field__label">Bind password <%= provider.hasSecret ? '(set — leave blank to keep)' : '' %></label><input class="input" type="password" name="ldapBindPassword" autocomplete="new-password"></div>
+      <div class="field"><label class="field__label">Search base</label><input class="input" name="searchBase" value="<%= cfg.searchBase || '' %>"></div>
+      <div class="field"><label class="field__label">Search filter</label><input class="input" name="searchFilter" value="<%= cfg.searchFilter || '(uid={{username}})' %>"></div>
+      <div class="field"><label class="field__label">Groups attribute</label><input class="input" name="groupsAttribute" value="<%= cfg.groupsAttribute || 'memberOf' %>"></div>
+      <div class="field"><label class="field__label">Email attribute</label><input class="input" name="emailAttribute" value="<%= cfg.emailAttribute || 'mail' %>"></div>
+      <div class="field"><label class="field__label">Display-name attribute</label><input class="input" name="displayNameAttribute" value="<%= cfg.displayNameAttribute || 'cn' %>"></div>
+    <% } %>
+
+    <div class="field"><label class="field__label">Default role</label>
+      <select class="input" name="defaultRole">
+        <% for (const r of ['viewer','operator','admin']) { %>
+        <option value="<%= r %>" <%= provider.defaultRole === r ? 'selected' : '' %>><%= r %></option>
+        <% } %>
+      </select>
+    </div>
+    <label><input type="checkbox" name="jitEnabled" <%= provider.jitEnabled ? 'checked' : '' %>> Just-in-time provisioning</label>
+    <label><input type="checkbox" name="enabled" <%= provider.enabled ? 'checked' : '' %>> Enabled</label>
+    <button type="submit" class="btn btn--primary">Save</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 760px">
+  <h2>Role mapping</h2>
+  <p class="muted" style="font-size: var(--text-sm)">Mapping a group to an admin role gives those users every tenant; scope rules only narrow non-admins.</p>
+  <p class="muted">Rules are evaluated by ascending priority; the first match wins. Otherwise the default role applies.</p>
+  <table class="table">
+    <thead><tr><th>Priority</th><th>Claim</th><th>Match</th><th>Value</th><th>Role</th><th></th></tr></thead>
+    <tbody>
+      <% for (const r of roleMappings) { %>
+      <tr>
+        <td><%= r.priority %></td><td><code><%= r.claimPath %></code></td><td><%= r.matchType %></td>
+        <td><%= r.matchValue %></td><td><span class="badge badge--accent"><%= r.roleId ? ((roleList.find((x) => x.id === r.roleId) || {}).name || r.roleId) : r.role %></span></td>
+        <td>
+          <form method="POST" action="/identity-providers/<%= provider.id %>/role-mappings/<%= r.id %>/delete" style="display:inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn--danger btn--sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <form method="POST" action="/identity-providers/<%= provider.id %>/role-mappings" class="stack" style="margin-top: var(--space-4)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div style="display:flex; gap: var(--space-2); flex-wrap: wrap">
+      <input class="input" name="priority" type="number" placeholder="100" style="width:90px">
+      <input class="input" name="claimPath" placeholder="groups" required>
+      <select class="input" name="matchType"><option value="equals">equals</option><option value="contains">contains</option><option value="regex">regex</option></select>
+      <input class="input" name="matchValue" placeholder="Admins" required>
+      <select class="input" name="roleId" aria-label="Role">
+        <% for (const r of roleList) { %>
+        <option value="<%= r.id %>"><%= r.name %><%= r.isBuiltin ? '' : ' (' + r.baseRole + ' base)' %></option>
+        <% } %>
+      </select>
+      <button class="btn btn--secondary btn--sm">Add rule</button>
+    </div>
+  </form>
+</div>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 760px">
+  <h2>Tenant scope</h2>
+  <p class="muted">
+    Which tenants this provider's users may see. Unlike role rules, <strong>every</strong> matching
+    scope rule applies and their tenants are combined; a tenant list of <code>*</code> grants every
+    tenant. When no rule matches, the default below applies. Re-applied at every sign-in to users whose
+    scope the provider manages (every JIT and SCIM user, unless an admin pinned one by hand).
+  </p>
+  <% if (scopeRuleList === null) { %>
+  <div class="alert alert--warning">Scope rules could not be loaded — managing them needs the <code>users:manage</code> permission.</div>
+  <% } else { %>
+  <table class="table">
+    <thead><tr><th>Claim</th><th>Match</th><th>Value</th><th>Tenants</th><th>Verticals</th><th></th></tr></thead>
+    <tbody>
+      <% if (scopeRuleList.length === 0) { %>
+      <tr><td colspan="6" class="muted">No scope rules — every user gets the default scope.</td></tr>
+      <% } %>
+      <% for (const r of scopeRuleList) { %>
+      <tr>
+        <td><code><%= r.claimPath %></code></td><td><%= r.matchType %></td><td><%= r.matchValue %></td>
+        <td><%= r.tenantIds.join(', ') %></td>
+        <td><%= r.verticals === '*' ? 'all' : r.verticals.join(', ') %></td>
+        <td>
+          <form method="POST" action="/identity-providers/<%= provider.id %>/scope-rules/<%= r.id %>/delete" style="display:inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn--danger btn--sm">Delete</button>
+          </form>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <form method="POST" action="/identity-providers/<%= provider.id %>/scope-rules" class="stack" style="margin-top: var(--space-4)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div style="display:flex; gap: var(--space-2); flex-wrap: wrap">
+      <input class="input" name="claimPath" placeholder="groups" required>
+      <select class="input" name="matchType"><option value="equals">equals</option><option value="contains">contains</option><option value="regex">regex</option></select>
+      <input class="input" name="matchValue" placeholder="acme-support" required>
+      <input class="input" name="tenantIds" placeholder="acme, globex (or *)" required>
+      <input class="input" name="verticals" placeholder="all verticals">
+      <button class="btn btn--secondary btn--sm">Add scope rule</button>
+    </div>
+  </form>
+
+  <% const defaultTenants = new Set(provider.defaultTenantIds || []) %>
+  <form method="POST" action="/identity-providers/<%= provider.id %>/default-scope" class="stack stack--sm" style="margin-top: var(--space-5)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <span class="field__label">Default scope (no rule matched)</span>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="radio" name="mode" value="all" <%= provider.defaultScopeMode !== 'restricted' ? 'checked' : '' %>> Every tenant
+    </label>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="radio" name="mode" value="restricted" <%= provider.defaultScopeMode === 'restricted' ? 'checked' : '' %>> Only these tenants (none ticked = no tenants):
+    </label>
+    <div class="row" style="gap: var(--space-3); flex-wrap: wrap; padding-left: var(--space-5)">
+      <% for (const t of (tenants || [])) { %>
+      <label class="row" style="gap: var(--space-1)">
+        <input type="checkbox" name="tenantIds" value="<%= t.id %>" <%= defaultTenants.has(t.id) ? 'checked' : '' %>> <%= t.name %>
+      </label>
+      <% } %>
+    </div>
+    <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Save default scope</button>
+  </form>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 760px">
+  <h2>SCIM provisioning</h2>
+  <p class="muted">Base URL: <code><%= scimBase %></code>. Mint a bearer token to give your IdP for SCIM 2.0 user/group provisioning.</p>
+  <table class="table">
+    <thead><tr><th>Prefix</th><th>Label</th><th>Last used</th><th>Status</th><th></th></tr></thead>
+    <tbody>
+      <% for (const t of scimTokens) { %>
+      <tr>
+        <td><code><%= t.prefix %>…</code></td>
+        <td><%= t.label || '—' %></td>
+        <td class="muted"><%= t.lastUsedAt ? new Date(t.lastUsedAt).toLocaleString() : 'never' %></td>
+        <td><%= t.revokedAt ? 'revoked' : 'active' %></td>
+        <td>
+          <% if (!t.revokedAt) { %>
+          <form method="POST" action="/identity-providers/<%= provider.id %>/scim-tokens/<%= t.id %>/delete" style="display:inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn--danger btn--sm">Revoke</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  <form method="POST" action="/identity-providers/<%= provider.id %>/scim-tokens" style="margin-top: var(--space-4); display:flex; gap: var(--space-2)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input class="input" name="label" placeholder="Okta SCIM">
+    <button class="btn btn--secondary btn--sm">Mint SCIM token</button>
+  </form>
+</div>
+
+<div class="card" style="margin-top: var(--space-6); max-width: 760px">
+  <h2>Danger zone</h2>
+  <form method="POST" action="/identity-providers/<%= provider.id %>/delete" onsubmit="return confirm('Delete this provider? Linked SSO users will lose their link.')">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button class="btn btn--danger">Delete provider</button>
+  </form>
+</div>

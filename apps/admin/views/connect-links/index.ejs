@@ -1,0 +1,209 @@
+<% layout('../layout', { title: 'Connect links' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<%
+  // `sessions`, not `rows` — must-fix 7: the operator who just minted this
+  // link should see the "copy and send" banner regardless of what the table
+  // filter (still carrying whatever they had typed before) happens to match.
+  // Finding it in the FILTERED array meant `?link=<id>` plus a non-matching
+  // filter hid the banner for the row the operator just created.
+  const justCreated = (typeof justCreatedSessionId !== 'undefined' && justCreatedSessionId)
+    ? sessions.find(s => s.id === justCreatedSessionId) || null
+    : null
+  const justUrl = (typeof justCreatedUrl !== 'undefined' && justCreatedUrl) ? justCreatedUrl : null
+  const company = (typeof companyInfo !== 'undefined' && companyInfo) ? companyInfo : null
+  const baseUrl = company && company.baseUrl ? company.baseUrl.replace(/\/$/, '') : ''
+  // Resolve the just-created URL: prefer the absolute URL the create call
+  // returned, else the one carried on the session row itself — both computed
+  // by integration-server's resolvePublicBaseUrl, which knows about
+  // PUBLIC_BASE_URL and the tenant's own domain. Returns '' when neither
+  // exists: a bare /connect/<token> path reads like a link but resolves
+  // against the ADMIN's origin, not the integration-server's, and takes the
+  // customer nowhere. Better to show what to configure than something
+  // copy-pasteable and wrong.
+  function resolveCreatedUrl() {
+    if (justUrl) return justUrl
+    if (!justCreated) return ''
+    return justCreated.url || ''
+  }
+%>
+<% const TEMPLATES = (typeof templates !== 'undefined' && templates) ? templates : [] %>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Configure</div>
+    <h1 class="page-header__title">Connect links</h1>
+    <p class="page-header__desc">Tokenised links you can email a customer so they can authorise an integration without leaving their inbox.</p>
+  </div>
+  <div class="page-header__actions" style="align-items: center">
+    <% if (TEMPLATES.length > 0) { %>
+    <select class="select" id="mint-from-template" style="font-size: var(--text-sm)">
+      <option value="">Mint from template…</option>
+      <% for (const t of TEMPLATES) { %>
+      <option value="<%= t.id %>"><%= t.name %></option>
+      <% } %>
+    </select>
+    <% } %>
+    <% if (canAct) { %><a href="/connect-links/new" class="btn btn--primary btn--sm">New link</a><% } %>
+    <a href="/connect-link-templates" class="btn btn--ghost btn--sm" title="Manage Connect link templates">Templates</a>
+  </div>
+</header>
+
+<% if (TEMPLATES.length > 0) { %>
+<script>
+  document.getElementById('mint-from-template').addEventListener('change', (e) => {
+    const id = e.target.value;
+    if (id) window.location.href = '/connect-links/new?template=' + encodeURIComponent(id);
+  });
+</script>
+<% } %>
+
+<%
+  // Ground truth, not a guess: a link is unaddressable exactly when
+  // integration-server could not resolve a URL for it. Keying the warning off
+  // companyInfo.baseUrl alone nagged deployments that set PUBLIC_BASE_URL on
+  // integration-server instead — where every link resolves fine — and said
+  // nothing about a tenant whose own domain is the one missing. With no
+  // sessions yet there is nothing to inspect, so the config value stands in.
+  //
+  // Deliberately `sessions`, never `rows` — must-fix 7: this is a
+  // deployment-level fact ("can a customer reach ANY of your links?"), not a
+  // property of whatever the table filter currently shows. Computing it off
+  // the filtered set let an unrelated filter (e.g. narrowing to one label)
+  // silence a real warning or raise a false one, the moment it changed which
+  // rows happened to be in view.
+  const active = sessions.filter(s => s.status === 'active')
+  const noPublicUrl = active.length > 0 ? active.some(s => !s.url) : !baseUrl
+%>
+<% if (noPublicUrl) { %>
+<div class="alert alert--warning" style="margin-top: var(--space-6)">
+  <strong>Set your deployment's public URL.</strong>
+  Without it, Connect links have no address to send a customer — there is nothing to copy, and a relative path would open against this admin, not the integration server.
+  Add it on <a href="/company-info">Company → Base URL</a> (or set <code class="mono">PUBLIC_BASE_URL</code> on integration-server).
+</div>
+<% } %>
+
+<% if (justCreated) { %>
+<% const createdUrl = resolveCreatedUrl() %>
+<% if (createdUrl) { %>
+<div class="alert alert--success" style="margin-top: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2)">
+  <div><strong>Link created.</strong> Copy and send to your customer.</div>
+  <div style="display: flex; gap: var(--space-2); align-items: center">
+    <input class="input mono" id="link-url" readonly
+      value="<%= createdUrl %>"
+      style="flex: 1; font-size: var(--text-sm)">
+    <button type="button" class="btn btn--secondary btn--sm" onclick="(function(){const i=document.getElementById('link-url');i.select();document.execCommand('copy');})()">Copy</button>
+  </div>
+</div>
+<% } else { %>
+<div class="alert alert--danger" style="margin-top: var(--space-6); display: flex; flex-direction: column; gap: var(--space-2)">
+  <div><strong>Link created, but it has no public address yet.</strong></div>
+  <div>
+    This deployment hasn't been told the URL customers reach it on, so the link
+    can't be addressed. Set <a href="/company-info">Company Info &rarr; Base URL</a>,
+    or the <span class="mono">PUBLIC_BASE_URL</span> environment variable on the
+    integration-server. The link itself is live — its token is
+    <span class="mono"><%= justCreated.token %></span>.
+  </div>
+</div>
+<% } %>
+<% } %>
+
+<%
+  // The filter form and the table render unconditionally — must-fix 2, the
+  // same correction already made on /webhooks, /api-keys, /scope-groups and
+  // /platforms. Hiding them whenever `rows` (the current, possibly filtered
+  // view) is empty stranded an operator whose filter matched nothing with no
+  // visible Clear control. Only the <tbody> below branches, telling a
+  // filtered-to-zero result apart from a genuinely empty deployment — note it
+  // reads the UNFILTERED `sessions` for hasFilters' sibling check, same as
+  // `active`/`justCreated` above.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (rows.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+          <% if (hasFilters) { %>
+          <p class="muted" style="margin: var(--space-4) 0">
+            No links match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+          </p>
+          <% } else { %>
+          <p class="muted" style="margin: var(--space-4) 0">No links yet. Create one to share with a customer.</p>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const s of rows) { %>
+      <tr>
+        <td style="font-weight: 500">
+          <%= s.label %>
+          <% if (s.oneTimeOnly) { %>
+          <span class="badge" style="margin-left: var(--space-2); font-size: var(--text-xs)" title="Connection is auto-deleted after the post-OAuth sync completes">One-time</span>
+          <% } %>
+        </td>
+        <td class="muted"><%= s.endUserId ? '👤 ' + s.endUserId.slice(0, 8) : '— anonymous' %></td>
+        <%# The tenant the link was minted for, which becomes the owner of
+            the connection the customer authorises through it. %>
+        <td style="font-size: var(--text-xs)"><%- include('../_tenant', { tenantId: s.tenantId, tenants: (typeof tenants !== 'undefined' ? tenants : []) }) %></td>
+        <td class="muted">
+          <% if (s.allowedPlatforms.length > 0) { %>
+            <%= s.allowedPlatforms.map(p => p.vertical + ':' + p.slug).join(', ') %>
+          <% } else if (s.allowedVerticals.length > 0) { %>
+            <%= s.allowedVerticals.join(', ') %>
+          <% } else { %>any<% } %>
+        </td>
+        <td>
+          <% if (s.status === 'active') { %>
+            <span class="badge badge--success"><span class="badge__dot"></span>Active</span>
+          <% } else if (s.status === 'consumed') { %>
+            <span class="badge badge--info"><span class="badge__dot"></span>Used</span>
+          <% } else { %>
+            <span class="badge"><span class="badge__dot"></span>Expired</span>
+          <% } %>
+        </td>
+        <td class="muted"><%= new Date(s.expiresAt).toLocaleDateString() %></td>
+        <td>
+          <% if (s.status === 'active') { %>
+          <div class="row" style="gap: var(--space-2)">
+            <%# Copies `s.url` — the address integration-server resolved for
+                THIS link — never a base plus the token. Rebuilding it here got
+                two cases wrong: with no base configured it copied the bare
+                path `/connect/<token>`, which reads like a link but resolves
+                against the admin's own origin; and it ignored a tenant's
+                custom domain, so a tenant on one was handed the wrong host.
+                With no resolved URL there is nothing safe to copy, so the
+                button is not offered — the banner above says what to set. %>
+            <% if (s.url) { %>
+            <button type="button" class="btn btn--ghost btn--sm"
+              data-url="<%= s.url %>"
+              onclick="(function(b){navigator.clipboard.writeText(b.dataset.url)})(this)">Copy</button>
+            <% } else { %>
+            <span class="muted" style="font-size: var(--text-xs)"
+              title="This deployment has no public URL configured, so this link has no address to copy.">No public URL</span>
+            <% } %>
+            <% if (canAct) { %><form method="POST" action="/connect-links/<%= s.id %>/revoke" onsubmit="return confirm('Revoke this link?')" style="display: inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--danger btn--sm">Revoke</button>
+            </form><% } %>
+          </div>
+          <% } else { %>
+            <span class="muted">—</span>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>

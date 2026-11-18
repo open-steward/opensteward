@@ -1,0 +1,54 @@
+import axios, { type AxiosInstance } from 'axios'
+import { KASHFLOW_API_BASE } from './constants'
+import type { Credentials } from '../../adapter/interface'
+import { withRetry } from '@opensteward/shared'
+
+/**
+ * HTTP client for the KashFlow REST API v2.
+ *
+ * Authentication: `Authorization: KfToken <session-token>`
+ * The session token is stored in `credentials.accessToken`.
+ *
+ * Docs: https://www.kashflow.com/developers/rest-api/
+ */
+export class KashflowClient {
+  private http: AxiosInstance
+
+  constructor(credentials: Credentials) {
+    this.http = axios.create({
+      baseURL: `${KASHFLOW_API_BASE}/`,
+      headers: {
+        Authorization: `KfToken ${credentials.accessToken}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+    })
+  }
+
+  async get<T>(path: string, params?: Record<string, unknown>): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.get<T>(path, { params })
+      return data
+    })
+  }
+
+  async post<T>(path: string, body: unknown): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.post<T>(path, body)
+      return data
+    })
+  }
+
+  async put<T>(path: string, body: unknown): Promise<T> {
+    return withRetry(async () => {
+      const { data } = await this.http.put<T>(path, body)
+      return data
+    })
+  }
+
+  async delete(path: string): Promise<void> {
+    return withRetry(async () => {
+      await this.http.delete(path)
+    })
+  }
+}

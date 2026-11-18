@@ -1,0 +1,70 @@
+# Azure / AKS overlay — layer on top of the base chart:
+#   helm install os deploy/helm/opensteward \
+#     -f deploy/helm/overlays/azure-values.yaml -f my-secrets-and-hosts.yaml
+#
+# Prerequisites (see deploy/iac/azure for reference Bicep):
+#   - AKS with the app-routing add-on (managed ingress-nginx), cert-manager,
+#     External Secrets Operator, and OIDC issuer + Workload Identity enabled
+#   - A user-assigned managed identity federated to the chart ServiceAccount, with
+#     Key Vault Secrets User on the vault
+#   - Azure DB for PostgreSQL Flexible Server reachable from the cluster
+# Replace every <PLACEHOLDER>.
+
+database:
+  mode: postgres
+  external:
+    existingSecret: opensteward-db
+    secretKey: DATABASE_URL
+  persistence:
+    storageClass: managed-csi # sqlite-mode trials only
+
+redis:
+  enabled: true
+  url: rediss://<AZURE_CACHE_NAME>.redis.cache.windows.net:6380
+
+secrets:
+  source: externalSecrets
+  externalSecrets:
+    createStore: true
+    provider: azure
+    azure:
+      vaultUrl: https://<KEYVAULT_NAME>.vault.azure.net
+      tenantId: <TENANT_ID>
+    # A Key Vault secret whose value is a JSON object with keys
+    # JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET).
+    remoteSecretName: opensteward-app-secrets
+
+serviceAccount:
+  annotations:
+    azure.workload.identity/client-id: <MANAGED_IDENTITY_CLIENT_ID>
+
+ingress:
+  enabled: true
+  className: webapprouting.kubernetes.io # AKS app-routing managed ingress-nginx
+  # cert-manager.io/cluster-issuer is added automatically from tls.certManager below.
+  tls:
+    enabled: true
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod
+  hosts:
+    - host: admin.example.com
+      service: admin
+    - host: api.example.com
+      service: integration-server
+
+publicUrls:
+  scheme: https
+  adminUi: https://admin.example.com
+  adminApi: https://admin-api.example.com
+  integrationServer: https://api.example.com
+
+podDisruptionBudget:
+  enabled: true
+services:
+  integration-server:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 75

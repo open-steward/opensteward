@@ -1,0 +1,48 @@
+{
+ "ITEMS": [
+  {
+   "ALIAS": "string",
+   "DATEADDED": "2019-08-24T14:15:22Z",
+   "GROUP": {
+    "DEFAULTONE": true,
+    "DESCRIPTION": "string",
+    "ID": 123,
+    "NAME": "string",
+    "PID": "string",
+    "SYSTEMGROUP": true
+   },
+   "ID": 123,
+   "IMAGE": "string",
+   "INVOICINGADDRESS": {
+    "ADDRESS": "string",
+    "CITY": "string",
+    "COMPANY": "string",
+    "CUSTOMERTYPE": "EMPTY",
+    "FIRSTNAME": "string",
+    "ID": 123,
+    "LASTNAME": "string",
+    "MOBILE": "string",
+    "PHONE": "string"
+   },
+   "MASTER": {
+    "EMAIL": "string",
+    "FIRSTNAME": "string",
+    "GENDER": "UNDEFINED",
+    "ID": 123,
+    "LASTNAME": "string",
+    "PID": "string",
+    "USERNAME": "string"
+   },
+   "NAME": "string",
+   "PID": "string",
+   "STATUS": "ENABLED",
+   "TYPE": "GENERAL"
+  }
+ ],
+ "PAGINATION": {
+  "PAGE": 0,
+  "PERPAGE": 0,
+  "TOTALITEMS": 0,
+  "TOTALPAGES": 0
+ }
+}

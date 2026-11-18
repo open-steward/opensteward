@@ -1,0 +1,194 @@
+<% layout('../layout', { title: mode === 'edit' ? 'Edit template' : 'New template' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<div style="max-width: 640px">
+  <h1><%= mode === 'edit' ? 'Edit template' : 'New connect link template' %></h1>
+  <p class="muted" style="margin: var(--space-1) 0 var(--space-6)">
+    Templates prefill the new-link form. Editing a template doesn't touch links already minted from it — runtime config is captured per-link.
+  </p>
+
+  <% if (typeof noEnabledPlatforms !== 'undefined' && noEnabledPlatforms) { %>
+  <div class="alert alert--warning" style="margin-bottom: var(--space-4)">
+    <strong>No platforms are configured yet.</strong>
+    Templates prefill a vertical and adapter, so without at least one enabled platform a template can't pin anything meaningful.
+    <a href="/platforms" style="text-decoration: underline">Configure a platform</a> first, then come back to author the template.
+  </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <%
+    const t = template ?? null
+    const sel = (a, b) => a === b ? 'selected' : ''
+    const presetVertical = t && t.allowedPlatforms[0] ? t.allowedPlatforms[0].vertical : (t && t.allowedVerticals[0] ? t.allowedVerticals[0] : '')
+    const presetPlatform = t && t.allowedPlatforms[0] ? t.allowedPlatforms[0].slug : ''
+    const presetMode = t ? t.linkMode : 'pinned'
+    const presetExpiry = t ? t.expiryDays : 7
+    const presetOneTime = t ? t.oneTimeOnly : false
+    const formAction = mode === 'edit' && t ? '/connect-link-templates/' + t.id : '/connect-link-templates'
+  %>
+
+  <% if (canAct) { %><form method="POST" action="<%= formAction %>" class="card stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="field">
+      <span class="field__label">Name *</span>
+      <input class="input" name="name" required value="<%= t ? t.name : '' %>" placeholder="e.g. Read-only Shopify (24h)">
+      <span class="field__hint">Unique per tenant. Shown in the new-link form's "Apply template" dropdown.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Description</span>
+      <input class="input" name="description" value="<%= t && t.description ? t.description : '' %>" placeholder="Why this preset exists">
+    </div>
+
+    <div class="field">
+      <span class="field__label">Tenant</span>
+      <%# A <select>, for the reason spelled out in api-keys/new.ejs: this field
+          ships pre-filled in EVERY render path (the create route passes
+          template: null, so the ternary emits 'default'; the edit route emits
+          the stored tenant), and browsers filter datalist suggestions against
+          whatever is already in the box. The old input+datalist therefore
+          offered exactly one option — the one already selected — in both
+          directions: 'default' hid the others on create, and a template on
+          'dept-a' could not be moved back to 'default' on edit.
+
+          The typeable fallback is not a nicety. `tenants` is fed by
+          listTenants(...).catch(() => []), so an admin-api outage would
+          otherwise remove the control entirely and silently scope the template
+          to 'default' — the failure class tests/journeys/
+          upstream-failure-is-not-emptiness.test.ts exists to prevent. %>
+      <% const tenantChoices = (typeof tenants !== 'undefined' && tenants) || [] %>
+      <% const currentTenant = t ? t.tenantId : 'default' %>
+      <% if (tenantChoices.length > 0) { %>
+      <select class="select" name="tenantId" required>
+        <%# The stored tenant may not be in the list (a tenant deleted after the
+            template was made). Keep it as an option rather than silently
+            re-scoping the template on the next save. %>
+        <% if (!tenantChoices.some((tn) => tn.id === currentTenant)) { %>
+        <option value="<%= currentTenant %>" selected><%= currentTenant %> (not in tenant list)</option>
+        <% } %>
+        <% for (const tn of tenantChoices) { %>
+        <option value="<%= tn.id %>" <%= tn.id === currentTenant ? 'selected' : '' %>><%= tn.name %> (<%= tn.id %>)</option>
+        <% } %>
+      </select>
+      <% } else { %>
+      <input class="input mono" name="tenantId" value="<%= currentTenant %>" autocomplete="off">
+      <% } %>
+      <span class="field__hint">Templates are scoped per tenant; leave as <code class="mono">default</code> if you only run one. Links minted for a tenant with a custom domain are issued on that domain.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Mode *</span>
+      <select class="select" name="linkMode" required>
+        <% for (const m of modes) { %>
+        <option value="<%= m %>" <%= sel(presetMode, m) %>><%= m %></option>
+        <% } %>
+      </select>
+    </div>
+
+    <div class="row" style="gap: var(--space-3)">
+      <div class="field" style="flex: 1">
+        <span class="field__label">Vertical</span>
+        <select class="select" name="vertical" id="vertical">
+          <option value="">Any</option>
+          <% for (const v of verticals) { %>
+          <option value="<%= v %>" <%= sel(presetVertical, v) %>><%= v %></option>
+          <% } %>
+        </select>
+      </div>
+      <div class="field" style="flex: 1">
+        <span class="field__label">Adapter</span>
+        <select class="select" name="platform" id="platform">
+          <option value="">Any</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Scope group</span>
+      <select class="select" name="scopeGroupId" id="scopeGroupId">
+        <option value="platform-default" selected>Use platform default</option>
+      </select>
+      <span class="field__hint">Only meaningful in pinned mode. Manage groups at <a href="/scope-groups">/scope-groups</a>.</span>
+    </div>
+
+    <div class="row" style="gap: var(--space-3)">
+      <div class="field" style="flex: 1">
+        <span class="field__label">Default expiry</span>
+        <select class="select" name="expiryDays">
+          <% for (const d of [1, 3, 7, 14, 30]) { %>
+          <option value="<%= d %>" <%= sel(presetExpiry, d) %>><%= d %> day<%= d === 1 ? '' : 's' %></option>
+          <% } %>
+        </select>
+      </div>
+      <div class="field" style="flex: 1">
+        <span class="field__label">Redirect URL</span>
+        <input class="input" name="redirectUrl" type="url" value="<%= t && t.redirectUrl ? t.redirectUrl : '' %>" placeholder="https://your-app.example.com/connected">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+        <input type="checkbox" name="oneTimeOnly" <%= presetOneTime ? 'checked' : '' %>>
+        <div>
+          <div><strong>One-time read-only pull</strong></div>
+          <div class="field__hint" style="margin-top: var(--space-1)">Pair with a read-only scope group on pinned mode.</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary"><%= mode === 'edit' ? 'Save' : 'Create template' %></button>
+      <a href="/connect-link-templates" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form><% } %>
+</div>
+
+<script>
+  const PROVIDERS = <%- jsonForScript(providers) %>;
+  const SCOPE_GROUPS = <%- jsonForScript(scopeGroups) %>;
+  const presetVertical = <%- jsonForScript(presetVertical) %>;
+  const presetPlatform = <%- jsonForScript(presetPlatform) %>;
+  const presetScopeGroupId = <%- jsonForScript(t ? t.scopeGroupId : null) %>;
+  const verticalEl = document.getElementById('vertical');
+  const platformEl = document.getElementById('platform');
+  const scopeGroupEl = document.getElementById('scopeGroupId');
+
+  function refreshAdapters() {
+    const v = verticalEl.value;
+    platformEl.innerHTML = '<option value="">Any</option>';
+    PROVIDERS.filter((p) => p.vertical === v)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((p) => {
+        const opt = document.createElement('option');
+        opt.value = p.slug;
+        opt.textContent = p.name;
+        if (p.slug === presetPlatform) opt.selected = true;
+        platformEl.appendChild(opt);
+      });
+    refreshScopeGroups();
+  }
+  function refreshScopeGroups() {
+    const v = verticalEl.value;
+    const p = platformEl.value;
+    scopeGroupEl.innerHTML = '<option value="platform-default">Use platform default</option>';
+    SCOPE_GROUPS
+      .filter((g) => g.vertical === v && g.platform === p)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((g) => {
+        const opt = document.createElement('option');
+        opt.value = String(g.id);
+        opt.textContent = g.name + ' (' + g.scopes.length + ')';
+        if (presetScopeGroupId === g.id) opt.selected = true;
+        scopeGroupEl.appendChild(opt);
+      });
+  }
+  verticalEl.addEventListener('change', refreshAdapters);
+  platformEl.addEventListener('change', refreshScopeGroups);
+  refreshAdapters();
+</script>
+<% if (!canAct) { %>
+<p class="muted" style="margin-top: var(--space-3); font-size: var(--text-xs)">Read-only — changing this needs the operator role.</p>
+<% } %>

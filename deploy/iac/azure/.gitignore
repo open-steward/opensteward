@@ -1,0 +1,10 @@
+# Generated secret state — NEVER commit. Contains JWT/SESSION/STORE secrets and
+# the Postgres password. STORE_SECRET in here is the data-at-rest key: back it
+# up out-of-band (password manager / pipeline secret), not in git.
+.opensteward-secrets.json
+.opensteward-secrets.pgpass
+*.pgpass
+
+# Bicep build artifacts
+*.json.tmp
+main.json

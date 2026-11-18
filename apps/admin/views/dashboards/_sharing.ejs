@@ -1,0 +1,28 @@
+<%# Sharing controls. Locals: sharing { audience, pinnedTenants }, tenantChoices [{id,name}],
+    canShareAll, allowPrivate. "Everyone" is offered to dashboards:share_all holders, and kept
+    selectable when it is already the stored value so an unchanged save is not refused. %>
+<% const a = sharing.audience; const picked = new Set(a.kind === 'tenants' ? a.tenants : []); const pins = new Set(sharing.pinnedTenants || []) %>
+<fieldset class="field" data-sharing-audience>
+  <legend class="field__label">Who can see it</legend>
+  <% if (allowPrivate) { %>
+  <label class="check"><input type="radio" name="audience" value="private"<%= a.kind === 'private' ? ' checked' : '' %>> Only me</label>
+  <% } %>
+  <label class="check"><input type="radio" name="audience" value="tenants"<%= a.kind === 'tenants' ? ' checked' : '' %>> People with access to any of these tenants</label>
+  <div class="row" style="gap: var(--space-3); flex-wrap: wrap; margin-left: var(--space-5)">
+    <% for (const t of tenantChoices) { %>
+    <label class="check"><input type="checkbox" name="audience_tenant" value="<%= t.id %>"<%= picked.has(t.id) ? ' checked' : '' %>> <%= t.name %></label>
+    <% } %>
+  </div>
+  <% if (canShareAll || a.kind === 'everyone') { %>
+  <label class="check"><input type="radio" name="audience" value="everyone"<%= a.kind === 'everyone' ? ' checked' : '' %>> Everyone who can view dashboards</label>
+  <% } %>
+</fieldset>
+<fieldset class="field" data-sharing-pins style="margin-top: var(--space-3)">
+  <legend class="field__label">Data from</legend>
+  <p class="muted" style="font-size: var(--text-sm); margin: 0">Tick tenants to limit the charts to them. Leave all unticked to show each viewer every tenant they can see. Nobody ever sees a tenant outside their own access.</p>
+  <div class="row" style="gap: var(--space-3); flex-wrap: wrap">
+    <% for (const t of tenantChoices) { %>
+    <label class="check"><input type="checkbox" name="pin_tenant" value="<%= t.id %>"<%= pins.has(t.id) ? ' checked' : '' %>> <%= t.name %></label>
+    <% } %>
+  </div>
+</fieldset>

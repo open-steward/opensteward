@@ -1,0 +1,561 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/0.1.2-preview/CreateUIDefinition.MultiVm.json#",
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+    "config": {
+      "isWizard": true,
+      "basics": {
+        "description": "OpenSteward is a self-hosted unified integration platform. This offer deploys the OpenSteward Helm chart onto an existing AKS cluster via a Kubernetes-app (cluster extension). Images are pulled from the Marketplace ACR, digest-pinned. **Bring Your Own License (BYOL): this package collects no marketplace metering or entitlement.** The OpenSteward license is a file verified offline, named as a Kubernetes Secret in the License step."
+      }
+    },
+    "basics": [
+      {
+        "name": "aksClusterInfo",
+        "type": "Microsoft.Common.InfoBox",
+        "visible": true,
+        "options": {
+          "icon": "Info",
+          "text": "Select the AKS cluster to install OpenSteward into. The cluster must already have an ingress controller, cert-manager (for TLS), and — if you choose External Secrets — the External Secrets Operator and Workload Identity (OIDC issuer + a federated managed identity). See the offer README."
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "clusterStep",
+        "label": "Cluster & images",
+        "subLabel": {
+          "preValidation": "Configure the target cluster and image source",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Cluster & images",
+        "elements": [
+          {
+            "name": "clusterApiInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Images are served from the Marketplace-managed ACR and pinned by multi-arch digest. The chart's image.registry is overridden to that ACR; image.digest pins the exact signed build. You normally leave these at their defaults."
+            }
+          },
+          {
+            "name": "imageRegistry",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Image registry (registry + owner)",
+            "toolTip": "Maps to Helm value image.registry. The single overridable '<registry>/<owner>' prefix; the chart's image helper appends the service name, forming '<registry>/<owner>/<service>' (i.e. printf '%s/%s' image.registry <service>). Defaults to the Marketplace-mirrored registry.",
+            "defaultValue": "mcr.microsoft.com/open-steward",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-z0-9]+([._-][a-z0-9]+)*(\\.[a-z0-9]+([._-][a-z0-9]+)*)*(:[0-9]+)?(/[a-z0-9]+([._-][a-z0-9]+)*)*$",
+              "validationMessage": "Enter a lowercase registry host and path, e.g. mcr.microsoft.com/open-steward."
+            }
+          },
+          {
+            "name": "imageDigest",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Image digest (sha256:...)",
+            "toolTip": "Maps to Helm value image.digest. When set, every service is pulled by digest ('<registry>/<owner>/<service>@<digest>', where the helper appends '/<service>' to image.registry) for reproducible, cosign-verifiable deploys. Leave blank to fall back to the image tag.",
+            "defaultValue": "",
+            "constraints": {
+              "required": false,
+              "regex": "^$|^sha256:[a-f0-9]{64}$",
+              "validationMessage": "Must be empty or a digest like sha256: followed by 64 hex characters."
+            }
+          },
+          {
+            "name": "imageTag",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Image tag (used only if no digest)",
+            "toolTip": "Maps to Helm value image.tag. Ignored when a digest is provided. Empty falls back to the chart appVersion. Pin a release like 0.1.0.",
+            "defaultValue": "",
+            "constraints": {
+              "required": false,
+              "regex": "^$|^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$",
+              "validationMessage": "Enter a valid image tag, or leave blank to use the chart appVersion."
+            }
+          }
+        ]
+      },
+      {
+        "name": "databaseStep",
+        "label": "Database",
+        "subLabel": {
+          "preValidation": "Choose the database mode",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Database",
+        "elements": [
+          {
+            "name": "databaseMode",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Database mode",
+            "defaultValue": "External PostgreSQL (HA, recommended)",
+            "toolTip": "Maps to Helm value database.mode. 'postgres' makes the stateful services stateless and points them at a managed Azure Database for PostgreSQL. 'sqlite' gives each stateful service a PVC and a single replica — trials only.",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "External PostgreSQL (HA, recommended)",
+                  "value": "postgres"
+                },
+                {
+                  "label": "SQLite (single-node, trials only)",
+                  "value": "sqlite"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "dbExistingSecret",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Existing DATABASE_URL secret name",
+            "toolTip": "Maps to Helm value database.external.existingSecret. Name of a Kubernetes Secret in the release namespace holding the Postgres connection string. Create it from your Azure Database for PostgreSQL Flexible Server output before installing.",
+            "defaultValue": "opensteward-db",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid Kubernetes Secret name (lowercase alphanumerics and '-')."
+            },
+            "visible": "[equals(steps('databaseStep').databaseMode, 'postgres')]"
+          },
+          {
+            "name": "dbSecretKey",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Key within that secret",
+            "toolTip": "Maps to Helm value database.external.secretKey. The data key inside the secret that holds the connection string.",
+            "defaultValue": "DATABASE_URL",
+            "constraints": {
+              "required": true,
+              "regex": "^[-._a-zA-Z0-9]+$",
+              "validationMessage": "Enter a valid Kubernetes Secret data key."
+            },
+            "visible": "[equals(steps('databaseStep').databaseMode, 'postgres')]"
+          },
+          {
+            "name": "dbStorageClass",
+            "type": "Microsoft.Common.TextBox",
+            "label": "PVC storage class (SQLite mode)",
+            "toolTip": "Maps to Helm value database.persistence.storageClass. Storage class for the per-service PVCs in SQLite mode. 'managed-csi' is the default Azure disk CSI class.",
+            "defaultValue": "managed-csi",
+            "constraints": {
+              "required": false
+            },
+            "visible": "[equals(steps('databaseStep').databaseMode, 'sqlite')]"
+          },
+          {
+            "name": "redisEnabled",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Enable Redis (required to scale integration-server past 1 replica)",
+            "toolTip": "Maps to Helm value redis.enabled. integration-server shares a per-API-key rate-limit budget across replicas via Redis. Required before scaling it beyond one replica.",
+            "constraints": {
+              "required": false
+            }
+          },
+          {
+            "name": "redisUrl",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Redis URL",
+            "toolTip": "Maps to Helm value redis.url. Azure Cache for Redis SSL endpoint, e.g. rediss://<name>.redis.cache.windows.net:6380.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[steps('databaseStep').redisEnabled]",
+              "regex": "^$|^rediss?://.+$",
+              "validationMessage": "Enter a redis:// or rediss:// URL."
+            },
+            "visible": "[steps('databaseStep').redisEnabled]"
+          }
+        ]
+      },
+      {
+        "name": "secretsStep",
+        "label": "Application secrets",
+        "subLabel": {
+          "preValidation": "Choose how app secrets are supplied",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Application secrets",
+        "elements": [
+          {
+            "name": "secretsInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Warning",
+              "text": "OpenSteward runs with NODE_ENV=production and fails closed: a weak or missing JWT_SECRET / SESSION_SECRET / STORE_SECRET crash-loops the pod rather than running insecurely. Each key must be >=32 chars with real entropy. STORE_SECRET is the data-at-rest key — set it once and never rotate it casually."
+            }
+          },
+          {
+            "name": "secretsSource",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "Secrets source",
+            "defaultValue": "Azure Key Vault via External Secrets (recommended)",
+            "toolTip": "Maps to Helm value secrets.source. Controls how the app secrets land in the single <release>-secrets Kubernetes Secret the pods read.",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Azure Key Vault via External Secrets (recommended)",
+                  "value": "externalSecrets"
+                },
+                {
+                  "label": "Reference an existing Kubernetes Secret",
+                  "value": "existingSecret"
+                },
+                {
+                  "label": "Generate in-cluster (trial)",
+                  "value": "generate"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "esProvider",
+            "type": "Microsoft.Common.DropDown",
+            "label": "External Secrets provider",
+            "defaultValue": "Azure Key Vault",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.provider. For the Azure Marketplace listing this is fixed to Azure Key Vault.",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "Azure Key Vault",
+                  "value": "azure"
+                }
+              ],
+              "required": true
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          },
+          {
+            "name": "esVaultUrl",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Key Vault URI",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.azure.vaultUrl. The full vault URI, e.g. https://<vault>.vault.azure.net. From the Bicep output keyVaultUri.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]",
+              "regex": "^https://[a-z0-9-]+\\.vault\\.azure\\.net/?$",
+              "validationMessage": "Enter a Key Vault URI like https://myvault.vault.azure.net."
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          },
+          {
+            "name": "esTenantId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Azure AD tenant ID",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.azure.tenantId. The AAD tenant GUID that owns the Key Vault.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]",
+              "regex": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "validationMessage": "Enter a tenant GUID."
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          },
+          {
+            "name": "esRemoteSecretName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Key Vault secret name (JSON blob)",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.remoteSecretName. A single Key Vault secret whose value is a JSON object with keys JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET). ESO syncs it into the pod Secret.",
+            "defaultValue": "opensteward-app-secrets",
+            "constraints": {
+              "required": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]",
+              "regex": "^[0-9a-zA-Z-]+$",
+              "validationMessage": "Enter a valid Key Vault secret name (alphanumerics and '-')."
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          },
+          {
+            "name": "esCreateStore",
+            "type": "Microsoft.Common.CheckBox",
+            "label": "Let the chart render the (Cluster)SecretStore",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.createStore. When checked, the chart renders the ESO SecretStore that authenticates to Key Vault using the chart ServiceAccount's Workload Identity. Uncheck to reuse an operator-managed store (then name it below).",
+            "defaultValue": true,
+            "constraints": {
+              "required": false
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          },
+          {
+            "name": "esSecretStoreName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Existing (Cluster)SecretStore name",
+            "toolTip": "Maps to Helm value secrets.externalSecrets.secretStore.name. Required only when you DON'T let the chart render the store — the name of your operator-managed ClusterSecretStore that ESO reads Key Vault through. Ignored when the chart renders its own store.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[and(equals(steps('secretsStep').secretsSource, 'externalSecrets'), not(steps('secretsStep').esCreateStore))]",
+              "regex": "^$|^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid (Cluster)SecretStore name."
+            },
+            "visible": "[and(equals(steps('secretsStep').secretsSource, 'externalSecrets'), not(steps('secretsStep').esCreateStore))]"
+          },
+          {
+            "name": "existingSecretName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Existing Kubernetes Secret name",
+            "toolTip": "Maps to Helm value secrets.existingSecret. Name of an operator-managed Secret (e.g. from Sealed Secrets / SOPS) holding JWT_SECRET / SESSION_SECRET / STORE_SECRET.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[equals(steps('secretsStep').secretsSource, 'existingSecret')]",
+              "regex": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid Kubernetes Secret name."
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'existingSecret')]"
+          },
+          {
+            "name": "generateInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": "[equals(steps('secretsStep').secretsSource, 'generate')]",
+            "options": {
+              "icon": "Warning",
+              "text": "Generate mode runs a pre-install hook Job that creates and maintains <release>-secrets. It never overwrites an existing STORE_SECRET. The resulting Secret is not Helm-owned, so uninstall leaves it. Use for trials; prefer Key Vault for production."
+            }
+          }
+        ]
+      },
+      {
+        "name": "ingressStep",
+        "label": "Ingress & TLS",
+        "subLabel": {
+          "preValidation": "Configure hosts, TLS, and public URLs",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Ingress & TLS",
+        "elements": [
+          {
+            "name": "ingressInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "admin-api is never exposed (ClusterIP only). The Admin UI host routes to the 'admin' service; the API host routes to 'integration-server'. Public URLs must match these hosts so SSO callbacks and cross-app links resolve from the browser."
+            }
+          },
+          {
+            "name": "ingressClassName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Ingress class name",
+            "toolTip": "Maps to Helm value ingress.className. On AKS with the app-routing add-on use 'webapprouting.kubernetes.io'; with a self-managed ingress-nginx use 'nginx'.",
+            "defaultValue": "webapprouting.kubernetes.io",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid ingress class name."
+            }
+          },
+          {
+            "name": "adminHost",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Admin UI host (routes to admin)",
+            "toolTip": "Maps to Helm value ingress.hosts[0].host with service 'admin', and to publicUrls.adminUi. The public DNS name for the admin console.",
+            "defaultValue": "admin.example.com",
+            "constraints": {
+              "required": true,
+              "regex": "^(?=.{1,253}$)([a-z0-9]([-a-z0-9]*[a-z0-9])?\\.)+[a-z]{2,}$",
+              "validationMessage": "Enter a fully qualified domain name, e.g. admin.example.com."
+            }
+          },
+          {
+            "name": "apiHost",
+            "type": "Microsoft.Common.TextBox",
+            "label": "API host (routes to integration-server)",
+            "toolTip": "Maps to Helm value ingress.hosts[1].host with service 'integration-server', and to publicUrls.integrationServer. The canonical Connect-Link / public API domain.",
+            "defaultValue": "api.example.com",
+            "constraints": {
+              "required": true,
+              "regex": "^(?=.{1,253}$)([a-z0-9]([-a-z0-9]*[a-z0-9])?\\.)+[a-z]{2,}$",
+              "validationMessage": "Enter a fully qualified domain name, e.g. api.example.com."
+            }
+          },
+          {
+            "name": "adminApiPublicUrl",
+            "type": "Microsoft.Common.TextBox",
+            "label": "SSO public base URL (admin-api callbacks)",
+            "toolTip": "Maps to Helm value publicUrls.adminApi (SSO_PUBLIC_BASE_URL). Where IdPs send SAML ACS / OIDC callbacks. admin-api is not ingress-exposed by the chart; front it with your own host/route if SSO is used.",
+            "defaultValue": "https://admin-api.example.com",
+            "constraints": {
+              "required": false,
+              "regex": "^$|^https://.+$",
+              "validationMessage": "Enter an https:// URL or leave blank."
+            }
+          },
+          {
+            "name": "tlsMode",
+            "type": "Microsoft.Common.OptionsGroup",
+            "label": "TLS",
+            "defaultValue": "cert-manager (Let's Encrypt)",
+            "toolTip": "Maps to Helm value ingress.tls. cert-manager provisions per-host certs from a ClusterIssuer; or reference an existing TLS Secret; or disable in-cluster TLS (e.g. when an external LB terminates).",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "cert-manager (Let's Encrypt)",
+                  "value": "certManager"
+                },
+                {
+                  "label": "Existing TLS secret",
+                  "value": "existingSecret"
+                },
+                {
+                  "label": "Disabled",
+                  "value": "disabled"
+                }
+              ],
+              "required": true
+            },
+            "visible": true
+          },
+          {
+            "name": "tlsClusterIssuer",
+            "type": "Microsoft.Common.TextBox",
+            "label": "cert-manager ClusterIssuer",
+            "toolTip": "Maps to Helm value ingress.tls.certManager.clusterIssuer. Name of the cert-manager ClusterIssuer (a cluster prerequisite), e.g. letsencrypt-prod.",
+            "defaultValue": "letsencrypt-prod",
+            "constraints": {
+              "required": "[equals(steps('ingressStep').tlsMode, 'certManager')]",
+              "regex": "^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid ClusterIssuer name."
+            },
+            "visible": "[equals(steps('ingressStep').tlsMode, 'certManager')]"
+          },
+          {
+            "name": "tlsExistingSecret",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Existing TLS secret name",
+            "toolTip": "Maps to Helm value ingress.tls.existingSecret. Name of a Kubernetes TLS Secret covering the hosts above.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[equals(steps('ingressStep').tlsMode, 'existingSecret')]",
+              "regex": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid Kubernetes Secret name."
+            },
+            "visible": "[equals(steps('ingressStep').tlsMode, 'existingSecret')]"
+          }
+        ]
+      },
+      {
+        "name": "identityStep",
+        "label": "Workload identity",
+        "subLabel": {
+          "preValidation": "Bind the chart ServiceAccount to a managed identity",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Workload identity",
+        "elements": [
+          {
+            "name": "identityInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "When secrets come from Key Vault via External Secrets, the chart ServiceAccount must federate to a user-assigned managed identity that has 'Key Vault Secrets User' on the vault. Paste its client ID below. Not required for existing-secret or generate modes."
+            }
+          },
+          {
+            "name": "workloadIdentityClientId",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Managed identity client ID",
+            "toolTip": "Maps to Helm value serviceAccount.annotations.[azure.workload.identity/client-id]. The clientId (GUID) of the user-assigned managed identity ESO federates to. From the Bicep output managedIdentityClientId.",
+            "defaultValue": "",
+            "constraints": {
+              "required": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]",
+              "regex": "^$|^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "validationMessage": "Enter the managed identity client ID (GUID)."
+            },
+            "visible": "[equals(steps('secretsStep').secretsSource, 'externalSecrets')]"
+          }
+        ]
+      },
+      {
+        "name": "licenseStep",
+        "label": "License",
+        "subLabel": {
+          "preValidation": "Optional: name the Secret holding your OpenSteward license",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "OpenSteward license",
+        "elements": [
+          {
+            "name": "licenseInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "OpenSteward verifies a license file offline; nothing is metered or reported. Without one it runs in community mode: all current verticals, 1 connection, 1 tenant. Create a Secret in the release namespace from your license file (kubectl create secret generic opensteward-license --from-file=license.key=./license.key) and name it below. The mount is optional, so you can name the Secret now and create it later, then restart integration-server once."
+            }
+          },
+          {
+            "name": "licenseSecretName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "License secret name (optional)",
+            "toolTip": "Maps to Helm value license.existingSecret. Name of a Kubernetes Secret holding the license file, mounted read-only on integration-server only. Empty = community mode.",
+            "defaultValue": "",
+            "constraints": {
+              "required": false,
+              "regex": "^$|^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "validationMessage": "Enter a valid Kubernetes Secret name (lowercase alphanumerics and '-'), or leave it empty."
+            },
+            "visible": true
+          },
+          {
+            "name": "licenseSecretKey",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Key within that secret",
+            "toolTip": "Maps to Helm value license.secretKey. The data key inside the secret that holds the license file.",
+            "defaultValue": "license.key",
+            "constraints": {
+              "required": true,
+              "regex": "^[-._a-zA-Z0-9]+$",
+              "validationMessage": "Enter a valid Kubernetes Secret data key."
+            },
+            "visible": "[not(empty(steps('licenseStep').licenseSecretName))]"
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "image.registry": "[steps('clusterStep').imageRegistry]",
+      "image.digest": "[steps('clusterStep').imageDigest]",
+      "image.tag": "[steps('clusterStep').imageTag]",
+
+      "database.mode": "[steps('databaseStep').databaseMode]",
+      "database.external.existingSecret": "[if(equals(steps('databaseStep').databaseMode, 'postgres'), steps('databaseStep').dbExistingSecret, '')]",
+      "database.external.secretKey": "[if(equals(steps('databaseStep').databaseMode, 'postgres'), steps('databaseStep').dbSecretKey, 'DATABASE_URL')]",
+      "database.persistence.storageClass": "[if(equals(steps('databaseStep').databaseMode, 'sqlite'), steps('databaseStep').dbStorageClass, '')]",
+
+      "redis.enabled": "[steps('databaseStep').redisEnabled]",
+      "redis.url": "[if(steps('databaseStep').redisEnabled, steps('databaseStep').redisUrl, '')]",
+
+      "secrets.source": "[steps('secretsStep').secretsSource]",
+      "secrets.existingSecret": "[if(equals(steps('secretsStep').secretsSource, 'existingSecret'), steps('secretsStep').existingSecretName, '')]",
+      "secrets.externalSecrets.provider": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('secretsStep').esProvider, '')]",
+      "secrets.externalSecrets.createStore": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('secretsStep').esCreateStore, false)]",
+      "secrets.externalSecrets.secretStore.name": "[if(and(equals(steps('secretsStep').secretsSource, 'externalSecrets'), not(steps('secretsStep').esCreateStore)), steps('secretsStep').esSecretStoreName, '')]",
+      "secrets.externalSecrets.azure.vaultUrl": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('secretsStep').esVaultUrl, '')]",
+      "secrets.externalSecrets.azure.tenantId": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('secretsStep').esTenantId, '')]",
+      "secrets.externalSecrets.remoteSecretName": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('secretsStep').esRemoteSecretName, '')]",
+
+      "ingress.enabled": true,
+      "ingress.className": "[steps('ingressStep').ingressClassName]",
+      "ingress.hosts[0].host": "[steps('ingressStep').adminHost]",
+      "ingress.hosts[0].service": "admin",
+      "ingress.hosts[1].host": "[steps('ingressStep').apiHost]",
+      "ingress.hosts[1].service": "integration-server",
+      "ingress.tls.enabled": "[not(equals(steps('ingressStep').tlsMode, 'disabled'))]",
+      "ingress.tls.certManager.enabled": "[equals(steps('ingressStep').tlsMode, 'certManager')]",
+      "ingress.tls.certManager.clusterIssuer": "[if(equals(steps('ingressStep').tlsMode, 'certManager'), steps('ingressStep').tlsClusterIssuer, '')]",
+      "ingress.tls.existingSecret": "[if(equals(steps('ingressStep').tlsMode, 'existingSecret'), steps('ingressStep').tlsExistingSecret, '')]",
+
+      "publicUrls.scheme": "https",
+      "publicUrls.adminUi": "[concat('https://', steps('ingressStep').adminHost)]",
+      "publicUrls.integrationServer": "[concat('https://', steps('ingressStep').apiHost)]",
+      "publicUrls.adminApi": "[steps('ingressStep').adminApiPublicUrl]",
+
+      "serviceAccount.annotations.azure\\.workload\\.identity/client-id": "[if(equals(steps('secretsStep').secretsSource, 'externalSecrets'), steps('identityStep').workloadIdentityClientId, '')]",
+
+      "license.existingSecret": "[steps('licenseStep').licenseSecretName]",
+      "license.secretKey": "[if(empty(steps('licenseStep').licenseSecretName), 'license.key', steps('licenseStep').licenseSecretKey)]"
+    }
+  }
+}

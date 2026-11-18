@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-payments"
+  },
+  "include": [
+    "src/verticals/payments/**/*",
+    "src/types/**/*"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    }
+  ]
+}

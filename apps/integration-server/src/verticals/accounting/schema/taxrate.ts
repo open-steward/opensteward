@@ -1,0 +1,14 @@
+import { z } from 'zod'
+import { ExternalId } from '@opensteward/shared'
+
+export const TaxRateSchema = z.object({
+  id: ExternalId.optional().meta({ example: 'tax_ca' }),
+  name: z.string().optional().meta({ example: 'CA Sales Tax' }),
+  description: z.string().optional().meta({ example: 'California state and local sales tax' }),
+  rate: z.number().optional().meta({ example: 8.75 }),
+  isActive: z.boolean().optional().meta({ example: true }),
+  createdAt: z.date().optional().meta({ example: '2026-01-15T09:30:00Z' }),
+  updatedAt: z.date().optional().meta({ example: '2026-02-01T14:20:00Z' }),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+})
+export type TaxRate = z.infer<typeof TaxRateSchema>

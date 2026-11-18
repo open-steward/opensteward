@@ -1,0 +1,11 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+  # Browser-driven end-to-end suite against a running compose stack. Its test
+  # script is `test:e2e` on purpose, so `pnpm -r test` never tries to drive a
+  # browser in the unit-test sweep.
+  - 'e2e'
+  # NOTE: `defensive/` is intentionally NOT a workspace. It hosts standalone
+  # placeholder packages published under reserved scopes (e.g. @open-steward,
+  # the hyphenated form, to block typo-squatting against @opensteward).
+  # See defensive/<name>/README.md for the publish + deprecate flow.

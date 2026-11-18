@@ -1,0 +1,89 @@
+{{- include "opensteward.validateAnalytics" . }}
+{{- if and .Values.superset.enabled .Values.analytics.superset.bootstrap.enabled }}
+{{- $full := include "opensteward.fullname" . }}
+{{- $b := .Values.analytics.superset.bootstrap }}
+# Embedded Superset bootstrap (apps/admin-api/src/scripts/superset-bootstrap.ts),
+# idempotent: connect Superset to the masked analytics views as the read-only
+# `superset` SQL principal (rotated on every run), create a dataset per view
+# and the default dashboard, enable embedding for the admin UI origin, and
+# register the dashboards with admin-api. Runs after the Superset chart's init
+# job and the analytics provisioning hook (lower weights).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $full }}-superset-bootstrap
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ $b.backoffLimit }}
+  activeDeadlineSeconds: {{ $b.activeDeadlineSeconds }}
+  template:
+    metadata:
+      labels:
+        {{- include "opensteward.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "opensteward.serviceAccountName" . }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- include "opensteward.podSecurityContext" . | nindent 8 }}
+      containers:
+        - name: superset-bootstrap
+          image: {{ include "opensteward.image" (dict "root" . "name" "admin-api") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- include "opensteward.containerSecurityContext" . | nindent 12 }}
+          command: ["node", "dist/scripts/superset-bootstrap.js"]
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.nodeEnv | quote }}
+            - name: SUPERSET_URL
+              value: {{ include "opensteward.supersetInternalUrl" . | quote }}
+            - name: INTEGRATION_SERVER_URL
+              value: "http://{{ $full }}-integration-server:3010"
+            - name: ADMIN_API_URL
+              value: "http://{{ $full }}-admin-api:3001"
+            - name: OPENSTEWARD_ADMIN_ORIGIN
+              value: {{ .Values.publicUrls.adminUi | quote }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.external.existingSecret }}
+                  key: {{ .Values.database.external.secretKey }}
+            - name: ADMIN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensteward.secretName" . }}
+                  key: ADMIN_SECRET
+            - name: SERVICE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensteward.secretName" . }}
+                  key: SERVICE_SECRET
+            - name: SUPERSET_SERVICE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensteward.supersetSecretName" . }}
+                  key: SUPERSET_SERVICE_USERNAME
+            - name: SUPERSET_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "opensteward.supersetSecretName" . }}
+                  key: SUPERSET_SERVICE_PASSWORD
+            {{- with $b.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+{{- end }}

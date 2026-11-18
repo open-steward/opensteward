@@ -1,0 +1,57 @@
+<% layout('layout', { title: 'Log in' }) -%>
+<%
+  const providerList = (typeof providers !== 'undefined' && providers) ? providers : []
+  const showLocal = (typeof localLoginEnabled === 'undefined') ? true : localLoginEnabled
+%>
+<div class="auth-card">
+  <h1>Log in</h1>
+  <% if (error) { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <% if (providerList.length > 0) { %>
+  <div class="stack" style="margin-top: var(--space-6)">
+    <% for (const p of providerList) { %>
+      <% if (p.protocol === 'ldap') { %>
+      <details class="card" style="padding: var(--space-4)">
+        <summary style="cursor:pointer">Sign in with <%= p.name %></summary>
+        <form method="POST" action="/login/sso/<%= p.slug %>/ldap" class="stack" style="margin-top: var(--space-4)">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="field"><label class="field__label">Username</label><input class="input" name="username" required></div>
+          <div class="field"><label class="field__label">Password</label><input class="input" type="password" name="password" required></div>
+          <button type="submit" class="btn btn--primary" style="width:100%">Sign in</button>
+        </form>
+      </details>
+      <% } else { %>
+      <a class="btn btn--secondary btn--lg" style="width:100%" href="/login/sso/<%= p.slug %>">Sign in with <%= p.name %></a>
+      <% } %>
+    <% } %>
+  </div>
+  <% } %>
+
+  <% if (showLocal) { %>
+  <% if (providerList.length > 0) { %><div class="muted" style="text-align:center; margin: var(--space-5) 0">— or use a local account —</div><% } %>
+  <form method="POST" action="/login" class="stack" style="margin-top: var(--space-6)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field__label" for="username">Username</label>
+      <input class="input" type="text" name="username" id="username" required autofocus>
+    </div>
+    <div class="field">
+      <label class="field__label" for="password">Password</label>
+      <input class="input" type="password" name="password" id="password" required>
+    </div>
+    <button type="submit" class="btn btn--primary btn--lg" style="width: 100%">Log in</button>
+  </form>
+  <% } else { %>
+  <details style="margin-top: var(--space-6)">
+    <summary class="muted" style="cursor:pointer; font-size: var(--text-sm)">Use a local account</summary>
+    <form method="POST" action="/login" class="stack" style="margin-top: var(--space-4)">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="field"><label class="field__label" for="username">Username</label><input class="input" type="text" name="username" id="username" required></div>
+      <div class="field"><label class="field__label" for="password">Password</label><input class="input" type="password" name="password" id="password" required></div>
+      <button type="submit" class="btn btn--secondary btn--lg" style="width: 100%">Log in</button>
+    </form>
+  </details>
+  <% } %>
+</div>

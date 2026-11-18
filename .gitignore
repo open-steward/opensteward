@@ -1,0 +1,96 @@
+node_modules/
+dist/
+data/
+!apps/admin/views/data/
+backups/
+.turbo/
+*.env
+!.env.example
+.env
+.env.local
+.env.scripts
+.DS_Store
+
+# Operator-specific compose overrides (see docker-compose.override.example.yml).
+# Customizations belong here so `git pull` never conflicts on the base file.
+docker-compose.override.yml
+*.db
+*.db-shm
+*.db-wal
+*.js.map
+*.tsbuildinfo
+coverage/
+sdk/python/
+config/config.yml
+apps/*/config/config.yml
+.claude/
+CLAUDE.md
+tasks/
+# Per-developer editor settings
+.vscode/
+.idea/
+# Live-integration OAuth tokens, at any depth. Anchored patterns (anything
+# containing a slash) resolve relative to this file, so a path-specific
+# pattern would cover only one suite; **/ covers every adapter's live-test
+# folder.
+**/.tokens.json
+.playwright-mcp/
+# Swagger/docs-server screenshots dropped at repo root during dev verification
+/swagger-*.png
+/invoice-*.png
+/accounting-*.png
+/crm-*.png
+/landing-*.png
+/combined-*.png
+
+# Agent working directory (SDD plans, ratchet reports, session scratch). Same
+# class as docs/superpowers/ below: OpenSteward's own development process, not
+# anything an operator running this stack needs. Only `.superpowers/sdd/` is
+# self-ignored by the tool that writes it, so a sibling folder would otherwise
+# be swept in by `git add -A`.
+.superpowers/
+
+# Internal planning and research notes. These are working documents for
+# OpenSteward's own development, not operator documentation, and docs-server
+# serves everything under docs/ unauthenticated — it also bakes each file's
+# body text into the search index shipped inside the published image. Keeping
+# them out of the repo entirely is what stops them reaching self-hosters.
+# scripts/build-search-index.ts also skips these paths, so a local working
+# copy here still never ships.
+docs/superpowers/
+docs/research/
+
+# Platform logos, fetched from the Brandfetch CDN rather than committed.
+#
+# Brandfetch's Logo API terms prohibit committing these files:
+# "programmatic access to logo images is not permitted" and caching requires
+# a written agreement with them. The files are also 1,474 other companies'
+# trademarks, and the published docs-server image ships docs/ (the Dockerfile
+# stages it into that image only), so committing them would redistribute
+# those marks through GHCR and the AWS, Azure and GCP marketplace mirrors.
+# .dockerignore keeps this directory out of every build context as well.
+#
+# Operators choose how they want logos via LOGO_SOURCE — see
+# docs/operations/platform-logos.md. `none` (the default) needs nothing here;
+# `local` populates this directory with `pnpm --filter integration-server
+# fetch:logos`. Either way the bytes never enter git.
+docs/platforms/logos/
+
+# Vendored browser assets (Phosphor, htmx, Swagger UI, lunr), copied out of
+# node_modules by packages/design-system/scripts/sync-vendor.ts on every build.
+# These are served from /design/vendor/ so a self-hosted deployment makes no
+# runtime request to unpkg or jsdelivr — see THIRD-PARTY-NOTICES.md. Generated,
+# so not tracked; versions are pinned in design-system's package.json where
+# Dependabot can see them.
+packages/design-system/vendor/
+
+# Operator license files (docs/deployment/license.md). docker-compose.yml
+# mounts ./opensteward-license into integration-server; a customer's license
+# never belongs in git. Anchored to the repo root: an unanchored `license.key`
+# would also ignore a future test fixture of that name. A run from source
+# resolves a relative OPENSTEWARD_LICENSE_FILE from apps/integration-server, so
+# the same two names there; its default, data/license.key, is under data/.
+/opensteward-license/
+/license.key
+/apps/integration-server/opensteward-license/
+/apps/integration-server/license.key

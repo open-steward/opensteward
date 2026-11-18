@@ -1,0 +1,88 @@
+name: marketplace-mirror
+
+# Mirrors the published GHCR images to the per-cloud marketplace registries
+# (ECR / ACR / Artifact Registry), preserving the digest, cosign signatures, and SBOM
+# attestations via `cosign copy`. BYOL — no metering is added; this only relocates the
+# already-built, signed images so a marketplace listing can reference them.
+#
+# Each cloud job is OFF until you opt in with a repository variable (so this workflow is
+# a clean no-op until configured):
+#   vars.MIRROR_AWS=true   + secrets.AWS_MIRROR_ROLE_ARN + vars.AWS_ECR_REGISTRY (+ region)
+#   vars.MIRROR_AZURE=true + Azure OIDC login secrets    + vars.AZURE_ACR_REGISTRY
+#   vars.MIRROR_GCP=true   + secrets.GCP_WIF_PROVIDER/GCP_MIRROR_SA + vars.GCP_AR_REGISTRY
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Image version to mirror (e.g. 0.1.0)"
+        required: true
+
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+
+env:
+  SERVICES: "admin admin-api docs-server webhook-gateway integration-server"
+  SRC: ghcr.io/open-steward
+
+jobs:
+  aws:
+    if: vars.MIRROR_AWS == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: Login to GHCR (source)
+        run: cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_MIRROR_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Login to ECR (target) + copy
+        run: |
+          aws ecr get-login-password --region "${{ vars.AWS_REGION }}" \
+            | cosign login "${{ vars.AWS_ECR_REGISTRY }}" -u AWS --password-stdin
+          for svc in $SERVICES; do
+            cosign copy -f "$SRC/$svc:${{ inputs.version }}" "${{ vars.AWS_ECR_REGISTRY }}/$svc:${{ inputs.version }}"
+          done
+
+  azure:
+    if: vars.MIRROR_AZURE == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: Login to GHCR (source)
+        run: cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Login to ACR (target) + copy
+        run: |
+          az acr login --name "${{ vars.AZURE_ACR_NAME }}"
+          for svc in $SERVICES; do
+            cosign copy -f "$SRC/$svc:${{ inputs.version }}" "${{ vars.AZURE_ACR_REGISTRY }}/$svc:${{ inputs.version }}"
+          done
+
+  gcp:
+    if: vars.MIRROR_GCP == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: sigstore/cosign-installer@v3
+      - name: Login to GHCR (source)
+        run: cosign login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_MIRROR_SA }}
+      - name: Login to Artifact Registry (target) + copy
+        run: |
+          gcloud auth print-access-token \
+            | cosign login "${{ vars.GCP_AR_REGISTRY }}" -u oauth2accesstoken --password-stdin
+          for svc in $SERVICES; do
+            cosign copy -f "$SRC/$svc:${{ inputs.version }}" "${{ vars.GCP_AR_REGISTRY }}/$svc:${{ inputs.version }}"
+          done

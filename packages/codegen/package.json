@@ -1,0 +1,45 @@
+{
+  "name": "@opensteward/codegen",
+  "version": "0.1.0",
+  "description": "Shared code generation utilities for OpenSteward verticals",
+  "license": "Elastic-2.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./logos": {
+      "import": "./dist/fetch-logos.js",
+      "require": "./dist/fetch-logos.js",
+      "types": "./dist/fetch-logos.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc && node ../../scripts/build-stamp.mts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "js-yaml": "^5.5.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.6.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "vitest": "^5.1.0"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

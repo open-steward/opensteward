@@ -1,0 +1,142 @@
+<% layout('layout', { title: 'Status' }) -%>
+<%
+  const _viewer = (typeof user !== 'undefined' && user) ? user : null
+  const _can = (p) => !!_viewer && (Array.isArray(_viewer.permissions) ? _viewer.permissions.includes(p) : _viewer.role === 'admin')
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Overview</div>
+    <h1 class="page-header__title">Status</h1>
+  </div>
+  <% if (_can('dashboards:view') || _can('data:read')) { %>
+  <div class="page-header__actions">
+    <% if (_can('dashboards:view')) { %><a href="/dashboards" class="btn btn--secondary btn--sm" data-home-dashboards><i class="ph ph-chart-line" aria-hidden="true"></i> Data dashboards</a><% } %>
+    <% if (_can('data:read')) { %><a href="/data" class="btn btn--ghost btn--sm"><i class="ph ph-table" aria-hidden="true"></i> Browse data</a><% } %>
+  </div>
+  <% } %>
+</header>
+
+<% if (typeof wizardComplete !== 'undefined' && wizardComplete) { %>
+<div class="alert alert--success" style="margin-top: var(--space-6)">
+  <div class="stack stack--sm">
+    <div><strong>Setup complete.</strong> Your integration-server is ready to receive API calls.</div>
+    <div class="muted" style="font-size: var(--text-sm)">
+      Next: paste your dev key into your app's <code class="mono">.env</code>, hit
+      <code class="mono">/v1/accounting/contacts?connection_id=…</code> to confirm. Revisit any wizard step from
+      <a href="/api-keys">API keys</a>, <a href="/webhooks">Webhooks</a>, or <a href="/company-info">Company</a>.
+    </div>
+    <div style="font-size: var(--text-sm); margin-top: var(--space-2)">
+      <strong>Refine your deployment</strong>
+      <ul style="margin: var(--space-2) 0 0 var(--space-4); padding: 0; line-height: 1.7">
+        <li><a href="/settings">Settings</a> <span class="muted">— rate limits, feature flags, OpenAPI Servers dropdown</span></li>
+        <li><a href="/scope-groups">Scope groups</a> <span class="muted">— reusable OAuth scope bundles for Connect Links</span></li>
+        <li><a href="/connect-link-templates">Connect link templates</a> <span class="muted">— preset link-mint forms for new customers</span></li>
+        <li><a href="/customers">Customers</a> <span class="muted">— onboard your first end-user + mint per-customer MCP tokens</span></li>
+        <li><a href="/sync-jobs">Sync jobs</a> <span class="muted">— cache-warm worker dashboard</span></li>
+        <li><a href="/audit">Audit log</a> <span class="muted">— every admin mutation, timestamped</span></li>
+      </ul>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<%# Finish setting up: the next wizard step, for an admin, until nothing is
+    outstanding or they skip it. Above the panel: setup comes before upkeep. -%>
+<%- include('_setup-resume', { setupResume, setupSkipped, setupUnconfirmed }) %>
+
+<%# Needs attention: one row per condition, with its action, clearable once.
+    Replaces the two non-dismissable alert blocks that stood here; the
+    "Credentials rejected" badge on the vertical cards below stays. -%>
+<%- include('_dashboard-tasks', { tasks, tasksHidden, tasksHiddenHref, tasksUnavailable, tasksUnavailableVerticals, tasksAllVerticalsDown, recentlyCleared, tenants }) %>
+
+<!-- Verticals -->
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: var(--space-8)">
+  <% for (const v of verticals) { %>
+  <div class="card">
+    <div class="row row--between" style="margin-bottom: var(--space-3)">
+      <div class="row" style="gap: var(--space-2)">
+        <span class="vtile vtile--sm vtile--<%= v.name %>"><%= v.label.slice(0, 2).toUpperCase() %></span>
+        <h2 class="card__title"><%= v.label %></h2>
+      </div>
+      <% if (v.status === 'up') { %>
+      <span class="badge badge--success"><span class="badge__dot"></span>Up</span>
+      <% } else { %>
+      <span class="badge badge--danger"><span class="badge__dot"></span>Down</span>
+      <% } %>
+    </div>
+
+    <% if (!adaptersKnown) { %>
+    <%# The rows could not be fetched. Say the count is all we have rather than
+        rendering an empty list, which would read as "nothing is configured". %>
+    <p class="muted" style="font-size: var(--text-sm); margin: 0"><%= v.adapterCount ?? 0 %> adapters enabled <span title="Adapter list unavailable — admin-api did not answer">(list unavailable)</span></p>
+    <% } else if (v.adapters.length === 0) { %>
+    <p class="muted" style="font-size: var(--text-sm); margin: 0">
+      No adapters enabled<% if (isAdmin) { %> — <a href="/platforms">configure one</a><% } %>
+    </p>
+    <% } else { %>
+    <div class="kv-list kv-list--compact">
+      <% for (const a of v.visible) { %>
+      <div class="kv-list__row" style="grid-template-columns: 1fr auto">
+        <span class="kv-list__value row" style="gap: var(--space-2); min-width: 0"><%- a.logoHtml %><a href="<%= a.href %>"><%= a.name %></a></span>
+        <span style="text-align: right">
+          <% if (a.credsInvalid) { %>
+          <span class="badge badge--danger">Credentials rejected</span>
+          <% } else if (!a.hasConfig) { %>
+          <span class="badge badge--warning">No credentials</span>
+          <% } else if (a.connectionCount > 0) { %>
+          <span class="muted" style="font-size: var(--text-xs)"><%= a.connectionCount %> connection<%= a.connectionCount > 1 ? 's' : '' %></span>
+          <% } else { %>
+          <span class="muted" style="font-size: var(--text-xs)">Ready</span>
+          <% } %>
+        </span>
+      </div>
+      <% } %>
+    </div>
+    <% } %>
+
+    <%# Outside the branch above: a vertical whose every adapter is switched off
+        reads "No adapters enabled", and the credentials already sitting there
+        are then invisible on the whole page. %>
+    <% if (adaptersKnown && (v.more > 0 || (isAdmin && v.configuredButOff > 0))) { %>
+    <div class="row" style="gap: var(--space-3); margin-top: var(--space-2); font-size: var(--text-xs)">
+      <% if (v.more > 0) { %>
+      <a href="<%= v.allHref %>">+<%= v.more %> more</a>
+      <% } %>
+      <% if (isAdmin && v.configuredButOff > 0) { %>
+      <a class="muted" href="/platforms?tab=configure&vertical=<%= v.name %>&status=configured"><%= v.configuredButOff %> configured but disabled</a>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% if (v.error) { %>
+    <p style="font-size: var(--text-xs); color: var(--danger-fg); margin-top: var(--space-1)">Error: <%= v.error %></p>
+    <% } %>
+  </div>
+  <% } %>
+</div>
+
+<!-- Connection summary -->
+<div class="card" style="margin-top: var(--space-8)">
+  <div class="card__header">
+    <h2 class="card__title">Connections (<%= totalConnections %>)</h2>
+  </div>
+  <div class="row" style="gap: var(--space-6)">
+    <span class="badge badge--success"><span class="badge__dot"></span>Valid: <%= statusCounts.valid %></span>
+    <span class="badge badge--warning"><span class="badge__dot"></span>Expiring: <%= statusCounts.expiring_soon %></span>
+    <span class="badge badge--danger"><span class="badge__dot"></span>Expired: <%= statusCounts.expired %></span>
+    <% if (statusCounts.platform_error > 0) { %>
+    <span class="badge badge--danger"><span class="badge__dot"></span>Platform creds: <%= statusCounts.platform_error %></span>
+    <% } %>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div class="row" style="margin-top: var(--space-6)">
+  <a href="/connections" class="btn btn--secondary">View all connections</a>
+  <% if (_can('dashboards:view')) { %>
+  <a href="/dashboards" class="btn btn--secondary">Open dashboards</a>
+  <% } %>
+  <% if (isAdmin) { %>
+  <a href="/platforms" class="btn btn--primary">Browse platforms</a>
+  <% } %>
+</div>

@@ -1,0 +1,97 @@
+<% layout('../layout', { title: 'Setup — step 5' }) -%>
+<%
+  const company = (typeof companyInfo !== 'undefined' && companyInfo) ? companyInfo : null
+  const callbackPath = '/auth/' + vertical + '/' + slug + '/callback'
+  const derivedRedirectUri = company && company.baseUrl
+    ? company.baseUrl.replace(/\/$/, '') + callbackPath
+    : 'http://localhost:3010' + callbackPath
+-%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'configure' }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 5 of 8</div>
+      <h1>Configure <span class="mono"><%= slug %></span></h1>
+      <p class="wizard-subtitle">
+        Enter the OAuth client credentials issued by <strong><%= slug %></strong>. Stored encrypted in the <%= vertical %> database.
+      </p>
+    </header>
+
+    <form method="POST" action="/setup/wizard/configure">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="vertical" value="<%= vertical %>">
+      <input type="hidden" name="slug" value="<%= slug %>">
+      <% if (next) { %>
+      <input type="hidden" name="next" value="<%= next.slug %>">
+      <% } %>
+
+      <div class="wizard-body">
+        <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+        <% } %>
+
+        <% if (enabledAdapters.length > 1) { %>
+        <div class="alert alert--info">
+          Configuring <strong><%= enabledAdapters.findIndex(a => a.slug === slug) + 1 %></strong> of <strong><%= enabledAdapters.length %></strong> enabled adapters.
+        </div>
+        <% } %>
+
+        <%- include('../platforms/_credentials-form', {
+          vertical: vertical,
+          slug: slug,
+          derivedRedirectUri: typeof derivedRedirectUri !== 'undefined' ? derivedRedirectUri : '',
+          company: typeof company !== 'undefined' ? company : null,
+          prefill: prefill,
+          scopeGroups: scopeGroups,
+        }) %>
+      </div>
+
+      <footer class="wizard-footer">
+        <a href="/setup/wizard/platforms?vertical=<%= vertical %>" class="btn btn--ghost">&larr; Back</a>
+        <div class="wizard-footer__primary">
+          <button type="submit" class="btn btn--primary">
+            <% if (next) { %>
+            Save and next: <%= next.slug %> &rarr;
+            <% } else { %>
+            Save and finish
+            <% } %>
+          </button>
+        </div>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<style>
+  .copy-btn {
+    background: transparent;
+    border: 0;
+    color: var(--fg-1);
+    text-align: left;
+    width: 100%;
+    padding: var(--space-1) var(--space-2);
+    margin: 0 calc(-1 * var(--space-2));
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    word-break: break-all;
+    font-family: inherit;
+  }
+  .copy-btn:hover { background: var(--surface-1); }
+</style>
+
+<script>
+  document.querySelectorAll('button[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var value = btn.getAttribute('data-copy') || ''
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(value).then(function () {
+          var orig = btn.textContent
+          btn.textContent = 'Copied'
+          setTimeout(function () { btn.textContent = orig }, 1000)
+        })
+      }
+    })
+  })
+</script>

@@ -1,0 +1,10 @@
+<!-- OpenSteward wordmark — dark-mode variant (light ink on dark bg).
+     See wordmark.svg for the spec. This file hard-codes the fill so it
+     can be referenced via <img src=...> in markdown without relying on
+     currentColor. Pair with wordmark-light.svg via <picture>. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 36" role="img" aria-label="OpenSteward">
+  <title>OpenSteward</title>
+  <text x="0" y="26" fill="#FAF9F6" font-family="Inter Tight, system-ui, -apple-system, BlinkMacSystemFont, sans-serif" font-size="24" letter-spacing="-0.48">
+    <tspan font-weight="500">Open</tspan><tspan font-weight="700">Steward</tspan>
+  </text>
+</svg>

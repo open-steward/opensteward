@@ -1,0 +1,157 @@
+{
+ "SHIPMENTS": [
+  {
+   "COUNTRY": "ES",
+   "DOCUMENTDELIVERYID": 108,
+   "DOCUMENTID": 123,
+   "EXPORTSTATUS": 1,
+   "ID": 108,
+   "INCOMINGDATE": "2020-06-29T07:52:43+02:00",
+   "LOCATIONID": 1234,
+   "MULTISHIPMENT": 1,
+   "OFFSETDAYS": 3,
+   "ORIGINWAREHOUSEGROUPID": 15,
+   "PHYSICALLOCATIONID": 1234,
+   "PID": "abc",
+   "ROWS": [
+    {
+     "DOCUMENTROWID": 123,
+     "DOCUMENTSHIPMENTID": 456,
+     "HASH": "hash",
+     "ID": 12,
+     "QUANTITY": 3,
+     "STOCKHASH": "stock_hash"
+    }
+   ],
+   "SHIPPING": {
+    "DISCOUNTS": [
+     {
+      "ACCUMULATEPRODUCTS": 1,
+      "AMOUNT": 10,
+      "AMOUNTTYPE": 1,
+      "APPLYTO": 2,
+      "BENEFITMODE": 2,
+      "DESCRIPTION": "Discount on the shipping",
+      "DISCOUNT": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "DISCOUNTCONDITION": 1,
+      "DISCOUNTID": 1,
+      "DISCOUNTTYPEVALUE": 40,
+      "DISCOUNTVALUE": 10,
+      "DOCUMENTSHIPPINGID": 1,
+      "ID": 4,
+      "MAXCONDITION": 100,
+      "MINCONDITION": 1,
+      "MULTIPLIER": 2,
+      "NAME": "Shipping discount",
+      "SUBTOTAL": 1,
+      "TICKETCODE": "ABCD",
+      "TOTAL": 100
+     }
+    ],
+    "DOCUMENTSHIPMENTID": 108,
+    "ID": 108,
+    "NAME": "Transporte 1",
+    "PACKAGES": 5,
+    "PLUGINID": "",
+    "PRICE": 5,
+    "PRICEWITHTAXES": 5.25,
+    "SHIPPERID": 2,
+    "SHIPPERPID": "Shipper 1",
+    "SHIPPINGCALCULATION": 1,
+    "SHIPPINGSECTIONID": 1,
+    "SHIPPINGTYPEID": 2,
+    "SHIPPINGTYPENAME": "ShippingType 1",
+    "SHIPPINGTYPEPID": "ShippingType1",
+    "TAXES": [
+     {
+      "BASE": 12.5,
+      "CUMULATIVEMODE": 1,
+      "NAME": "Iva normal",
+      "OPERATION": 1,
+      "PRIORITY": 1,
+      "RERATE": 0.5,
+      "TAX": {
+       "ID": 2,
+       "PID": "IVA21"
+      },
+      "TAXID": 2,
+      "TAXRATE": 21,
+      "TAXVALUE": 2.5,
+      "TYPE": 1
+     }
+    ],
+    "TRACKINGS": [
+     {
+      "LASTUPDATE": "September, 15 2021 11:42:27 +0200",
+      "PACKAGES": [
+       {
+        "ACTIVITY": [
+         {
+          "DATETIME": "February, 02 2020 00:00:00 +0100",
+          "DESCRIPTION": "desc",
+          "PROPERTIES": [
+           {
+            "NAME": "par1",
+            "VALUE": "par2"
+           }
+          ],
+          "STATUS": "1"
+         }
+        ],
+        "LASTUPDATE": "September, 15 2021 12:00:31 +0200",
+        "WEIGHT": 3,
+        "WEIGHTUNITS": "Kg"
+       }
+      ],
+      "PICKUPDATE": "February, 01 2020 00:00:00 +0100",
+      "PROPERTIES": [
+       {
+        "NAME": "name property",
+        "VALUE": "value property"
+       }
+      ]
+     }
+    ]
+   },
+   "SPLITBYDATES": 0,
+   "STATUS": 1,
+   "STATUSES": [
+    {
+     "ACTIONS": [
+      {
+       "ACTIONID": 1,
+       "ACTIONTYPE": 1,
+       "HISTORYACTIONSTATUS": 1,
+       "PARAMETERS": [
+        {
+         "ITEMID": 123,
+         "NAME": "aaa",
+         "VALUE": "223"
+        },
+        {
+         "ITEMID": 123,
+         "NAME": "bbb",
+         "VALUE": "333"
+        }
+       ],
+       "SETTINGORDERSTATUSACTIONID": 1
+      }
+     ],
+     "CURRENTDATETIME": "June, 29 2020 07:52:46 +0200",
+     "DOCUMENTSHIPMENTID": 108,
+     "FROMSTATUS": 0,
+     "FROMSUBSTATUSID": "",
+     "ID": 1,
+     "TOSTATUS": 1,
+     "TOSUBSTATUSID": ""
+    }
+   ],
+   "SUBSTATUSID": 3,
+   "TRACKINGNUMBER": "TRK-123",
+   "TYPE": 1
+  }
+ ]
+}

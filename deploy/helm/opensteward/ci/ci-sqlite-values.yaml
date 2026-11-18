@@ -1,0 +1,31 @@
+# `helm template`/lint + kind-install fixture: SQLite mode, plain secrets.
+database:
+  mode: sqlite
+  persistence:
+    size: 1Gi
+secrets:
+  source: plain
+  plain:
+    jwtSecret: "ci-jwt-secret-that-is-at-least-32-chars-long"
+    sessionSecret: "ci-session-secret-at-least-32-chars-long!!"
+    storeSecret: "ci-store-secret-that-is-at-least-32-chars!!"
+    adminSecret: "ci-admin-secret-at-least-32-chars-long!!!!!"
+publicUrls:
+  adminApi: "https://admin-api.example.test"
+  adminUi: "https://admin.example.test"
+  docsServer: "https://docs.example.test"
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: admin.example.test
+      service: admin
+      paths: [{ path: /, pathType: Prefix }]
+    - host: api.example.test
+      service: integration-server
+      paths: [{ path: /, pathType: Prefix }]
+  tls:
+    enabled: true
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod

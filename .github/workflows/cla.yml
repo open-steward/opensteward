@@ -1,0 +1,67 @@
+name: cla
+
+# Enforces the Contributor License Agreement (CLA.md) on every pull request.
+#
+# Why this exists: OpenSteward is source-available (Elastic-2.0 + Additional
+# Use Grant). Under a plain inbound=outbound rule a contribution would arrive
+# licensed under those same restricted terms, leaving the project unable to
+# license that code commercially. CLA.md fixes that. This workflow is what
+# stops an unsigned contribution being merged by accident.
+#
+# Why not a third-party CLA bot: the usual one
+# (contributor-assistant/github-action) was ARCHIVED in March 2026 and is
+# unmaintained, and it wants `pull_request_target` with `contents: write` —
+# an unmaintained action holding write access on a public repo is a
+# supply-chain risk this project avoids. Signing here is
+# self-service instead: a contributor adds themselves to
+# .github/cla-signatures.json in their own PR, so the agreement is recorded
+# as a commit authored by them. That is stronger evidence than a
+# bot-recorded comment and needs no write permissions at all.
+#
+# Deliberately uses `pull_request`, NOT `pull_request_target`: this checks out
+# and runs code from the PR head, so it must stay in the unprivileged,
+# read-only context. Do not switch triggers without revisiting that.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  # Also on main so a bad ledger merged by any route is caught immediately.
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/cla-signatures.json"
+      - "scripts/check-cla.ts"
+      - "CLA.md"
+      - ".github/workflows/cla.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cla:
+    name: CLA signed
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      # Only the root workspace is needed — check-cla.ts imports nothing but
+      # node builtins, so this installs tsx and stops.
+      - name: Install
+        run: pnpm install --frozen-lockfile --ignore-scripts --filter .
+
+      - name: Check CLA signature
+        env:
+          # github.event.pull_request.user.login is attacker-controlled on a
+          # fork PR, so it goes through env rather than being interpolated
+          # into the shell. On a push to main this is empty and the step
+          # degrades to ledger validation only, which is what we want.
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: pnpm check:cla

@@ -1,0 +1,212 @@
+<%
+  const company = (typeof companyInfo !== 'undefined' && companyInfo) ? companyInfo : null
+  // White-label: when the operator opts out of attribution and hasn't set a
+  // name, suppress the default "OpenSteward" wordmark/mark fallbacks.
+  const hideAttribution = !!(company && company.hideAttribution)
+  // Wordmark text: operator name wins; default product name unless suppressed.
+  const brandName = company && company.name ? company.name : (hideAttribution ? '' : 'OpenSteward')
+  // Accessible label for the logo/home link — never empty.
+  const brandLabel = company && company.name ? company.name : 'Home'
+  // Document-title brand — neutral when attribution is suppressed.
+  const titleBrand = company && company.name ? company.name : (hideAttribution ? 'Console' : 'OpenSteward')
+  const currentUser = (typeof user !== 'undefined' && user) ? user : null
+  // Permissions are loaded per request by core/server.ts; a view rendered
+  // without them (never expected) falls back to "admins can do everything".
+  const userCan = (p) => !!currentUser && (Array.isArray(currentUser.permissions)
+    ? currentUser.permissions.includes(p)
+    : currentUser.role === 'admin')
+-%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' && title ? title + ' - ' : '' %>Admin - <%= titleBrand %></title>
+  <link rel="icon" href="/design/logo/mark.svg" type="image/svg+xml" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="/design/logo/mark-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
+  <link rel="stylesheet" href="/design/tokens.css">
+  <link rel="stylesheet" href="/design/base.css">
+  <link rel="stylesheet" href="/design/components.css">
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/wizard.css">
+  <%- (typeof brandingHead !== 'undefined' && brandingHead) ? brandingHead : '' %>
+  <style>
+    /* Override the design-system base — turn the sidebar into a flex
+       column so the build-info footer can hug the bottom via
+       margin-top: auto. Scoped narrowly so it can't bleed into
+       docs-server's reuse of the same selectors. */
+    .sidebar { display: flex; flex-direction: column; }
+    .sidebar__footer { flex-shrink: 0; }
+  </style>
+  <link rel="stylesheet" href="/design/vendor/phosphor/regular/style.css">
+  <%# Theme before first paint. External, not inline: pages served with a
+      strict CSP (script-src 'self' — the data viewer and dashboards) must run
+      it too. Synchronous on purpose (no defer). -%>
+  <script src="/public/js/theme-init.js"></script>
+</head>
+<body>
+  <% if (currentUser) { %>
+  <div class="app-shell">
+    <div class="sidebar-backdrop" data-sidebar-close></div>
+    <aside class="sidebar">
+      <a href="/" class="sidebar__brand" aria-label="<%= brandLabel %>">
+        <% if (company && company.logoDataUrl) { %>
+        <img src="<%= company.logoDataUrl %>" alt="<%= brandLabel %>">
+        <% } else if (!hideAttribution) { %>
+        <svg class="sidebar__mark" viewBox="0 0 64 64" role="img" aria-label="<%= brandLabel %>">
+          <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="32" r="8.5"></circle>
+            <line x1="26.5" y1="32" x2="52" y2="32"></line>
+            <line x1="44" y1="32" x2="44" y2="40"></line>
+            <line x1="50" y1="32" x2="50" y2="38"></line>
+          </g>
+        </svg>
+        <% } %>
+        <% if (brandName) { %><span><%= brandName %></span><% } %>
+      </a>
+      <%
+        // Rules and the href list live in core/views/helpers.ts, where they are
+        // unit-tested — see tests/unit/views/sidebar-active.test.ts.
+        const here = (typeof currentPath !== 'undefined' && currentPath) ? currentPath : '/'
+        const nav = (href) => navLinkAttrs(href, here)
+      %>
+      <nav class="sidebar__group" aria-label="Overview">
+        <div class="sidebar__eyebrow">Overview</div>
+        <a<%- nav('/') %> href="/"><i class="ph ph-gauge"></i> Status</a>
+        <% if (userCan('dashboards:view')) { %>
+        <a<%- nav('/dashboards') %> href="/dashboards"><i class="ph ph-chart-line"></i> Dashboards</a>
+        <% } %>
+        <a<%- nav('/connections') %> href="/connections"><i class="ph ph-plugs-connected"></i> Connections</a>
+        <% if (userCan('data:read')) { %>
+        <a<%- nav('/data') %> href="/data"><i class="ph ph-table"></i> Data</a>
+        <% } %>
+      </nav>
+      <nav class="sidebar__group" aria-label="Connect Links">
+        <div class="sidebar__eyebrow">Connect</div>
+        <a<%- nav('/connect-links') %> href="/connect-links"><i class="ph ph-link"></i> Connect links</a>
+        <a<%- nav('/connect-link-templates') %> href="/connect-link-templates"><i class="ph ph-stack"></i> Link templates</a>
+        <a<%- nav('/customers') %> href="/customers"><i class="ph ph-address-book"></i> Customers</a>
+        <a<%- nav('/sync-jobs') %> href="/sync-jobs"><i class="ph ph-cloud-arrow-down"></i> Sync jobs</a>
+      </nav>
+      <% const isAdminRole = currentUser.role === 'admin' %>
+      <% if (isAdminRole || userCan('roles:manage') || userCan('destinations:manage') || userCan('sql_access:manage')) { %>
+      <nav class="sidebar__group" aria-label="Admin">
+        <div class="sidebar__eyebrow">Admin</div>
+        <% if (isAdminRole) { %>
+        <a<%- nav('/setup/wizard') %> href="/setup/wizard"><i class="ph ph-magic-wand"></i> Setup wizard</a>
+        <a<%- nav('/platforms') %> href="/platforms"><i class="ph ph-puzzle-piece"></i> Platforms</a>
+        <a<%- nav('/scope-groups') %> href="/scope-groups"><i class="ph ph-tag"></i> Scope groups</a>
+        <a<%- nav('/tenants') %> href="/tenants"><i class="ph ph-globe"></i> Tenants &amp; domains</a>
+        <a<%- nav('/users') %> href="/users"><i class="ph ph-users"></i> Users</a>
+        <% } %>
+        <% if (userCan('roles:manage')) { %>
+        <a<%- nav('/roles') %> href="/roles"><i class="ph ph-shield-check"></i> Roles</a>
+        <% } %>
+        <% if (userCan('destinations:manage')) { %>
+        <a<%- nav('/destinations') %> href="/destinations"><i class="ph ph-export"></i> Destinations</a>
+        <% } %>
+        <% if (userCan('sql_access:manage')) { %>
+        <a<%- nav('/sql-access') %> href="/sql-access"><i class="ph ph-database"></i> SQL access</a>
+        <% } %>
+        <% if (isAdminRole) { %>
+        <a<%- nav('/identity-providers') %> href="/identity-providers"><i class="ph ph-fingerprint"></i> SSO &amp; identity</a>
+        <a<%- nav('/api-keys') %> href="/api-keys"><i class="ph ph-key"></i> API keys</a>
+        <a<%- nav('/oauth-clients') %> href="/oauth-clients"><i class="ph ph-identification-badge"></i> OAuth clients</a>
+        <a<%- nav('/webhooks') %> href="/webhooks"><i class="ph ph-webhooks-logo"></i> Webhooks</a>
+        <a<%- nav('/audit') %> href="/audit"><i class="ph ph-list-magnifying-glass"></i> Audit log</a>
+        <a<%- nav('/company-info') %> href="/company-info"><i class="ph ph-buildings"></i> Company</a>
+        <a<%- nav('/settings') %> href="/settings"><i class="ph ph-sliders-horizontal"></i> Settings</a>
+        <a<%- nav('/settings/system') %> href="/settings/system"><i class="ph ph-info"></i> System</a>
+        <% } %>
+      </nav>
+      <% } %>
+      <!-- Build-info footer: "OpenSteward <release>", from /api/version-info
+           (public/js/shell.js). Hides itself when the release is unknown. -->
+      <div class="sidebar__footer" data-version-footer aria-live="polite"
+           style="margin-top: auto; padding: var(--space-3) var(--space-4);
+                  border-top: 1px solid var(--border-subtle);
+                  font-family: var(--font-mono); font-size: var(--text-xs);
+                  color: var(--fg-3); line-height: 1.4; word-break: break-word;">
+        <span class="muted">loading…</span>
+      </div>
+    </aside>
+    <div class="app-main">
+      <header class="app-header">
+        <div class="app-header__meta">
+          <button type="button" class="sidebar-toggle" data-sidebar-open aria-label="Open menu"><i class="ph ph-list"></i></button>
+          <a class="avatar-name" href="/profile" title="My profile"><%- avatar(currentUser) %><span><%= currentUser.username %></span></a>
+          <span class="muted">·</span>
+          <span class="badge"><%= currentUser.roleName || currentUser.role %></span>
+          <% if (currentUser.scope && currentUser.scope.mode === 'restricted') { %>
+          <span class="badge badge--warning" title="You only see some tenants: <%= currentUser.scope.grants.map((g) => g.tenantId).join(', ') || 'none' %>">scoped</span>
+          <% } %>
+        </div>
+        <div class="row">
+          <%
+            // Unread-notification count, set by a layout-level preHandler in
+            // core/server.ts: '0', '3', '50+', or null when admin-api could not
+            // be asked. Null is unknown, not zero — no count in the label and
+            // no badge. Not a nav() entry on purpose: the bell marks itself
+            // current, and the sidebar no longer lists Notifications.
+            const unread = (typeof unreadNotifications !== 'undefined' && unreadNotifications !== null) ? String(unreadNotifications) : null
+            const bellLabel = unread === null ? 'Notifications' : 'Notifications, ' + unread + ' unread'
+            const onNotifications = here === '/notifications' || here.startsWith('/notifications/')
+          %>
+          <a class="btn btn--ghost btn--sm header-bell" href="/notifications" aria-label="<%= bellLabel %>" title="<%= bellLabel %>"<%- onNotifications ? ' aria-current="page"' : '' %>><i class="ph ph-bell"></i><% if (unread !== null && unread !== '0') { %><span class="header-bell__count" aria-hidden="true"><%= unread %></span><% } %></a>
+          <button type="button" class="btn btn--ghost btn--sm" data-theme-toggle aria-label="Toggle theme"><i class="ph ph-moon"></i></button>
+          <form method="POST" action="/logout">
+            <button type="submit" class="btn btn--ghost btn--sm">Log out</button>
+          </form>
+        </div>
+      </header>
+      <main class="app-content">
+        <% if (typeof licenseBanner !== 'undefined' && licenseBanner) { %>
+        <div class="alert alert--<%= licenseBanner.tone %>" role="status" data-license-banner="<%= licenseBanner.state %>" style="margin-bottom: var(--space-4)">
+          <div>
+            <strong><%= licenseBanner.title %></strong>
+            <%= licenseBanner.detail %>
+            <a href="<%= licenseBanner.href %>" target="_blank" rel="noopener noreferrer" style="text-decoration: underline"><%= licenseBanner.linkText %></a>
+            · <a href="/settings/system" style="text-decoration: underline">License details</a>
+          </div>
+        </div>
+        <% } %>
+        <%- body %>
+      </main>
+    </div>
+  </div>
+  <%- include('_resource-modal') %>
+  <% } else { %>
+  <div class="auth-shell">
+    <button type="button" class="btn btn--ghost btn--sm" data-theme-toggle aria-label="Toggle theme" style="position: fixed; top: var(--space-4); right: var(--space-4);"><i class="ph ph-moon"></i></button>
+    <%- body %>
+  </div>
+  <% } %>
+
+  <!-- Toast layer (Phase 6 of admin/docs audit). Routes use window.oiToast(...) -->
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
+  <%# Queued action outcomes, rendered as toasts by /public/js/flash.js.
+      A <template> is inert: not displayed, not exposed to assistive tech.
+      Escaped interpolation means a closing script tag inside an upstream
+      error message cannot break out — there is no script to break out of.
+      See apps/admin/src/core/flash.ts. %>
+  <% if (typeof flashes !== 'undefined' && flashes && flashes.length) { %>
+  <template id="flash-data">
+    <% flashes.forEach(function (f) { %>
+    <div data-flash-tone="<%= f.tone %>"><%= f.body %></div>
+    <% }) %>
+  </template>
+  <% } %>
+  <%# Shell behaviour — theme toggle, mobile sidebar, window.oiToast, [data-copy],
+      [data-confirm] and the build-info footer. Before flash.js, which calls
+      oiToast: deferred scripts run in document order. -%>
+  <script src="/public/js/shell.js" defer></script>
+  <script src="/public/js/flash.js" defer></script>
+  <script src="/public/js/a11y.js" defer></script>
+  <%# Upgrades any link marked data-modal into a dialog. Harmless on the
+      signed-out shell, which has no <dialog> for it to fill. -%>
+  <script src="/public/js/resource-modal.js" defer></script>
+  <%# A platform logo that fails to load becomes its monogram (see
+      src/core/platform-logo.ts). Passive until such an image errors. -%>
+  <script src="/public/js/platform-logo.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+{{- $root := . -}}
+{{- $sqlite := eq .Values.database.mode "sqlite" -}}
+{{- range $name, $svc := .Values.services }}
+{{- $single := and $svc.stateful $sqlite -}}
+{{/* A single-replica SQLite service can't honour a PDB (it would block node
+     drains). Only multi-replica (stateless or Postgres-mode) services get one. */}}
+{{- if not $single }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "opensteward.fullname" $root }}-{{ $name }}
+  labels:
+    {{- include "opensteward.serviceLabels" (dict "root" $root "name" $name) | nindent 4 }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      {{- include "opensteward.serviceSelector" (dict "root" $root "name" $name) | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

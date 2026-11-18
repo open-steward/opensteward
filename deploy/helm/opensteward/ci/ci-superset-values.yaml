@@ -1,0 +1,29 @@
+# `helm template`/lint fixture: Postgres mode + read-only SQL access +
+# embedded Apache Superset (the vendored superset chart dependency).
+# Layer on top of ci-postgres-values.yaml.
+analytics:
+  sqlAccess:
+    enabled: true
+    adminDatabaseUrl:
+      existingSecret: opensteward-analytics-admin
+    readHost: "replica.example.test"
+  superset:
+    publicUrl: "https://bi.example.test"
+    networkPolicy:
+      allowFrom:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+superset:
+  enabled: true
+  extraEnv:
+    OPENSTEWARD_ADMIN_ORIGIN: "https://admin.example.test"
+    SUPERSET_SESSION_COOKIE_SECURE: "true"
+    SUPERSET_ENABLE_PROXY_FIX: "true"
+  database:
+    host: "postgres.example.test"
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - bi.example.test

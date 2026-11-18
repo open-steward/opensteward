@@ -1,0 +1,177 @@
+<% layout('../layout', { title: 'OAuth clients' }) -%>
+<%
+  const isAdmin = user && user.role === 'admin'
+  const fmtDate = (v) => v ? new Date(v).toLocaleString() : '—'
+  // authorityLabel is hoisted onto each row in routes/oauth-clients.ts, from
+  // the same MODE_LABEL map the Authority filter/sort column uses — so the
+  // string rendered here and the string a filter matches against are the
+  // same value by construction, never two copies of the map that can drift.
+%>
+
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Configure</div>
+    <h1 class="page-header__title">OAuth clients</h1>
+    <p class="page-header__desc">
+      Identity providers whose OIDC bearer tokens this deployment accepts on
+      <span class="mono">/v1/*</span>, as an alternative to <span class="mono">osk_</span> API keys.
+      OpenSteward only verifies these tokens — it never mints them, and holds no client secret.
+    </p>
+  </div>
+  <% if (isAdmin) { %>
+  <div class="page-header__actions">
+    <a href="/oauth-clients/new" class="btn btn--primary btn--sm">Register issuer</a>
+  </div>
+  <% } %>
+</header>
+
+<div class="alert <%= readiness.ready ? 'alert--success' : 'alert--warning' %>" style="margin-top: var(--space-6)">
+  <div class="stack stack--sm">
+    <div>
+      <% if (readiness.ready) { %>
+      <strong>OIDC bearer auth is usable.</strong>
+      <% } else { %>
+      <strong>Not usable yet.</strong>
+      <% } %>
+      <%= readiness.reason %>
+    </div>
+    <div class="muted" style="font-size: var(--text-sm)">
+      Turning API keys off in <a href="/settings">Settings</a> is refused until this says usable —
+      otherwise the switch would lock every developer out.
+      <span class="mono">X-Admin-Secret</span> is never gated by either, and is the way back in.
+    </div>
+  </div>
+</div>
+
+<%
+  // The filter form and the table render unconditionally — must-fix 2, the
+  // same correction already made on /webhooks, /api-keys, /scope-groups and
+  // /platforms. Hiding them whenever `issuers` (the current, possibly
+  // filtered view) is empty stranded an operator whose filter matched
+  // nothing with no visible Clear control. Only the <tbody> below branches,
+  // telling a filtered-to-zero result apart from a genuinely empty
+  // deployment.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<div class="table-wrap" style="margin-top: var(--space-3)">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (issuers.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+          <% if (hasFilters) { %>
+          <p class="muted" style="margin: var(--space-4) 0">
+            No issuers match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+          </p>
+          <% } else { %>
+          <p class="muted" style="margin: var(--space-4) 0">
+            No issuers registered<% if (isAdmin) { %> — <a href="/oauth-clients/new">register one</a><% } %>.
+            Until then, <span class="mono">/v1/*</span> takes API keys only and a JWT is refused with
+            <span class="mono">403 OAUTH_DISABLED</span>.
+          </p>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const i of issuers) { %>
+      <tr>
+        <td>
+          <a href="/oauth-clients/<%= i.id %>"><%= i.name %></a>
+          <div class="muted mono" style="font-size: var(--text-xs)"><%= i.issuer %></div>
+        </td>
+        <td>
+          <%= i.authorityLabel %>
+          <% if (i.authorityMode === 'external') { %>
+          <div class="muted" style="font-size: var(--text-xs)">no revocation before expiry</div>
+          <% } %>
+        </td>
+        <%# An issuer belongs to no tenant; its tokens do. Which tenants this
+            issuer can act for depends on its authority mode — the service
+            accounts registered on its page, or its allow-list for the tenant
+            claim. Spelled out per row so the question "whose tokens are
+            these?" is answered here rather than one page deeper. %>
+        <td style="font-size: var(--text-xs)">
+          <% const s = (typeof served !== 'undefined' && served) ? served[i.id] : undefined %>
+          <% if (i.authorityMode === 'external') { %>
+            <% if (i.allowedTenants.length === 0) { %>
+            <span class="badge badge--warning">none allowed</span>
+            <div class="muted">admits nobody until a tenant is listed</div>
+            <% } else { %>
+            <span class="mono"><%= i.allowedTenants.join(', ') %></span>
+            <div class="muted">from the token's <span class="mono"><%= i.tenantClaim || '(no claim set)' %></span> claim</div>
+            <% } %>
+          <% } else if (!s) { %>
+            <span class="muted">—</span>
+          <% } else if (s.accounts === 0) { %>
+            <span class="badge badge--warning">no service accounts</span>
+            <div class="muted">every token from this issuer is refused</div>
+          <% } else { %>
+            <span class="mono"><%= s.tenants.join(', ') %></span>
+            <div class="muted"><%= s.accounts %> service account<%= s.accounts === 1 ? '' : 's' %></div>
+          <% } %>
+        </td>
+        <td class="muted" style="font-size: var(--text-xs)">
+          <% if (i.lastVerifiedAt) { %><%= fmtDate(i.lastVerifiedAt) %><% } else { %>never<% } %>
+        </td>
+        <td>
+          <% if (!i.enabled) { %>
+          <span class="badge badge--warning">Disabled</span>
+          <% } else if (!i.lastVerifiedAt) { %>
+          <span class="badge badge--warning">Untested</span>
+          <% } else { %>
+          <span class="badge badge--success"><span class="badge__dot"></span>Active</span>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <h2 class="card__title" style="margin-top: 0">Where the tenant comes from</h2>
+  <p class="muted" style="margin: 0 0 var(--space-3); font-size: var(--text-sm)">
+    There is no tenant to pick here because an issuer is registered once for the whole deployment and
+    belongs to no tenant. The tenant is decided <strong>per token</strong>, when it is verified, by the
+    issuer's authority mode:
+  </p>
+  <ul class="muted" style="margin: 0 0 var(--space-3); padding-left: var(--space-5); font-size: var(--text-sm)">
+    <li style="margin-bottom: var(--space-2)">
+      <strong>Registry</strong> and <strong>Registry ∩ token</strong> — the token's subject is looked up among the
+      <em>service accounts</em> registered on the issuer's page. Each service account names the tenant it acts
+      for, so one issuer serves any number of tenants: register the same identity provider's subjects under
+      different tenants. A subject with no service account is refused.
+    </li>
+    <li>
+      <strong>Token decides</strong> — the tenant is read from the issuer's <em>tenant claim</em>, and is accepted
+      only if it appears in the issuer's <em>allowed tenants</em>. An empty allow-list admits nobody.
+    </li>
+  </ul>
+  <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+    Whichever way it was resolved, the token then behaves exactly like an
+    <a href="/api-keys">API key</a> minted for that tenant: it reaches only that tenant's customers, Connect
+    Links and connections, and the same scope rules apply.
+  </p>
+</div>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <h2 class="card__title" style="margin-top: 0">How a developer uses this</h2>
+  <p class="muted" style="margin: 0 0 var(--space-2); font-size: var(--text-sm)">
+    They get a token from your identity provider the way they do for any other internal service,
+    and send it exactly where an API key would go:
+  </p>
+  <pre class="mono" style="margin: 0; font-size: var(--text-xs); overflow-x: auto"><code>Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6…</code></pre>
+  <p class="muted" style="margin: var(--space-3) 0 0; font-size: var(--text-sm)">
+    The token resolves to the same scopes an API key uses, so every scope rule on
+    <a href="/api-keys">API keys</a> applies unchanged.
+  </p>
+</div>

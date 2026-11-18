@@ -1,0 +1,230 @@
+<% layout('../layout', { title: 'Platforms' }) -%>
+<%
+  const verticalLabels = { '': 'All', accounting: 'Accounting', crm: 'CRM', ecommerce: 'Ecommerce', logistics: 'Logistics', payments: 'Payments', docsign: 'Docsign', projects: 'Projects', 'customer-support': 'Support', inventory: 'Inventory' }
+  const statusLabels = { all: 'All', configured: 'Configured', enabled: 'Enabled', connected: 'Connected' }
+%>
+<div style="max-width: 1100px; margin: 0 auto">
+  <header class="page-header">
+    <div class="page-header__group">
+      <div class="page-header__eyebrow">Configure</div>
+      <h1 class="page-header__title">Platforms</h1>
+      <p class="page-header__desc">
+        <strong><%= totals.configured %></strong> configured ·
+        <strong><%= totals.enabled %></strong> enabled ·
+        <strong><%= totals.connected %></strong> with active connections ·
+        <strong><%= totals.all %></strong> total.
+      </p>
+    </div>
+  </header>
+
+  <% if (typeof unavailable !== 'undefined' && unavailable && unavailable.length) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)">
+    <strong><%= unavailable.join(', ') %></strong> couldn't be loaded — the counts
+    below exclude <%= unavailable.length === 1 ? 'it' : 'them' %>. Check that
+    admin-api's <span class="mono">config.yml</span> lists
+    <%= unavailable.length === 1 ? 'this vertical' : 'these verticals' %>.
+  </div>
+  <% } %>
+
+  <!-- Tab strip -->
+  <nav class="row" style="gap: 0; margin-bottom: var(--space-6); border-bottom: 1px solid var(--border-subtle)">
+    <%
+      const tabStyle = (active) => active
+        ? 'padding: var(--space-3) var(--space-4); font-weight: 500; color: var(--accent); border-bottom: 2px solid var(--accent); margin-bottom: -1px; text-decoration: none;'
+        : 'padding: var(--space-3) var(--space-4); color: var(--fg-3); text-decoration: none;'
+    %>
+    <a href="/platforms" style="<%= tabStyle(tab === 'browse') %>">
+      <i class="ph ph-books" aria-hidden="true"></i> Browse Library
+    </a>
+    <a href="/platforms?tab=configure" style="<%= tabStyle(tab === 'configure') %>">
+      <i class="ph ph-gear" aria-hidden="true"></i> Configure (<%= totals.configured %>)
+    </a>
+    <a href="/platforms?tab=logos" style="<%= tabStyle(tab === 'logos') %>">
+      <i class="ph ph-image" aria-hidden="true"></i> Logos
+    </a>
+  </nav>
+
+  <% if (tab === 'browse') { %>
+    <%- browseBody %>
+  <% } else if (tab === 'logos') { %>
+    <%# Every form on this tab POSTs to a dedicated endpoint, so unlike the
+        Configure tab's GET filter form none of them need a hidden `tab` input.
+        A GET form added here later WOULD need one, or submitting it drops the
+        operator back on Browse. %>
+
+    <% if (logoSettingsUnavailable) { %>
+    <div class="alert alert--warning" style="margin-bottom: var(--space-4)">
+      Could not read the logo settings from the Admin API. The catalog is showing monogram tiles.
+    </div>
+    <% } %>
+
+    <%# Rendered from resolveLogoConfig's own verdict rather than a second copy
+        of its rules, so this banner cannot disagree with what the catalog does.
+        Layer 3 of the cdn/client-ID guard: it also covers the case where the
+        environment changed under a saved config. %>
+    <% if (logo && logo.degraded) { %>
+    <div class="alert alert--warning" style="margin-bottom: var(--space-4)">
+      <div>
+        <strong>Showing monogram tiles.</strong>
+        <% if (logo.degradeReason === 'cdn-missing-client-id') { %>
+          The saved mode is <span class="mono">cdn</span>, but no Brandfetch client ID is
+          set, so the catalog falls back to monograms. Enter a client ID below, or pick
+          Monogram tiles to make that explicit.
+        <% } else { %>
+          <span class="mono"><%= logo.requestedSource %></span> is not one of
+          <span class="mono">none</span> / <span class="mono">cdn</span> /
+          <span class="mono">local</span>.
+        <% } %>
+      </div>
+    </div>
+    <% } %>
+    <% if (logo && logo.logoSource === 'local' && (!logoStatus || logoStatus.count === 0)) { %>
+    <div class="alert alert--info" style="margin-bottom: var(--space-4)">
+      Self-hosting is selected but no logos are stored yet, so every tile shows a
+      monogram until a fetch completes. Start one below — that is the right order.
+    </div>
+    <% } %>
+
+    <%- include('./_logo-settings', {
+      logo, csrfToken, logoModes,
+      action: '/platforms/logos/settings',
+      readOnly: false,
+    }) %>
+    <%- include('./_logo-fetch', {
+      logo, logoJob, logoStatus, csrfToken, verticals,
+      actionBase: '/platforms/logos',
+      readOnly: false,
+    }) %>
+  <% } else { %>
+    <!-- Configure tab: sortable, filterable, paginated list of configured / enabled platforms -->
+    <%
+      // Vertical pill row: plain links built from `tableQs`, the same helper
+      // the pagination partial uses, so a pill click carries the CURRENT
+      // Platform-text filter, sort and status along with it rather than
+      // resetting them — the same "one state, one query string" contract
+      // sortHref/tableQs already give every other absorbed table.
+      function verticalPillHref(value) {
+        const nextFilters = { ...tableState.filters }
+        if (value) nextFilters.vertical = value
+        else delete nextFilters.vertical
+        const qs = tableQs({ ...tableState, filters: nextFilters, page: 1 }, tableSpec)
+        return tableSpec.baseUrl + (qs ? '?' + qs : '')
+      }
+      // Whether anything narrows the view from its tab default — used both
+      // to decide whether a Clear control is warranted and to pick the
+      // "nothing configured yet" vs. "nothing matches" empty-state copy.
+      const hasActiveFilter = Object.keys(tableState.filters).length > 0 || status !== 'configured'
+    %>
+    <div class="row" style="gap: var(--space-2); margin-bottom: var(--space-3); flex-wrap: wrap">
+      <% for (const [value, label] of Object.entries(verticalLabels)) { %>
+      <%
+        const active = (tableState.filters.vertical || '') === value
+        const cls = active ? 'btn btn--primary btn--sm' : 'btn btn--ghost btn--sm'
+      %>
+      <a href="<%= verticalPillHref(value) %>" class="<%= cls %>"><%= label %></a>
+      <% } %>
+    </div>
+
+    <%- include('../_table-filters-form', { tableSpec, tableState }) %>
+    <div class="row" style="gap: var(--space-2); margin-top: var(--space-4); margin-bottom: var(--space-3); align-items: center; justify-content: flex-end; flex-wrap: wrap">
+      <%# `status` is a cross-cutting view over three other columns at once
+          (see PLATFORMS_TABLE's doc comment in routes/platforms.ts), so it is
+          not one of _table-head.ejs's per-column filter cells — it stays a
+          plain <select>, associated to the same filter form by `form=` like
+          every other control on this row. onchange carries no EJS
+          interpolation, so no-interpolation-in-inline-js.test.ts's ban on a
+          server value inside an inline handler does not apply here. -%>
+      <select class="select select--sm" name="status" form="<%= tableSpec.id %>" onchange="this.form.submit()" aria-label="Filter by status">
+        <% for (const [value, label] of Object.entries(statusLabels)) { %>
+        <option value="<%= value %>" <%= status === value ? 'selected' : '' %>><%= label %></option>
+        <% } %>
+      </select>
+      <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+      <% if (hasActiveFilter) { %>
+      <a class="btn btn--ghost btn--sm" href="/platforms?tab=configure">Clear</a>
+      <% } %>
+    </div>
+
+    <div class="card" style="margin-top: var(--space-3); padding: 0">
+      <div class="table-scroll">
+        <table class="table">
+          <%- include('../_table-head', { tableSpec, tableState }) %>
+          <tbody>
+            <% if (rows.length === 0) { %>
+            <tr>
+              <%# Filter row and Clear control render unconditionally above,
+                  even here — a filter that matches nothing must not strand
+                  the operator with no way to see or change what they typed. -%>
+              <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+                <% if (!hasActiveFilter) { %>
+                <div class="empty-state" style="padding: var(--space-6) 0">
+                  <p class="muted" style="margin: 0">No configured platforms yet.</p>
+                  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-2)">
+                    Switch to the <a href="/platforms">Browse Library</a> tab to set up a new one.
+                  </p>
+                </div>
+                <% } else { %>
+                <div class="empty-state empty-state--no-results" style="padding: var(--space-6) 0">
+                  <p class="muted" style="margin: 0">No platforms match your filters.</p>
+                  <div class="empty-state__actions" style="margin-top: var(--space-3)">
+                    <a class="btn btn--ghost btn--sm" href="/platforms?tab=configure">Clear filters</a>
+                  </div>
+                </div>
+                <% } %>
+              </td>
+            </tr>
+            <% } else { %>
+            <% for (const row of rows) { %>
+            <tr>
+              <td>
+                <a href="/platforms/<%= row.vertical %>/<%= row.slug %>" class="mono" style="font-weight: 500"><%= row.slug %></a>
+                <% if (row.unsupported) { %>
+                <span class="badge badge--warning" style="margin-left: var(--space-2)" title="<%= row.unsupported.reason %>"><span class="badge__dot"></span>Unsupported</span>
+                <% } %>
+              </td>
+              <td>
+                <span class="badge" style="text-transform: capitalize"><%= row.vertical %></span>
+              </td>
+              <td style="text-align: center">
+                <% if (row.enabled) { %>
+                <span class="badge badge--success"><span class="badge__dot"></span>Enabled</span>
+                <% } else { %>
+                <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td style="text-align: center">
+                <% if (row.hasConfig) { %>
+                <span class="badge badge--info"><span class="badge__dot"></span>Configured</span>
+                <% } else { %>
+                <span class="muted">—</span>
+                <% } %>
+                <% if (row.credsInvalid) { %>
+                <span class="badge badge--danger" title="The OAuth client id/secret was rejected on a token refresh — update it; customer re-authorization will not help."><span class="badge__dot"></span>Creds invalid</span>
+                <% } %>
+              </td>
+              <td style="text-align: right">
+                <% if (row.connectionCount > 0) { %>
+                <a href="/connections?vertical=<%= row.vertical %>&platform=<%= row.slug %>" class="mono"><%= row.connectionCount %></a>
+                <% } else { %>
+                <span class="muted">0</span>
+                <% } %>
+              </td>
+              <td style="text-align: right">
+                <a href="/platforms/<%= row.vertical %>/<%= row.slug %>" class="btn btn--ghost btn--sm">Edit &rarr;</a>
+              </td>
+            </tr>
+            <% } %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <%- include('../_pagination', {
+      page: tableState.page,
+      pageLimit: pageLimit,
+      total: rowsTotal,
+      baseUrl: '/platforms',
+      filterQs: tableQs(tableState, tableSpec),
+    }) %>
+  <% } %>
+</div>

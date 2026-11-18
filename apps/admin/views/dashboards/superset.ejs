@@ -1,0 +1,29 @@
+<% layout('../layout', { title: 'Dashboard' }) -%>
+<%# One embedded Apache Superset dashboard. public/js/superset-embed.js frames
+    it through the vendored embedded SDK and fetches a guest token from
+    POST /dashboards/superset/:id/guest-token (CSRF token from data-csrf).
+    The guest token carries the viewer's tenant scope as row-level security. %>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/dashboards">Dashboards</a> · Superset</div>
+    <h1 class="page-header__title"><%= dashboard.title %></h1>
+    <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 0">Shared with: <%= audienceText %> · Data from: <%= dataFrom %><% if (canShareAll) { %> · <a href="/dashboards/superset/<%= encodeURIComponent(dashboard.id) %>/sharing">Change</a><% } %></p>
+    <% if (dashboard.description) { %><p class="page-header__desc"><%= dashboard.description %></p><% } %>
+  </div>
+</header>
+
+<section class="card" style="margin-top: var(--space-4); padding: 0; overflow: hidden"
+  data-superset-embed
+  data-dashboard-id="<%= dashboard.id %>"
+  data-embedded-uuid="<%= dashboard.embeddedUuid %>"
+  data-superset-domain="<%= supersetDomain %>"
+  data-csrf="<%= csrfToken %>"
+  aria-label="<%= dashboard.title %>">
+  <p class="muted" data-superset-state role="status" style="margin: 0; padding: var(--space-4)">Loading dashboard…</p>
+  <div data-superset-mount style="min-height: 75vh"></div>
+</section>
+<p class="muted" style="margin-top: var(--space-2); font-size: var(--text-xs)">
+  Served by Superset from masked analytics views, limited to the tenants you can see.
+</p>
+<script src="/vendor/superset-embedded-sdk.js" defer></script>
+<script src="/public/js/superset-embed.js" defer></script>

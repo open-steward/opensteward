@@ -1,0 +1,513 @@
+<% layout('../layout', { title: 'New connect link' }) -%>
+<%
+  // Offered only when there is a choice to make; a single-tenant deployment
+  // sees no tenant controls at all.
+  const tenantChoices = (typeof tenants !== 'undefined' && tenants) || []
+  // Arrived from Customers with somebody already chosen (`?customer=<id>`).
+  // Rendered as the resolved state rather than left to JavaScript, so the form
+  // is correct before any script runs and stays correct without one.
+  const preset = (typeof presetCustomer !== 'undefined' && presetCustomer) || null
+  const presetLabel = preset
+    ? (preset.displayName ? preset.displayName + ' (' + preset.email + ')' : preset.email)
+    : ''
+  // What the operator submitted, echoed back when the form is re-rendered
+  // with an error. A fresh GET passes nothing, so every field falls to its
+  // default here — the one place those defaults are stated.
+  const submitted = (typeof formValues !== 'undefined' && formValues) || null
+  const values = Object.assign({
+    linkMode: 'pinned',
+    label: '',
+    customerEmail: '',
+    customerDisplayName: '',
+    tenantId: '',
+    vertical: '',
+    platform: '',
+    scopeGroupId: 'platform-default',
+    redirectUrl: '',
+    expiryDays: '',
+    oneTimeOnly: !!linkDefaults.oneTimeDefault,
+    syncMode: '',
+    syncIntervalValue: '',
+    syncIntervalUnit: 'hours',
+    // A fresh GET has no label at all, so there is nothing for the operator to
+    // own yet and the autofill starts in charge.
+    labelAutofilled: true,
+  }, submitted || {})
+  // The one control the error is about. Marked, described by the alert, and
+  // focused — so "choose another label" lands the cursor in the label.
+  const flagged = (typeof errorField !== 'undefined' && errorField) || null
+  const invalid = (name) => flagged === name
+  const flag = (name) => invalid(name) ? ' aria-invalid="true" aria-describedby="formError" autofocus' : ''
+%>
+<div style="max-width: 640px">
+  <h1>New connect link</h1>
+  <p class="muted" style="margin: var(--space-1) 0 var(--space-6)">Pick the customer, optionally pre-select an adapter, and send the resulting URL by email.</p>
+
+  <% if (typeof noEnabledPlatforms !== 'undefined' && noEnabledPlatforms) { %>
+  <div class="alert alert--warning" style="margin-bottom: var(--space-4)">
+    <strong>No platforms are configured yet.</strong>
+    A Connect link needs at least one enabled platform — otherwise the customer lands on an empty picker and can't authorize anything.
+    <a href="/platforms" style="text-decoration: underline">Configure a platform</a> first, then come back to mint the link.
+  </div>
+  <% } %>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" id="formError" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <% const TEMPLATES = (typeof templates !== 'undefined' && templates) ? templates : [] %>
+
+  <% if (TEMPLATES.length > 0) { %>
+  <div class="field" style="margin-bottom: var(--space-4)">
+    <span class="field__label">Apply template</span>
+    <select class="select" id="applyTemplate">
+      <option value="">— start blank —</option>
+      <% for (const t of TEMPLATES) { %>
+      <option value="<%= t.id %>"><%= t.name %><%= t.description ? ' — ' + t.description : '' %></option>
+      <% } %>
+    </select>
+    <span class="field__hint">Hydrates the form below from a saved preset. Manage at <a href="/connect-link-templates">/connect-link-templates</a>.</span>
+  </div>
+  <% } %>
+
+  <form method="POST" action="/connect-links" class="card stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="field">
+      <span class="field__label">Mode *</span>
+      <select class="select" name="linkMode" id="linkMode" required>
+        <option value="pinned"<%= values.linkMode === 'pinned' ? ' selected' : '' %>>Pinned — I know the customer and the adapter</option>
+        <option value="customer-picks-adapter"<%= values.linkMode === 'customer-picks-adapter' ? ' selected' : '' %>>Customer picks adapter — I know the customer</option>
+        <option value="self-register"<%= values.linkMode === 'self-register' ? ' selected' : '' %>>Self-register — customer enters their own email</option>
+      </select>
+      <span class="field__hint" id="linkModeHint">The customer skips the adapter picker and goes straight to OAuth.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Label *</span>
+      <input class="input<%= invalid('label') ? ' input--invalid' : '' %>" name="label" required placeholder="e.g. Q2 reconciliation — Acme" value="<%= values.label %>"<%- flag('label') %>>
+      <%# Whether the value above is still the autofill's or has been typed
+          over. Round-tripped rather than re-derived: a re-rendered form echoes
+          the submitted label back, and without this the autofill read its own
+          output as the operator's and switched itself off for the rest of the
+          page. public/js/connect-link-label.js maintains it. %>
+      <input type="hidden" name="labelAutofilled" id="labelAutofilled" value="<%= values.labelAutofilled ? '1' : '0' %>">
+      <span class="field__hint">Filled in for you as you complete the form; edit it and it's yours from the first keystroke. For your reference only — the customer doesn't see this.</span>
+    </div>
+
+    <div class="field" id="customerEmailField">
+      <span class="field__label">Customer email</span>
+      <input class="input" name="customerEmail" type="email" placeholder="jane@acme.com" autocomplete="off"
+        list="customer-suggestions" value="<%= preset ? preset.email : values.customerEmail %>">
+      <%# Seeded with the preset so the script's own resolution — which matches
+          the typed address against this list — agrees with what the server
+          rendered, instead of clearing it on the first keystroke. %>
+      <datalist id="customer-suggestions"><% if (preset) { %><option value="<%= preset.email %>" label="<%= preset.displayName ? preset.email + ' — ' + preset.displayName : preset.email %>" data-id="<%= preset.id %>" data-tenant="<%= preset.tenantId || '' %>" data-name="<%= preset.displayName || '' %>"></option><% } %></datalist>
+      <span class="field__hint">
+        Start typing to find an existing customer. An address that matches nobody creates a new
+        customer, named below.
+      </span>
+    </div>
+
+    <%# Shown once the typed address resolves to somebody. A datalist gives no
+        sign that a selection happened, so without this there is no way to tell
+        which of two very different things is about to occur: reusing a customer,
+        or creating one. %>
+    <div class="field" id="customerMatched" style="<%= preset ? '' : 'display: none' %>">
+      <span class="field__label">Customer</span>
+      <span class="badge badge--success">Existing</span>
+      <span class="mono" id="customerMatchedName" style="font-size: var(--text-sm)"><%= presetLabel %></span>
+      <span class="field__hint">
+        This link will be issued to them. Their record is not modified — edit it from
+        <a href="/customers">Customers</a>.
+      </span>
+    </div>
+
+    <%# Hidden as soon as a customer is matched: the server ignores it in that
+        case, so offering it would only mislead. %>
+    <div class="field" id="customerDisplayNameField" style="<%= preset ? 'display: none' : '' %>">
+      <span class="field__label">Display name</span>
+      <input class="input" name="customerDisplayName" placeholder="Jane Doe (Acme)" value="<%= values.customerDisplayName %>">
+      <span class="field__hint">Names the new customer this link creates. Optional.</span>
+    </div>
+
+    <input type="hidden" name="endUserId" id="endUserId" value="<%= preset ? preset.id : '' %>">
+
+    <%# The link's tenant becomes the resulting connection's owning tenant, and
+        it must agree with the customer's — the server refuses a link that names
+        someone from another tenant. So it is derived whenever a customer is
+        already known, and only chosen when there is nobody to derive it from:
+        a brand-new email, or a self-register link. Single-tenant deployments
+        get neither control. %>
+    <% if (tenantChoices.length > 1) { %>
+    <div class="field" id="tenantDerived" style="display: none">
+      <span class="field__label">Tenant</span>
+      <span class="mono" id="tenantDerivedValue"></span>
+      <span class="field__hint">From the selected customer — a link must belong to their tenant.</span>
+      <input type="hidden" name="tenantId" id="tenantDerivedInput" value="" disabled>
+    </div>
+    <div class="field" id="tenantChooser">
+      <label class="field__label" for="linkTenant">Tenant</label>
+      <select class="select" name="tenantId" id="linkTenant">
+        <% for (const t of tenantChoices) { %>
+        <option value="<%= t.id %>"<%= t.id === values.tenantId ? ' selected' : '' %>><%= t.name %> (<%= t.id %>)</option>
+        <% } %>
+      </select>
+      <span class="field__hint">
+        Which tenant owns the connection this link creates. Picking an existing customer above sets it for you.
+      </span>
+    </div>
+    <% } else if (tenantChoices.length === 0) { %>
+    <%# An EMPTY list is not a single-tenant deployment — every deployment is
+        seeded with a `default` tenant by migration (admin-store.ts), so zero
+        tenants can only mean listTenants() failed and its `.catch(() => [])`
+        swallowed it. Without this branch the control disappeared and the POST's
+        `body.tenantId?.trim() || DEFAULT_TENANT` quietly minted the link into
+        `default` — a link scoped to the wrong tenant, with nothing on screen
+        saying a choice had been made for you. That is the failure
+        tests/journeys/upstream-failure-is-not-emptiness.test.ts exists to
+        prevent: an upstream outage must not read as an empty world.
+
+        Typeable rather than hidden, so a link can still be minted deliberately. %>
+    <div class="field">
+      <label class="field__label" for="linkTenant">Tenant</label>
+      <input class="input mono" name="tenantId" id="linkTenant" value="default" autocomplete="off">
+      <span class="field__hint">
+        The tenant list could not be loaded, so this could not be filled in for you — check the id before sending this link. Registered tenants are at <a href="/tenants">/tenants</a>.
+      </span>
+    </div>
+    <% } %>
+
+    <div class="row" style="gap: var(--space-3)" id="adapterRow">
+      <div class="field" style="flex: 1">
+        <span class="field__label" id="verticalLabel">Vertical *</span>
+        <select class="select<%= invalid('vertical') ? ' select--invalid' : '' %>" name="vertical" id="vertical"<%- flag('vertical') %>>
+          <option value="">Any</option>
+          <% for (const v of verticals) { %>
+          <option value="<%= v %>"<%= v === values.vertical ? ' selected' : '' %>><%= v %></option>
+          <% } %>
+        </select>
+      </div>
+      <div class="field" style="flex: 1">
+        <span class="field__label" id="platformLabel">Adapter *</span>
+        <%# Script fills this in after a vertical is picked (refreshAdapters).
+            On a re-render the vertical is already known, so the list — and
+            the chosen adapter — has to come from the server, or the operator's
+            choice is gone before the page has finished loading. Same order and
+            labels as the script builds, so nothing changes under them. %>
+        <select class="select<%= invalid('platform') ? ' select--invalid' : '' %>" name="platform" id="platform"<%= values.vertical ? '' : ' disabled' %><%- flag('platform') %>>
+          <option value="">Any</option>
+          <% if (values.vertical) { for (const p of providers.filter(p => p.vertical === values.vertical).sort((a, b) => a.name.localeCompare(b.name))) { %>
+          <option value="<%= p.slug %>"<%= p.slug === values.platform ? ' selected' : '' %>><%= p.name %> (<%= p.authType || 'oauth2' %>)</option>
+          <% } } %>
+        </select>
+      </div>
+    </div>
+
+    <div class="field" id="scopeField">
+      <span class="field__label">Scopes</span>
+      <select class="select" name="scopeGroupId" id="scopeGroupId">
+        <option value="platform-default"<%= values.scopeGroupId === 'platform-default' ? ' selected' : '' %>>Use platform default</option>
+        <option value="read-only"<%= values.scopeGroupId === 'read-only' ? ' selected' : '' %>>Read-only</option>
+        <%# Scope groups are populated by script on (vertical, platform) change;
+            on a re-render both are known, so the matching groups are listed
+            here with the chosen one selected. %>
+        <% if (values.vertical && values.platform) { for (const g of scopeGroups.filter(g => g.vertical === values.vertical && g.platform === values.platform).sort((a, b) => a.name.localeCompare(b.name))) { %>
+        <option value="<%= g.id %>"<%= String(g.id) === values.scopeGroupId ? ' selected' : '' %>><%= g.name %> (<%= g.scopes.length %> scope<%= g.scopes.length === 1 ? '' : 's' %>)</option>
+        <% } } %>
+      </select>
+      <span class="field__hint" id="scopeHint">
+        Use platform default requests the scopes configured for the platform.
+        Read-only requests just its read scopes (falling back to the platform
+        default where none are catalogued). Pick a scope group to customize.
+        Manage groups at <a href="/scope-groups">/scope-groups</a>.
+      </span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Redirect URL after success (optional)</span>
+      <input class="input" name="redirectUrl" type="url" placeholder="https://your-app.example.com/connected" value="<%= values.redirectUrl %>">
+    </div>
+
+    <div class="field">
+      <span class="field__label">Link expires after</span>
+      <select class="select" name="expiryDays" id="expiryDays">
+        <option value=""<%= values.expiryDays === '' ? ' selected' : '' %>>Deployment default (<%= linkDefaults.expiryHours %>h)</option>
+        <% for (const d of ['1', '3', '7', '14', '30']) { %>
+        <option value="<%= d %>"<%= values.expiryDays === d ? ' selected' : '' %>><%= d %> day<%= d === '1' ? '' : 's' %></option>
+        <% } %>
+      </select>
+      <span class="field__hint">How long the customer has to click and complete the OAuth flow. Once they consume the link, expiry no longer matters.</span>
+    </div>
+
+    <div class="field" data-sync-schedule-field>
+      <label class="field__label" for="syncMode">Sync schedule</label>
+      <select class="select<%= invalid('syncSchedule') ? ' select--invalid' : '' %>" name="syncMode" id="syncMode"<%- flag('syncSchedule') %>>
+        <option value=""<%= values.syncMode === '' ? ' selected' : '' %>>Default schedule (the deployment interval)</option>
+        <option value="custom"<%= values.syncMode === 'custom' ? ' selected' : '' %>>Custom interval</option>
+        <option value="trigger_only"<%= values.syncMode === 'trigger_only' ? ' selected' : '' %>>Trigger only — never automatically, not even when connected</option>
+        <option value="once"<%= values.syncMode === 'once' ? ' selected' : '' %>>One-time — sync once when connected</option>
+      </select>
+      <div class="row" style="gap: var(--space-2); align-items: center; margin-top: var(--space-2)">
+        <label for="syncIntervalValue">Custom interval: every</label>
+        <input class="input" style="width: 6rem" type="number" min="1" step="1" name="syncIntervalValue" id="syncIntervalValue" value="<%= values.syncIntervalValue %>">
+        <select class="select" name="syncIntervalUnit" aria-label="Custom interval unit">
+          <% for (const u of ['minutes', 'hours', 'days']) { %>
+          <option value="<%= u %>"<%= values.syncIntervalUnit === u ? ' selected' : '' %>><%= u %></option>
+          <% } %>
+        </select>
+      </div>
+      <span class="field__hint">How often the connection this link creates is re-synced. The interval applies to Custom only: 15 minutes to 30 days. A one-time read-only pull ignores this and syncs once.</span>
+    </div>
+
+    <div class="field">
+      <label class="row" style="gap: var(--space-2); align-items: flex-start; cursor: pointer">
+        <input type="checkbox" name="oneTimeOnly" id="oneTimeOnly"<%= values.oneTimeOnly ? " checked" : "" %>>
+        <div>
+          <div><strong>One-time read-only pull</strong></div>
+          <div class="field__hint" style="margin-top: var(--space-1)">
+            The customer authorizes once, we pull all configured resources, then we delete the connection.
+            Pair with a <a href="/scope-groups">read-only scope group</a> for the chosen platform so the OAuth grant cannot perform writes.
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary">Create link</button>
+      <a href="/connect-links" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  const PROVIDERS = <%- jsonForScript(providers) %>;
+  const SCOPE_GROUPS = <%- jsonForScript(typeof scopeGroups !== 'undefined' ? scopeGroups : []) %>;
+
+  // Seed for the label autofill (public/js/connect-link-label.js), which is
+  // deferred and so reads this after the whole inline script has run. The
+  // minted-at stamp is taken once, here, rather than each time the label is
+  // rewritten — the label names when the link was minted, not when the operator
+  // last touched a dropdown. Tenants are serialized for the name-from-id lookup;
+  // the view itself only renders them when there is a choice to make.
+  window.__connectLinkLabelSeed = {
+    tenants: <%- jsonForScript(typeof tenants !== 'undefined' ? tenants : []) %>,
+    providers: PROVIDERS,
+    mintedAt: Date.now(),
+  };
+
+  const linkModeEl = document.getElementById('linkMode');
+  const linkModeHint = document.getElementById('linkModeHint');
+  const customerEmailField = document.getElementById('customerEmailField');
+  const customerDisplayNameField = document.getElementById('customerDisplayNameField');
+  const customerEmailInput = customerEmailField.querySelector('input[name="customerEmail"]');
+  const verticalEl = document.getElementById('vertical');
+  const platformEl = document.getElementById('platform');
+  const scopeGroupEl = document.getElementById('scopeGroupId');
+  const scopeField = document.getElementById('scopeField');
+  const scopeHint = document.getElementById('scopeHint');
+  const verticalLabel = document.getElementById('verticalLabel');
+  const platformLabel = document.getElementById('platformLabel');
+
+  const MODE_HINTS = {
+    'pinned': 'The customer opens the link, skips the adapter picker, and goes straight to OAuth.',
+    'customer-picks-adapter': 'The customer chooses any allowed adapter at connect time. Per-link scope overrides are disabled because the adapter isn\'t known until they pick.',
+    'self-register': 'The customer enters their own email on the connect page, then picks an adapter. Use this when you\'re sharing the link before knowing who will claim it.',
+  };
+  const SCOPE_HINT_DEFAULT =
+    "Override the platform's configured scopes for just this link. Manage groups at <a href=\"/scope-groups\">/scope-groups</a>.";
+  const SCOPE_HINT_MODE_LOCKED =
+    "Platform default and read-only resolve per platform when the customer connects. Custom scope groups apply only in pinned mode (a single adapter known at mint time).";
+  const SCOPE_HINT_BUCKET_D =
+    'This adapter ignores per-link scope overrides — its scopes are fixed in the OAuth app config. Set them on the platform configure page.';
+
+  function applyMode() {
+    const mode = linkModeEl.value;
+    linkModeHint.textContent = MODE_HINTS[mode] || '';
+    const isSelfReg = mode === 'self-register';
+    const isCustomerPicks = mode === 'customer-picks-adapter';
+    const isPinned = mode === 'pinned';
+
+    customerEmailField.style.display = isSelfReg ? 'none' : '';
+    customerDisplayNameField.style.display = isSelfReg ? 'none' : '';
+    customerEmailInput.required = !isSelfReg && isPinned ? false : false; // never required, but kept for future tightening
+    if (isSelfReg) {
+      customerEmailInput.value = '';
+      document.getElementById('endUserId').value = '';
+      // The match confirmation belongs to an email that no longer exists.
+      const matched = document.getElementById('customerMatched');
+      if (matched) matched.style.display = 'none';
+      customerDisplayNameField.style.display = 'none';
+    }
+
+    // Self-register has no customer to derive a tenant from, so the choice
+    // comes back. Switching modes with a customer already selected would
+    // otherwise leave the derived tenant on screen with nothing behind it.
+    const derivedWrap = document.getElementById('tenantDerived');
+    const chooserWrap = document.getElementById('tenantChooser');
+    if (derivedWrap && chooserWrap && isSelfReg) {
+      derivedWrap.style.display = 'none';
+      chooserWrap.style.display = '';
+      const derivedInput = document.getElementById('tenantDerivedInput');
+      if (derivedInput) derivedInput.disabled = true;
+      const sel = chooserWrap.querySelector('select[name="tenantId"]');
+      if (sel) sel.disabled = false;
+    }
+
+    verticalLabel.textContent = isPinned ? 'Vertical *' : 'Vertical';
+    platformLabel.textContent = isPinned ? 'Adapter *' : 'Adapter';
+    // The asterisks above are a promise; these two lines are what keeps it.
+    // Without them the browser would let a pinned link submit with "Any" for
+    // both, and the server's rejection would be the first thing to say so.
+    // A disabled select is skipped by constraint validation, so `platform`
+    // only blocks submission once a vertical has been chosen and it is enabled
+    // — which is the same order the operator fills the form in anyway.
+    verticalEl.required = isPinned;
+    platformEl.required = isPinned;
+
+    // Scope groups are offered only in pinned mode (and only when the selected
+    // adapter supports scope override — checked separately).
+    if (isPinned) {
+      scopeGroupEl.disabled = false;
+      refreshScopeGroups();
+      scopeHint.innerHTML = SCOPE_HINT_DEFAULT;
+      // Re-evaluate bucket-D once the user picks an adapter.
+      maybeApplyBucketDLock();
+    } else {
+      // Non-pinned: the adapter isn't known at mint time, so a platform-specific
+      // scope group can't apply. Platform default and read-only both resolve
+      // per platform at OAuth-start, so those two stay on offer.
+      scopeGroupEl.disabled = false;
+      refreshScopeGroups();
+      scopeHint.innerHTML = SCOPE_HINT_MODE_LOCKED;
+    }
+  }
+  linkModeEl.addEventListener('change', applyMode);
+
+  function refreshAdapters() {
+    const v = verticalEl.value;
+    platformEl.innerHTML = '<option value="">Any</option>';
+    if (!v) { platformEl.disabled = true; return; }
+    platformEl.disabled = false;
+    PROVIDERS.filter(p => p.vertical === v).sort((a, b) => a.name.localeCompare(b.name)).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.slug;
+      opt.textContent = p.name + ' (' + (p.authType || 'oauth2') + ')';
+      platformEl.appendChild(opt);
+    });
+    refreshScopeGroups();
+    maybeApplyBucketDLock();
+  }
+  function refreshScopeGroups() {
+    const v = verticalEl.value;
+    const p = platformEl.value;
+    // The previous choice survives the rebuild when it is still on offer: a
+    // policy always is, a scope group only while its adapter stays chosen.
+    const prev = scopeGroupEl.value;
+    scopeGroupEl.innerHTML =
+      '<option value="platform-default" selected>Use platform default</option>' +
+      '<option value="read-only">Read-only</option>';
+    if (linkModeEl.value === 'pinned' && v && p) {
+      SCOPE_GROUPS
+        .filter(g => g.vertical === v && g.platform === p)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(g => {
+          const opt = document.createElement('option');
+          opt.value = String(g.id);
+          opt.textContent = g.name + ' (' + g.scopes.length + ' scope' + (g.scopes.length === 1 ? '' : 's') + ')';
+          scopeGroupEl.appendChild(opt);
+        });
+    }
+    if (Array.from(scopeGroupEl.options).some(o => o.value === prev)) scopeGroupEl.value = prev;
+  }
+
+  // Bucket-D check: fetch platform config metadata to learn whether the
+  // adapter honors per-link scope overrides. When false, the dropdown is
+  // disabled (no error UX) with an explanatory hint.
+  let lastBucketDKey = '';
+  async function maybeApplyBucketDLock() {
+    if (linkModeEl.value !== 'pinned') return;
+    const v = verticalEl.value;
+    const p = platformEl.value;
+    if (!v || !p) {
+      scopeGroupEl.disabled = false;
+      scopeHint.innerHTML = SCOPE_HINT_DEFAULT;
+      lastBucketDKey = '';
+      return;
+    }
+    const key = v + ':' + p;
+    if (key === lastBucketDKey) return;
+    lastBucketDKey = key;
+    try {
+      const res = await fetch('/connect-links/platform-meta/' + encodeURIComponent(v) + '/' + encodeURIComponent(p));
+      if (!res.ok) return;
+      const body = await res.json();
+      const meta = body && body.data;
+      if (meta && meta.supportsScopeOverride === false) {
+        scopeGroupEl.disabled = true;
+        scopeGroupEl.value = 'platform-default';
+        scopeHint.innerHTML = SCOPE_HINT_BUCKET_D;
+      } else {
+        scopeGroupEl.disabled = false;
+        scopeHint.innerHTML = SCOPE_HINT_DEFAULT;
+      }
+    } catch (e) { /* ignore — leave dropdown enabled */ }
+  }
+
+  verticalEl.addEventListener('change', refreshAdapters);
+  platformEl.addEventListener('change', () => {
+    refreshScopeGroups();
+    maybeApplyBucketDLock();
+  });
+  applyMode();
+
+  // Template-apply dropdown — hydrates the form fields from a preset.
+  const TEMPLATES = <%- jsonForScript(typeof templates !== 'undefined' ? templates : []) %>;
+  const PRESET_TEMPLATE = <%- jsonForScript(typeof presetTemplate !== 'undefined' ? presetTemplate : null) %>;
+  const applyTplEl = document.getElementById('applyTemplate');
+  if (applyTplEl) {
+    applyTplEl.addEventListener('change', () => {
+      const id = parseInt(applyTplEl.value, 10);
+      if (!Number.isFinite(id)) return;
+      const t = TEMPLATES.find((x) => x.id === id);
+      if (!t) return;
+      linkModeEl.value = t.linkMode;
+      applyMode();
+      const v = t.allowedPlatforms[0] ? t.allowedPlatforms[0].vertical : (t.allowedVerticals[0] || '');
+      const p = t.allowedPlatforms[0] ? t.allowedPlatforms[0].slug : '';
+      verticalEl.value = v;
+      refreshAdapters();
+      if (p) {
+        platformEl.value = p;
+        refreshScopeGroups();
+        maybeApplyBucketDLock();
+      }
+      if (t.scopeGroupId != null) {
+        // Wait for refreshScopeGroups (sync) to populate, then select.
+        scopeGroupEl.value = String(t.scopeGroupId);
+      }
+      const expiry = document.getElementById('expiryDays');
+      if (expiry) expiry.value = String(t.expiryDays);
+      const oneTime = document.querySelector('input[name="oneTimeOnly"]');
+      if (oneTime) oneTime.checked = !!t.oneTimeOnly;
+      const redirect = document.querySelector('input[name="redirectUrl"]');
+      if (redirect) redirect.value = t.redirectUrl || '';
+    });
+
+    // Server-side prefill via ?template=<id>: drive the same change handler
+    // so all field hydration flows through one code path.
+    if (PRESET_TEMPLATE && typeof PRESET_TEMPLATE.id === 'number') {
+      applyTplEl.value = String(PRESET_TEMPLATE.id);
+      applyTplEl.dispatchEvent(new Event('change'));
+    }
+  }
+
+</script>
+
+<!-- Before the autocomplete, not after: this listens for the customer-change
+     event that script dispatches, including the one it fires on load for a
+     form that arrived with a customer already chosen. -->
+<script src="/public/js/connect-link-label.js" defer></script>
+
+<!-- Debounced + abortable; see the file header for why it is not inline. -->
+<script src="/public/js/customer-autocomplete.js" defer></script>

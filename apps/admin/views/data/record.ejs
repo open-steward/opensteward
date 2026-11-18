@@ -1,0 +1,75 @@
+<% layout('../layout', { title: title }) -%>
+<%
+  const cid = encodeURIComponent(record.connectionId)
+  const classBadge = { pii: ['PII', 'badge--warning'], financial: ['Financial', 'badge--info'], secret: ['Secret', 'badge--danger'] }
+  const back = '/data/connections/' + cid + '?type=' + encodeURIComponent(record.resourceType)
+  const fields = schema ? schema.fields.filter((f) => f.inSchema) : []
+%>
+<div class="row row--between">
+  <h1><%= record.resourceType %> <span class="mono"><%= record.id %></span></h1>
+  <%# The dialog's close button is the way back there; the page keeps this. %>
+  <a href="<%= back %>" class="btn btn--ghost btn--sm" data-modal-omit>Back to records</a>
+</div>
+
+<% if (revealed) { %>
+<div class="alert alert--warning" style="margin-top: var(--space-4)" data-pii-revealed>
+  <strong>Personal data is shown unmasked.</strong> This reveal was recorded in the audit log. Reload the record page to return to the masked view.
+</div>
+<% } else { %>
+<p class="muted" style="margin-top: var(--space-2); font-size: var(--text-sm)">Values are shown masked, exactly as the API returns them.</p>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-4)">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="stack stack--sm"><span class="eyebrow">Connection</span><p style="margin: 0"><a class="mono" style="font-size: var(--text-sm)" href="/data/connections/<%= cid %>"><%= record.connectionId %></a></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Platform</span><p style="margin: 0"><%= record.platform %> · <span style="text-transform: capitalize"><%= record.vertical %></span></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Fetched</span><p style="margin: 0"><%= record.fetchedAt ? new Date(record.fetchedAt).toLocaleString() : '—' %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Updated</span><p style="margin: 0"><%= record.updatedAt ? new Date(record.updatedAt).toLocaleString() : '—' %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Schema version</span><p style="margin: 0"><%= record.normVersion || '—' %></p></div>
+  </div>
+</div>
+
+<% if (canReadPii && !revealed) { %>
+<form method="POST" action="/data/connections/<%= cid %>/records/<%= encodeURIComponent(record.resourceType) %>/<%= encodeURIComponent(record.id) %>/reveal" class="card" style="margin-top: var(--space-4)" data-reveal-form>
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="field">
+    <label class="field__label" for="reveal-reason">Reason for revealing personal data</label>
+    <input class="input" id="reveal-reason" type="text" name="reason" maxlength="500" placeholder="e.g. support ticket 42">
+    <p class="field__hint">Optional. Recorded in the audit log with your name and this record.</p>
+  </div>
+  <div class="row" style="margin-top: var(--space-3)">
+    <button type="submit" class="btn btn--danger btn--sm">Reveal personal data</button>
+  </div>
+</form>
+<% } %>
+
+<h2 style="margin-top: var(--space-8); font-size: var(--text-lg)">Record</h2>
+<div class="card" style="margin-top: var(--space-3)" data-json-view>
+  <pre class="json-view__fallback mono" style="margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--text-sm)"><%= JSON.stringify(record.data, null, 2) %></pre>
+  <script type="application/json" data-json-view-source><%- jsonForScript(record.data) %></script>
+  <script type="application/json" data-json-view-classes><%- jsonForScript(classOf) %></script>
+</div>
+
+<% if (fields.length > 0) { %>
+<h2 style="margin-top: var(--space-8); font-size: var(--text-lg)">Field classification</h2>
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <thead><tr><th>Field</th><th>Class</th><th>Masked as</th></tr></thead>
+    <tbody>
+      <% for (const f of fields) { %>
+      <tr>
+        <td class="mono"><%= f.path %></td>
+        <td>
+          <% if (classBadge[f.class]) { %><span class="badge <%= classBadge[f.class][1] %>"><%= classBadge[f.class][0] %></span><% } else { %><span class="badge badge--muted"><%= f.class %></span><% } %>
+          <% if (!f.classified) { %><span class="muted" style="font-size: var(--text-xs)">default</span><% } %>
+        </td>
+        <td class="muted"><%= f.mask || '—' %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<% } %>
+<script src="/public/js/json-view.js" defer></script>

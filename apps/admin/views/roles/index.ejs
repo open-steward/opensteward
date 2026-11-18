@@ -1,0 +1,76 @@
+<% layout('../layout', { title: 'Roles' }) -%>
+<%
+  const describe = new Map((permissions || []).map((p) => [p.id, p.description]))
+%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Admin</div>
+    <h1 class="page-header__title">Roles</h1>
+    <p class="page-header__desc">
+      What each console user may do. The three built-in roles are fixed; a custom role picks a base
+      role (what role-gated pages treat its holders as) and exactly the permissions it grants.
+      Assign roles and tenant scope on each <a href="/users">user</a>, or from an identity
+      provider's role-mapping rules.
+    </p>
+  </div>
+  <div class="page-header__actions">
+    <a href="/roles/new" class="btn btn--primary btn--sm">New role</a>
+  </div>
+</header>
+
+<div class="card" style="margin-top: var(--space-6); padding: 0">
+  <div class="table-scroll">
+  <table class="table">
+    <thead>
+      <tr><th>Role</th><th>Base role</th><th>Permissions</th><th></th></tr>
+    </thead>
+    <tbody>
+      <% for (const r of roles) { %>
+      <tr>
+        <td>
+          <strong><%= r.name %></strong>
+          <% if (r.isBuiltin) { %><span class="badge">built-in</span><% } %>
+          <% if (r.description) { %><div class="muted" style="font-size: var(--text-sm)"><%= r.description %></div><% } %>
+        </td>
+        <td><span class="badge badge--accent"><%= r.baseRole %></span></td>
+        <td>
+          <% if (r.permissions.length === 0) { %>
+          <span class="muted">none</span>
+          <% } else { %>
+          <% for (const p of r.permissions) { %>
+          <span class="badge mono" title="<%= describe.get(p) || '' %>"><%= p %></span>
+          <% } %>
+          <% } %>
+        </td>
+        <td style="white-space: nowrap">
+          <a href="/roles/<%= encodeURIComponent(r.id) %>" class="btn btn--ghost btn--sm"><%= r.isBuiltin ? 'View' : 'Edit' %></a>
+          <% if (!r.isBuiltin) { %>
+          <form method="POST" action="/roles/<%= encodeURIComponent(r.id) %>/delete" style="display:inline"
+                onsubmit="return confirm('Delete this role? Roles still assigned to a user or named by an IdP rule cannot be deleted.')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn--danger btn--sm">Delete</button>
+          </form>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<details class="card" style="margin-top: var(--space-6)">
+  <summary style="cursor: pointer; font-weight: 600"><i class="ph ph-info"></i> Permission catalog</summary>
+  <table class="table" style="margin-top: var(--space-3)">
+    <thead><tr><th>Permission</th><th>Allows</th><th>Built-in roles</th></tr></thead>
+    <tbody>
+      <% for (const p of permissions) { %>
+      <tr>
+        <td class="mono"><%= p.id %></td>
+        <td><%= p.description %></td>
+        <td><%= p.builtinRoles.join(', ') %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+</details>

@@ -1,0 +1,491 @@
+/* Admin-specific overrides. Design tokens + components ship from
+   @opensteward/design-system (linked in views/layout.ejs). */
+
+/* Console-user avatar — `avatar()` in core/views/helpers.ts renders either
+   the picture (an <img>) or the initials fallback (a <span>); both take the
+   same box so a row never shifts when a picture arrives. */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  object-fit: cover;
+  background: var(--accent-muted);
+  color: var(--accent-fg);
+  border: 1px solid var(--border-subtle);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+  vertical-align: middle;
+}
+.avatar--initials::before { content: attr(data-initials); }
+.avatar--sm { width: 24px; height: 24px; font-size: 10px; }
+.avatar--lg { width: 64px; height: 64px; font-size: var(--text-lg); }
+.avatar-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.profile-card {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.profile-card__forms {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+/* Dashboard "Finish setting up" card — views/_setup-resume.ejs. One line:
+   the next step on the left, Continue / Skip on the right; stacks when the
+   viewport cannot hold both. */
+.setup-resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.setup-resume__main {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.setup-resume__next {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--fg-2);
+}
+.setup-resume__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.setup-resume__actions form {
+  display: inline;
+}
+/* The one-line notes the card leaves behind: a recent "Skip for now" with
+   its Undo, or the ?wizard=complete landing when the scan could not run. */
+.setup-resume__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+}
+.setup-resume__note form {
+  display: inline;
+}
+
+/* Dashboard "Needs attention" panel — views/_dashboard-tasks.ejs.
+   One row per task: identity and sentence on the left, actions on the
+   right; the two stack once the viewport is too narrow to hold both. */
+.tasks__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.tasks__note {
+  font-size: var(--text-sm);
+}
+.tasks__unavailable {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--warning-fg);
+}
+.tasks__list,
+.tasks__cleared {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.tasks__row,
+.tasks__cleared-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.tasks__main {
+  min-width: 0;
+  flex: 1 1 320px;
+}
+.tasks__id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.tasks__platform {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.tasks__title {
+  overflow-wrap: anywhere;
+}
+.tasks__tenant {
+  font-size: var(--text-xs);
+}
+.tasks__sentence {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--fg-2);
+  overflow-wrap: anywhere;
+}
+.tasks__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.tasks__actions form {
+  display: inline;
+}
+.tasks__more {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-sm);
+}
+.tasks__cleared {
+  margin-top: var(--space-3);
+}
+.tasks__cleared-row {
+  font-size: var(--text-sm);
+}
+@media (max-width: 520px) {
+  .tasks__row,
+  .tasks__cleared-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  /* The 320px basis above is a width on a row; on a column it would become
+     a 320px HEIGHT for every text block. The setup-resume card shares the
+     basis, and this block: the stack test reads the first ≤520px block. */
+  .tasks__main,
+  .setup-resume__main {
+    flex-basis: auto;
+    width: 100%;
+  }
+  .tasks__actions {
+    flex-shrink: 1;
+  }
+}
+/* ---- Header bell ----------------------------------------------------------
+   The unread-notification count, on the ghost button that links to
+   /notifications (views/layout.ejs). Colours are the theme tokens, so the
+   badge follows dark mode with no second rule set. */
+.header-bell {
+  position: relative;
+}
+.header-bell[aria-current='page'] {
+  background: var(--surface-1);
+  color: var(--fg-1);
+}
+.header-bell__count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--danger);
+  color: var(--surface-0);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ---- List-table sorting and per-column filters --------------------------- */
+
+/* .table th uppercases and letter-spaces its text and draws the rule under the
+   head. A second header row inherits all three: uppercased placeholder text and
+   a double rule. Both are undone here rather than in the design system, which
+   docs-server also consumes. */
+.table__headers--with-filters th { border-bottom: 0; padding-bottom: var(--space-2); }
+.table__filters th {
+  padding-top: 0;
+  padding-bottom: var(--space-3);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+}
+
+/* .input is a fixed 36px full-width control — far too heavy for a header cell.
+   A genuine design-system gap; kept admin-local until a second app needs it. */
+.input--sm, .select--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--space-2);
+  font-size: var(--text-xs);
+  min-width: 0;
+}
+
+.table__sort { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: var(--space-1); }
+.table__sort:hover { color: var(--fg-1); text-decoration: underline; }
+.table__sort-ind { opacity: 0.6; font-size: 0.7em; }
+
+/* Below the shell's existing breakpoint the row would force a long horizontal
+   scroll for controls too narrow to type in. Sort links stay. */
+@media (max-width: 900px) { .table__filters { display: none; } }
+
+/* Webhooks list — URL column (views/webhooks/index.ejs). This cell used to
+   carry `overflow: hidden; text-overflow: ellipsis` with no `white-space:
+   nowrap`. Ellipsis only ever paints on a `nowrap` line — without it the
+   rule was a no-op, so the URL was never shown truncated-with-"…", it was
+   just clipped by the hidden overflow with no indication anything was cut.
+   `overflow-wrap: anywhere` lets a long unbroken run (a UUID path segment,
+   a query string with no spaces) break wherever it has to, so the full URL
+   wraps onto extra lines instead of overflowing or being clipped.
+   Scoped to this class rather than `.table td`: a blanket word-break there
+   would reflow the nine other tables sharing that selector, most of which
+   have no long unbroken content to worry about.
+
+   `width` alongside `max-width` — NOT `max-width` alone (measured with a
+   throwaway table twin of this one, `.table-scroll > .table` under a wide
+   viewport: `max-width` alone rendered the column at 799px against a
+   declared 420px, i.e. ignored). `table-layout: auto` (the default this
+   table uses) only formally recognises a `width` in its column-width
+   algorithm; `max-width` on a `<td>` is a non-spec extra that most engines
+   honour only until there is leftover table width to redistribute, at
+   which point that redistribution pass hands the column more room anyway
+   and ignores the cap. Giving the column an explicit `width` (210px, half
+   of the previous 420px cap) makes it one of the algorithm's "constrained
+   columns" and pins it for real; `max-width` stays alongside as a floor
+   against the same non-spec engine behavior stretching it back out, and
+   `overflow-wrap: anywhere` (above) is what keeps that narrower column from
+   ever clipping the URL — it wraps to more lines instead. */
+.webhooks-url {
+  width: 210px;
+  max-width: 210px;
+  overflow-wrap: anywhere;
+}
+
+/* Webhooks list — collapsed row actions (views/webhooks/index.ejs). Pause,
+   rotate-secret, delete and send-test were four separate always-visible POST
+   forms per row (plus a Delivery settings link) — stacked, they pushed every
+   row's height out just to show four buttons an operator uses rarely. Folds
+   them behind one <summary> labelled "Actions", so the closed row is back to
+   one line; each form is untouched (method, action, its own `_csrf` hidden
+   input) so every action still works exactly as before, just behind one
+   click to reveal it.
+
+   A CSS-only FLOATING menu (`position: absolute`, overlaying instead of
+   pushing) was considered first and rejected: this table sits in
+   `.table-scroll { overflow-x: auto }`, and setting only `overflow-x` forces
+   the paired `overflow-y` to compute to `auto` too, per the CSS Overflow
+   spec's two-value resolution rule (confirmed on a throwaway page —
+   `getComputedStyle(...).overflowY` came back `"auto"` with only
+   `overflow-x` ever set). A menu escaping its row via `position: absolute`
+   becomes part of `.table-scroll`'s scrollable-overflow region under that
+   `auto`, and for any row near the table's bottom edge it would render
+   partly or fully clipped behind a scrollbar the operator has no reason to
+   look for. Expanding in-flow has no such failure mode — it only grows ITS
+   OWN row, only while open — and matches the `<details>` idiom already used
+   elsewhere in this admin for progressive disclosure (identity-providers'
+   list, a customer's detail page) rather than inventing a one-off floating
+   widget. Scoped to `.row-actions`, never a bare `details`/`summary`
+   selector — those other pages' disclosures must not pick up styling meant
+   for a table-row action menu. */
+.row-actions {
+  display: inline-block;
+  vertical-align: middle;
+}
+.row-actions > summary {
+  list-style: none;
+}
+.row-actions > summary::-webkit-details-marker {
+  display: none;
+}
+.row-actions__menu {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+.row-actions__menu form {
+  margin: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   JSON tree (public/js/json-view.js) — stored record detail.
+   ───────────────────────────────────────────────────────────────────────── */
+.json-view__toolbar { gap: var(--space-2); margin-bottom: var(--space-2); }
+.json-view__list { list-style: none; margin: 0; padding-left: var(--space-4); font-size: var(--text-sm); line-height: 1.6; }
+.json-view__root { padding-left: 0; overflow-wrap: anywhere; }
+.json-view__summary { cursor: pointer; }
+.json-view__key { color: var(--fg-1); font-weight: 500; }
+.json-view__colon { color: var(--fg-3); }
+.json-view__meta { color: var(--fg-3); }
+.json-view__badge { margin-left: var(--space-1); font-size: var(--text-xs); }
+.json-view__value--string { color: var(--accent-fg); }
+.json-view__value--number { color: var(--info); }
+.json-view__value--boolean { color: var(--warning); }
+.json-view__value--null { color: var(--fg-4); font-style: italic; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Dashboards index (views/dashboards/index.ejs) — search and vertical chips,
+   then one row per vertical with its dashboards side by side.
+   ───────────────────────────────────────────────────────────────────────── */
+.dash-index__filter { flex-wrap: wrap; margin-top: var(--space-5); }
+.dash-index__search { width: 16rem; max-width: 100%; }
+.dash-index__filter .filterbar__clear { margin-left: 0; }
+.dash-index__h2 { margin: var(--space-6) 0 var(--space-2); font-size: var(--text-md); }
+.dash-index__h3 { margin: var(--space-3) 0 var(--space-2); font-size: var(--text-xs); font-weight: 600; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.dash-index__none { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; padding: var(--space-3) var(--space-4); font-size: var(--text-sm); }
+.table--compact th, .table--compact td { padding: var(--space-2) var(--space-3); }
+.dash-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.dash-chip { padding: 2px var(--space-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-full); font-size: var(--text-xs); color: var(--fg-2); text-decoration: none; white-space: nowrap; }
+.dash-chip:hover { border-color: var(--border-strong); color: var(--fg-1); }
+.dash-chip[aria-current="true"] { background: var(--accent-100); border-color: var(--accent-300); color: var(--accent-800); font-weight: 600; }
+.dash-rows { border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--surface-0); }
+.dash-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: var(--space-3); align-items: center; padding: var(--space-2) var(--space-3); border-top: 1px solid var(--border-subtle); }
+.dash-row:first-child { border-top: 0; }
+.dash-row__label { margin: 0; font-size: var(--text-xs); font-weight: 600; color: var(--fg-3); text-transform: uppercase; letter-spacing: 0.06em; }
+.dash-row__tiles, .dash-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.dash-tile { display: block; min-width: 0; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background: var(--surface-0); color: inherit; text-decoration: none; }
+.dash-tile:hover { border-color: var(--border-strong); background: var(--surface-1); }
+.dash-tile__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); font-size: var(--text-sm); }
+.dash-tile__head strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-tile__count { flex: none; font-size: var(--text-xs); color: var(--fg-3); }
+.dash-tile__desc { display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); color: var(--fg-3); }
+.dash-switcher { display: inline-flex; gap: var(--space-2); align-items: center; }
+.dash-switcher .select { max-width: 16rem; }
+.dash-switcher__label { font-size: var(--text-xs); color: var(--fg-3); white-space: nowrap; }
+@media (max-width: 900px) {
+  .dash-row { grid-template-columns: 1fr; gap: var(--space-2); }
+  .dash-row__tiles, .dash-tiles { grid-template-columns: 1fr; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Dashboards (public/js/dashboard.js) — a 12-column widget grid.
+   ───────────────────────────────────────────────────────────────────────── */
+.dash-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.dash-widget { display: flex; flex-direction: column; min-width: 0; }
+.dash-widget__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+.dash-widget__title { margin: 0; font-size: var(--text-md); font-weight: 600; }
+.dash-widget__desc { margin: var(--space-1) 0 0; color: var(--fg-3); font-size: var(--text-xs); }
+.dash-widget__body { position: relative; min-height: 240px; margin-top: var(--space-3); }
+.dash-widget__body--number { min-height: 120px; display: flex; flex-direction: column; justify-content: center; }
+.dash-widget__chart { position: absolute; inset: 0; }
+.dash-widget__number { font-size: var(--text-3xl); font-weight: 600; color: var(--fg-1); line-height: 1.1; }
+.dash-widget__number-sub { color: var(--fg-3); font-size: var(--text-sm); }
+.dash-widget__state { color: var(--fg-3); font-size: var(--text-sm); }
+@media (max-width: 900px) { .dash-grid { grid-template-columns: 1fr; } .dash-widget { grid-column: 1 / -1 !important; } }
+
+/* Categorical chart palette for dashboards, in fixed order (never cycled —
+   a 7th series folds into "Other" upstream). Drawn from the design system's
+   vertical hues, re-ordered so neighbours stay apart under colour-vision
+   deficiency, and re-stepped for the dark surface rather than flipped.
+   Both sets pass the dataviz palette validator (lightness band, chroma
+   floor, adjacent CVD ΔE ≥ 8, normal-vision floor, 3:1 contrast). */
+:root {
+  --chart-1: #2F6AA8;
+  --chart-2: #B5751E;
+  --chart-3: #B84A7A;
+  --chart-4: #8A8A2C;
+  --chart-5: #4A5BA6;
+  --chart-6: #C56A50;
+}
+[data-theme="dark"] {
+  --chart-1: #5a96d7;
+  --chart-2: #c38230;
+  --chart-3: #cf6e95;
+  --chart-4: #97983c;
+  --chart-5: #788ddc;
+  --chart-6: #d1755b;
+}
+
+/* Sequential ramp for magnitudes (heatmap, calendar, funnel stages): one hue,
+   seq-1 the least, seq-5 the most. Light steps run light → dark; dark steps
+   flip the anchor so the least sits nearest the dark surface. Both pass the
+   dataviz validator in --ordinal mode (monotone lightness, adjacent ΔL ≥ 0.06,
+   single hue, the low end ≥ 2:1 against the card surface: #FFFFFF light,
+   surface-0 ≈ #1e1a15 dark). */
+:root {
+  --chart-seq-1: #8db3dc;
+  --chart-seq-2: #6a98cc;
+  --chart-seq-3: #4a7db9;
+  --chart-seq-4: #2f63a0;
+  --chart-seq-5: #1c477a;
+}
+[data-theme="dark"] {
+  --chart-seq-1: #35598a;
+  --chart-seq-2: #4672a8;
+  --chart-seq-3: #5a8dc7;
+  --chart-seq-4: #7eaadf;
+  --chart-seq-5: #abcbef;
+}
+
+/* Widget body sizing (set by dashboard.js): a table or a set of small
+   multiples takes the height of its content; a heatmap with many rows gets
+   more room than the 240px default. */
+.dash-widget__body--fit,
+.dash-widget__body--multi { min-height: 0; }
+.dash-widget__body--tall { min-height: 380px; }
+.dash-widget__table { max-height: 360px; overflow: auto; }
+.dash-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dash-widget__chip {
+  flex-shrink: 0;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  color: var(--fg-2);
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.dash-widget__foot { margin: var(--space-2) 0 0; color: var(--fg-3); font-size: var(--text-xs); }
+
+/* Small multiples — one per currency, never a shared axis. Charts sit in a
+   grid of equal cells, number tiles in a row that wraps, table sections one
+   under the other. */
+.dash-multiples { display: grid; gap: var(--space-3); }
+.dash-multiples--grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.dash-multiples--tiles { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.dash-multiples--stack { grid-template-columns: minmax(0, 1fr); }
+.dash-multiple {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.dash-multiple__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  color: var(--fg-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+.dash-multiple__delta { color: var(--fg-3); font-size: var(--text-xs); font-weight: 400; }
+.dash-multiple__body { position: relative; margin-top: var(--space-2); }
+.dash-multiples--grid .dash-multiple__body { height: 200px; }
+.dash-multiples--grid .dash-multiple__body--heatmap,
+.dash-multiples--grid .dash-multiple__body--calendar { height: 260px; }
+.dash-multiples--grid .dash-multiple__body--gauge { height: auto; }
+.dash-multiples--tiles .dash-widget__number { font-size: var(--text-2xl); }
+
+/* Number tiles and gauges: the value in ink, then its status pill, the change
+   against the prior period and the secondary numbers. */
+.dash-kpi { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-1); }
+.dash-kpi__status { margin-top: var(--space-1); }
+.dash-kpi__delta { font-size: var(--text-sm); color: var(--fg-3); }
+.dash-kpi__delta--good { color: var(--success-fg); }
+.dash-kpi__delta--bad { color: var(--danger-fg); }
+.dash-gauge { display: flex; flex-direction: column; }
+.dash-gauge__chart { position: relative; height: 170px; }
+.dash-gauge__caption { display: flex; flex-direction: column; align-items: center; gap: var(--space-1); text-align: center; }

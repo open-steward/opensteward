@@ -1,0 +1,322 @@
+<% layout('../layout', { title: 'User detail' }) -%>
+<% if (!account) { %>
+<h1>User not found</h1>
+<p class="muted" style="margin-top: var(--space-2)">
+  No account with this id exists. It may have been deleted, or the id may be mistyped.
+</p>
+<p style="margin-top: var(--space-4)"><a href="/users">Back to users</a></p>
+<% } else { %>
+<%
+  const isAdmin = user && user.role === 'admin'
+  const fmtDate = (v) => (v ? new Date(v).toLocaleString() : '—')
+  const links = account.links || []
+  // Pinning an account that cannot use a password means nobody can sign in the
+  // moment local login is disabled. Nothing else in the admin surfaces this.
+  const breakGlassMismatch = account.isPinnedBreakGlass && !account.isLocalAdmin
+  // The role list falls back to the built-ins when /api/roles could not be
+  // read, so the picker never offers less than it did before custom roles.
+  const roleOptions = (typeof roles !== 'undefined' && roles && roles.length)
+    ? roles
+    : ['viewer', 'operator', 'admin'].map((id) => ({ id, name: id, isBuiltin: true, baseRole: id }))
+  const tenantOptions = (typeof tenants !== 'undefined' && tenants) ? tenants : []
+%>
+<div class="row row--between">
+  <div class="avatar-name"><%- avatar(account, 'lg') %><h1><%= account.username %></h1></div>
+  <%# data-modal-omit: opened as a dialog from the list, the close button is
+      already the way back. The standalone page keeps it. %>
+  <a href="/users" class="btn btn--ghost btn--sm" data-modal-omit>Back to users</a>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+<% } %>
+<% if (typeof notice !== 'undefined' && notice) { %>
+<div class="alert alert--success" style="margin-top: var(--space-4)"><%= notice %></div>
+<% } %>
+
+<% if (breakGlassMismatch) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)">
+  <div>
+    <strong>This account is pinned for break-glass but cannot use a password.</strong>
+    <span class="mono">auth.break_glass_user_id</span> names this account, but it signs in
+    through an identity provider. If local login is disabled, nobody will be able to sign in.
+    Pin a local admin instead, under <a href="/settings">Settings</a>.
+  </div>
+</div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="stack stack--sm">
+      <span class="eyebrow">User ID</span>
+      <%# The one place this is visible in the admin. Settings renders
+          auth.break_glass_user_id as a bare uuid with no way to look up whose
+          it is; this is how you find out. %>
+      <span class="mono" style="font-size: var(--text-sm)" data-copy="<%= account.id %>"
+            title="Click to copy"><%= account.id %></span>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Role</span>
+      <span>
+        <span class="badge"><%= account.roleName || account.role %></span>
+        <% if (account.roleId && account.roleId !== account.role) { %>
+        <span class="muted" style="font-size: var(--text-sm)">custom role, <%= account.role %> base</span>
+        <% } %>
+      </span>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Sign-in</span>
+      <span>
+        <%= account.ssoOnly ? 'Identity provider only' : 'Local password' %>
+        <% if (account.isLocalAdmin) { %>
+        <span class="badge badge--info" title="Admin with no identity links — the set that must never be empty">local admin</span>
+        <% } %>
+        <% if (account.isPinnedBreakGlass) { %>
+        <span class="badge badge--warning">pinned break-glass</span>
+        <% } %>
+      </span>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Created</span>
+      <span><%= fmtDate(account.createdAt) %></span>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Email</span>
+      <span>
+        <% if (account.email) { %>
+        <%= account.email %>
+        <% if (account.emailSource === 'idp') { %><span class="badge" title="Copied from the identity provider; refreshed at every SSO sign-in">from IdP</span><% } %>
+        <% } else { %>
+        <span class="muted">—</span>
+        <% } %>
+      </span>
+    </div>
+  </div>
+</div>
+
+<% if (isAdmin) { %>
+<%# Profile: email and picture. Plain forms, no JS — the picture posts as
+    multipart/form-data to routes/user-profile.ts, which forwards it to
+    admin-api; admin-api decides the type from the bytes. %>
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Profile</h2>
+  <div class="profile-card" style="margin-top: var(--space-3)">
+    <%- avatar(account, 'lg', account.avatarVersion ? 'Current picture of ' + account.username : 'No picture — initials of ' + account.username) %>
+    <div class="profile-card__forms grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6)">
+      <form method="POST" action="/users/<%= account.id %>/email" class="stack stack--sm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="field__label" for="profile-email">Email</label>
+        <input class="input" type="email" id="profile-email" name="email" value="<%= account.email || '' %>" maxlength="254" autocomplete="off">
+        <span class="field__hint">
+          <% if (account.emailSource === 'idp') { %>
+          From the identity provider, refreshed at every sign-in. Saving it here makes it the console's: SSO stops overwriting it.
+          <% } else if (account.email) { %>
+          Set in the console; SSO never overwrites it. Clear it to let the identity provider fill it.
+          <% } else { %>
+          Optional. Left empty, the identity provider fills it at the next SSO sign-in.
+          <% } %>
+        </span>
+        <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Save email</button>
+      </form>
+      <div class="stack stack--sm">
+        <form method="POST" action="/users/<%= account.id %>/avatar" enctype="multipart/form-data" class="stack stack--sm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label class="field__label" for="profile-avatar">Picture</label>
+          <input class="input" type="file" id="profile-avatar" name="avatar" accept="image/png,image/jpeg,image/webp" required>
+          <span class="field__hint">
+            PNG, JPEG or WebP, up to 512 KB.
+            <% if (account.avatarSource === 'idp') { %>The current one comes from the identity provider; an upload replaces it for good.<% } %>
+          </span>
+          <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Upload picture</button>
+        </form>
+        <% if (account.avatarVersion) { %>
+        <form method="POST" action="/users/<%= account.id %>/avatar/delete"
+          onsubmit="return confirm('Remove this picture? The console shows initials instead.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--ghost btn--sm">Remove picture</button>
+        </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<% if (isAdmin) { %>
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Manage account</h2>
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-6); margin-top: var(--space-3)">
+    <% if (user && user.id !== account.id) { %>
+    <form method="POST" action="/users/<%= account.id %>/role" class="stack stack--sm"
+      data-restricted="<%= account.role !== 'admin' && account.scope && account.scope.mode === 'restricted' ? 'true' : 'false' %>"
+      onsubmit="return confirm(this.roleId.selectedOptions[0].dataset.baseRole === 'admin' && this.dataset.restricted === 'true' ? 'Making this account an admin gives them every tenant and lifts their tenant restriction. Continue?' : 'Change this account\u2019s role? It takes effect on their next request.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <span class="field__label">Role</span>
+      <% const currentRoleId = account.roleId || account.role %>
+      <select class="select" name="roleId">
+        <% for (const r of roleOptions) { %>
+        <option value="<%= r.id %>" data-base-role="<%= r.baseRole %>"<%= currentRoleId === r.id ? ' selected' : '' %>><%= r.name %><%= r.isBuiltin ? '' : ' (' + r.baseRole + ' base)' %></option>
+        <% } %>
+      </select>
+      <span class="field__hint">Built-in or <a href="/roles">custom roles</a>. Demoting the last password-usable built-in admin is refused — the break-glass floor. Making someone an admin gives them every tenant and lifts any tenant restriction.</span>
+      <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Change role</button>
+    </form>
+    <% } else { %>
+    <div class="stack stack--sm">
+      <span class="field__label">Role</span>
+      <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+        You cannot change your own role — ask another admin.
+      </p>
+    </div>
+    <% } %>
+    <% if (!account.ssoOnly) { %>
+    <form method="POST" action="/users/<%= account.id %>/password" class="stack stack--sm"
+      onsubmit="return confirm('Reset this account\u2019s password? The current one stops working immediately.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <span class="field__label">Reset password</span>
+      <input class="input" type="password" name="password" placeholder="New password" autocomplete="new-password" required>
+      <input class="input" type="password" name="confirm" placeholder="Confirm" autocomplete="new-password" required>
+      <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Reset password</button>
+    </form>
+    <% } else { %>
+    <div class="stack stack--sm">
+      <span class="field__label">Reset password</span>
+      <p class="muted" style="margin: 0; font-size: var(--text-sm)">
+        This account signs in through an identity provider; there is no local password to reset.
+      </p>
+    </div>
+    <% } %>
+  </div>
+</div>
+<% } %>
+
+<%
+  const scope = account.scope || { mode: 'all', grants: [] }
+  const grantFor = new Map((scope.grants || []).map((g) => [g.tenantId, g]))
+  const canScope = !!(user && Array.isArray(user.permissions) && user.permissions.includes('users:manage'))
+%>
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Tenant scope</h2>
+  <p class="muted" style="margin-top: var(--space-2); font-size: var(--text-sm)">
+    <% if (account.role === 'admin') { %>
+    Admins always have every tenant. To limit this user to some tenants, give them a non-admin role first.
+    <% } else if (scope.mode === 'all') { %>
+    Sees every tenant.
+    <% } else if (scope.grants.length === 0) { %>
+    Restricted, with no tenants granted — sees no tenant data at all.
+    <% } else { %>
+    Restricted to <%= scope.grants.map((g) => g.tenantId + (g.verticals === '*' ? '' : ' (' + g.verticals.join(', ') + ')')).join(', ') %>.
+    <% } %>
+    <% if (account.scopeSource === 'idp') { %>
+    Managed by the identity provider's scope rules — re-applied at every SSO sign-in.
+    <% } %>
+  </p>
+  <% if (canScope && account.role !== 'admin') { %>
+  <form method="POST" action="/users/<%= account.id %>/scope" class="stack stack--sm" style="margin-top: var(--space-3)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="row" style="gap: var(--space-2)">
+      <input type="radio" name="mode" value="all" <%= scope.mode === 'all' ? 'checked' : '' %>> Every tenant
+    </label>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="radio" name="mode" value="restricted" <%= scope.mode === 'restricted' ? 'checked' : '' %>> Only these tenants:
+    </label>
+    <div class="stack stack--sm" style="padding-left: var(--space-5)">
+      <% if (tenantOptions.length === 0) { %>
+      <span class="muted">No tenants to choose from.</span>
+      <% } %>
+      <% for (const t of tenantOptions) { const g = grantFor.get(t.id) %>
+      <div class="row" style="gap: var(--space-2); align-items: center; flex-wrap: wrap">
+        <label class="row" style="gap: var(--space-2); min-width: 220px">
+          <input type="checkbox" name="tenants" value="<%= t.id %>" <%= g ? 'checked' : '' %>>
+          <span><%= t.name %> <span class="muted mono" style="font-size: var(--text-xs)"><%= t.id %></span></span>
+        </label>
+        <input class="input" name="verticals_<%= t.id %>" placeholder="all verticals"
+               value="<%= g && g.verticals !== '*' ? g.verticals.join(', ') : '' %>" style="max-width: 260px"
+               aria-label="Verticals for <%= t.name %> (comma-separated; empty = all)">
+      </div>
+      <% } %>
+    </div>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="source" value="idp" <%= account.scopeSource === 'idp' ? 'checked' : '' %>>
+      Let the identity provider's scope rules manage this (overwritten at the next SSO sign-in)
+    </label>
+    <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Save scope</button>
+  </form>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Identity providers</h2>
+  <% if (links.length === 0) { %>
+  <p class="muted" style="margin-top: var(--space-3)">
+    No identity links. This account signs in with a local password.
+  </p>
+  <% } else { %>
+  <div style="overflow-x: auto">
+    <table class="table" style="margin-top: var(--space-3)">
+      <thead>
+        <tr><th>Provider</th><th>Subject</th><th>Last sign-in</th><th>Managed</th></tr>
+      </thead>
+      <tbody>
+        <% for (const l of links) { %>
+        <tr>
+          <td><%= l.providerName || l.providerId %></td>
+          <td class="mono" style="font-size: var(--text-xs)">
+            <% if (l.externalId) { %>
+              <%= l.externalId %>
+            <% } else { %>
+              <span class="muted">hidden</span>
+            <% } %>
+          </td>
+          <td><%= fmtDate(l.lastLoginAt) %></td>
+          <td><%= l.scimManaged ? 'SCIM' : 'Just-in-time' %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <%# The reveal. Not an access gate — this whole page is admin-only — but the
+      subject is usually a work email, and looking at one should leave a trace.
+      Gated on isAdmin anyway so it stays honest if /users ever opens up. %>
+  <% if (!revealed && isAdmin) { %>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-4)">
+    The subject each provider knows this account by is hidden by default — it is usually a
+    work email. <a href="/users/<%= account.id %>?reveal=true">Reveal</a> to view (writes an
+    audit entry naming you).
+  </p>
+  <% } else if (revealed) { %>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-4)">
+    Revealed. This was recorded in the <a href="/audit?action=user.pii_reveal">audit log</a>.
+  </p>
+  <% } %>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Recent activity</h2>
+  <% if (!recent || recent.length === 0) { %>
+  <p class="muted" style="margin-top: var(--space-3)">
+    Nothing recorded for this account, or the audit log could not be read.
+  </p>
+  <% } else { %>
+  <div style="overflow-x: auto">
+    <table class="table" style="margin-top: var(--space-3)">
+      <thead><tr><th>When</th><th>Action</th><th>Target</th></tr></thead>
+      <tbody>
+        <% for (const e of recent) { %>
+        <tr>
+          <td class="muted"><%= fmtDate(e.createdAt) %></td>
+          <td class="mono" style="font-size: var(--text-xs)"><%= e.action %></td>
+          <td class="mono" style="font-size: var(--text-xs)"><%= e.targetId || '—' %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-3)">
+    <a href="/audit?user_id=<%= encodeURIComponent(account.username) %>">See all activity</a>
+  </p>
+  <% } %>
+</div>
+<% } %>

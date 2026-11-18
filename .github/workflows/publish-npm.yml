@@ -1,0 +1,88 @@
+name: publish-npm
+
+# Publishes the public npm packages on a coordinated platform release tag.
+#
+# Trigger:
+#   - push tag `platform/vX.Y.Z`  → publishes the packages at their package.json version
+#   - workflow_dispatch           → manual run (dry-run unless publish=true)
+#
+# Scope: @opensteward/mcp-server, @opensteward/sdk and @opensteward/license-token.
+# These have ZERO internal workspace dependencies, so they install cleanly off the
+# public registry. @opensteward/cli is not published: it imports runtime code from the
+# private @opensteward/shared (incl. the offline tools that need native better-sqlite3
+# / pg); publishing it would require bundling or making shared public. It is marked
+# "private": true, and check:published-packages fails on any other workspace package
+# that is neither in this list nor private.
+#
+# Licensing note: @opensteward/mcp-server and @opensteward/sdk are Apache-2.0 (each
+# ships its own LICENSE), deliberately kept permissive so consumers can depend on them
+# without legal review. The rest of the repo — the server stack — is source-available
+# under the Elastic License 2.0 plus an Additional Use Grant; see the root LICENSE.
+# Do not add a server-stack package to this workflow without revisiting that.
+# Exception: @opensteward/license-token is Elastic-2.0 like the server stack. It is the
+# license-key contract (ELv2 "license key functionality") that OpenSteward and the
+# OpenSteward license service both consume. Keep it at zero workspace dependencies.
+#
+# Versions already on npm are skipped, so a version published by hand (license-token's
+# first releases) never fails a later platform release. A prerelease version (one with a
+# "-", e.g. 1.0.0-rc.0) goes to the `next` dist-tag, never `latest`. Never push a
+# `license-token/v*` git tag: images.yml builds an image for every `<scope>/v*` tag.
+#
+# Prerequisite: an `NPM_TOKEN` repository secret (npm automation token, publish scope).
+# Provenance (--provenance) is omitted because npm rejects provenance from a
+# private repo. Enable it once the repo is public.
+on:
+  push:
+    tags:
+      - "platform/v*"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Set to "true" to actually publish (otherwise dry-run)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: build + publish public packages
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+          registry-url: "https://registry.npmjs.org"
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm --filter @opensteward/mcp-server --filter @opensteward/sdk --filter @opensteward/license-token run build
+
+      - name: Publish (or dry-run)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # Tag pushes publish for real; manual runs publish only when publish=true.
+          DRY="--dry-run"
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.publish }}" = "true" ]; then
+            DRY=""
+          fi
+          echo "Publishing with: ${DRY:-(real)}"
+          for dir in apps/mcp-server packages/sdk packages/license-token; do
+            pkg=$(node -p "require('./$dir/package.json').name")
+            ver=$(node -p "require('./$dir/package.json').version")
+            echo "── $pkg@$ver ──"
+            if npm view "$pkg@$ver" version >/dev/null 2>&1; then
+              echo "already published; skipping"
+              continue
+            fi
+            tag=latest
+            case "$ver" in *-*) tag=next ;; esac
+            pnpm --filter "$pkg" publish --access public --no-git-checks --tag "$tag" $DRY
+          done

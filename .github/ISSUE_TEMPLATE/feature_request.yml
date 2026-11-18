@@ -1,0 +1,48 @@
+name: Feature or platform request
+description: A new capability, or a platform or adapter you need.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What are you asking for
+      options:
+        - A new feature
+        - A new platform or adapter
+        - More resources or fields on an existing adapter
+    validations:
+      required: true
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Vertical
+      options:
+        - Not vertical-specific
+        - accounting
+        - crm
+        - ecommerce
+        - logistics
+        - payments
+        - docsign
+        - projects
+        - customer-support
+        - inventory
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      description: For a platform or adapter request, its name and the slug if it already has one.
+  - type: input
+    id: api-docs
+    attributes:
+      label: API documentation
+      description: For a platform request, a link to its public API reference.
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use case
+      description: What you are trying to do, and what is missing today.
+    validations:
+      required: true

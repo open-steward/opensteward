@@ -1,0 +1,218 @@
+<% layout('../layout', { title: 'Setup — step 2' }) -%>
+<div class="wizard-shell">
+  <%- include('_rail', { current: 'company-info' }) %>
+
+  <div class="wizard-content">
+    <header class="wizard-header">
+      <div class="eyebrow">Step 2 of 8</div>
+      <h1>Brand the deployment</h1>
+      <p class="wizard-subtitle">
+        These details show up on the hosted Connect Link page and serve as the source of truth when you register OAuth apps on each adapter's developer portal in step 4. Every field is optional — fill in what's relevant and skip the rest.
+      </p>
+    </header>
+
+    <% if (error) { %>
+    <div class="alert alert--danger"><%= error %></div>
+    <% } %>
+    <div id="brandingFormError" class="alert alert--danger" style="display: none"></div>
+
+    <form method="POST" action="/setup/wizard/company-info" class="wizard-body stack stack--lg">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+      <div class="card">
+        <h2 class="card__title">Identity</h2>
+        <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+          Used in the navbar, the Connect Link header, and pre-filled into OAuth app registration forms.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+          <div class="field">
+            <label class="field__label" for="name">Display name</label>
+            <input class="input" type="text" name="name" id="name" value="<%= company.name || '' %>" placeholder="Acme Inc.">
+          </div>
+          <div class="field">
+            <label class="field__label" for="legalName">Legal name</label>
+            <input class="input" type="text" name="legalName" id="legalName" value="<%= company.legalName || '' %>" placeholder="Acme Holdings B.V.">
+          </div>
+          <div class="field" style="grid-column: span 2">
+            <label class="field__label" for="description">Description</label>
+            <textarea class="textarea" name="description" id="description" rows="2"
+              placeholder="One or two sentences about your company"><%= company.description || '' %></textarea>
+          </div>
+          <div class="field">
+            <label class="field__label" for="website">Website</label>
+            <input class="input" type="url" name="website" id="website" value="<%= company.website || '' %>" placeholder="https://acme.example.com">
+          </div>
+          <div class="field">
+            <label class="field__label" for="baseUrl">
+              Base URL
+              <span class="badge badge--info" style="margin-left: var(--space-2); font-size: var(--text-xs)">recommended</span>
+            </label>
+            <input class="input" type="url" name="baseUrl" id="baseUrl" value="<%= company.baseUrl || '' %>" placeholder="https://oi.acme.example.com">
+            <span class="field__hint">
+              The public URL of <em>this</em> integration-server. Drives the OAuth <code class="mono">redirect_uri</code>
+              that step 4's adapter forms auto-derive, and seeds the Swagger UI Servers dropdown on
+              <a href="/settings">/settings → OpenAPI / docs</a>. Leave blank for local dev.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__title">Branding</h2>
+        <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+          Logo + colour show up on every hosted Connect Link page so external customers see your brand.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+          <div class="field">
+            <label class="field__label" for="logoFile">Logo</label>
+            <% if (company.logoDataUrl) { %>
+            <div style="padding: var(--space-3); background: var(--surface-1); border-radius: var(--radius-sm); display: inline-block; margin-bottom: var(--space-2)">
+              <img src="<%= company.logoDataUrl %>" alt="Current logo" style="height: 48px; width: auto; display: block">
+            </div>
+            <% } %>
+            <input type="file" id="logoFile" accept="image/*"
+              data-target="logoDataUrl" data-hint="logoFileHint" data-max-bytes="524288" data-label="Logo">
+            <input type="hidden" name="logoDataUrl" id="logoDataUrl" value="<%= company.logoDataUrl || '' %>">
+            <span class="field__hint" id="logoFileHint">SVG, PNG, or JPEG, 512KB max. Stored inline as a data URL.</span>
+          </div>
+          <div class="field">
+            <label class="field__label" for="primaryColor">Primary color</label>
+            <div class="row" style="gap: var(--space-2)">
+              <input type="color" value="<%= company.primaryColor || '#2D6ADB' %>"
+                onchange="document.getElementById('primaryColor').value = this.value"
+                style="height: 36px; width: 56px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; background: var(--surface-0)">
+              <input class="input input--mono" type="text" name="primaryColor" id="primaryColor" value="<%= company.primaryColor || '' %>"
+                placeholder="#2D6ADB"
+                pattern="^#[0-9a-fA-F]{6}$">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field__label" for="secondaryColor">Secondary color</label>
+            <div class="row" style="gap: var(--space-2)">
+              <input type="color" value="<%= company.secondaryColor || '#2D6ADB' %>"
+                onchange="document.getElementById('secondaryColor').value = this.value"
+                style="height: 36px; width: 56px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; background: var(--surface-0)">
+              <input class="input input--mono" type="text" name="secondaryColor" id="secondaryColor" value="<%= company.secondaryColor || '' %>"
+                placeholder="#1B4FB0"
+                pattern="^#[0-9a-fA-F]{6}$">
+            </div>
+            <span class="field__hint">Hover/active accent. Falls back to primary.</span>
+          </div>
+          <div class="field" style="grid-column: span 2">
+            <label class="field__label" for="faviconFile">Favicon</label>
+            <% if (company.faviconDataUrl) { %>
+            <div style="padding: var(--space-3); background: var(--surface-1); border-radius: var(--radius-sm); display: inline-block; margin-bottom: var(--space-2)">
+              <img src="<%= company.faviconDataUrl %>" alt="Current favicon" style="height: 32px; width: auto; display: block">
+            </div>
+            <% } %>
+            <input type="file" id="faviconFile" accept="image/png,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico"
+              data-target="faviconDataUrl" data-hint="faviconFileHint" data-max-bytes="262144" data-label="Favicon">
+            <input type="hidden" name="faviconDataUrl" id="faviconDataUrl" value="<%= company.faviconDataUrl || '' %>">
+            <span class="field__hint" id="faviconFileHint">PNG, SVG or ICO, 256KB max — shown in the browser tab.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__title">Typography <span class="muted" style="font-weight: 400; font-size: var(--text-sm)">(optional)</span></h2>
+        <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+          Apply a custom font across the admin UI, Connect Links and the developer portal. Upload a
+          font file or reference a hosted stylesheet (e.g. Google Fonts), then name the family. An
+          uploaded file takes precedence.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+          <div class="field">
+            <label class="field__label" for="fontFamily">Font family</label>
+            <input class="input" type="text" name="fontFamily" id="fontFamily" value="<%= company.fontFamily || '' %>"
+              placeholder="Roboto" pattern="^[\w ,'&quot;-]{1,120}$">
+          </div>
+          <div class="field">
+            <label class="field__label" for="fontUrl">Font stylesheet URL</label>
+            <input class="input" type="url" name="fontUrl" id="fontUrl" value="<%= company.fontUrl || '' %>"
+              placeholder="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
+            <span class="field__hint">https only. Used when no font file is uploaded.</span>
+          </div>
+          <div class="field" style="grid-column: span 2">
+            <label class="field__label" for="fontFile">Font file</label>
+            <% if (company.fontDataUrl) { %>
+            <p class="muted" style="font-size: var(--text-sm); margin-bottom: var(--space-2)">A font file is currently uploaded.</p>
+            <% } %>
+            <input type="file" id="fontFile" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf"
+              data-target="fontDataUrl" data-hint="fontFileHint" data-max-bytes="524288" data-label="Font">
+            <input type="hidden" name="fontDataUrl" id="fontDataUrl" value="<%= company.fontDataUrl || '' %>">
+            <span class="field__hint" id="fontFileHint">WOFF2, WOFF, TTF or OTF, 512KB max.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card__title">Contact &amp; legal</h2>
+        <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+          Most adapter developer portals want a privacy-policy URL + support email when you register an OAuth app.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+          <div class="field">
+            <label class="field__label" for="supportEmail">Support email</label>
+            <input class="input" type="email" name="supportEmail" id="supportEmail" value="<%= company.supportEmail || '' %>" placeholder="support@acme.example.com">
+          </div>
+          <div></div>
+          <div class="field">
+            <label class="field__label" for="privacyPolicyUrl">Privacy policy URL</label>
+            <input class="input" type="url" name="privacyPolicyUrl" id="privacyPolicyUrl" value="<%= company.privacyPolicyUrl || '' %>" placeholder="https://acme.example.com/privacy">
+          </div>
+          <div class="field">
+            <label class="field__label" for="termsOfServiceUrl">Terms of service URL</label>
+            <input class="input" type="url" name="termsOfServiceUrl" id="termsOfServiceUrl" value="<%= company.termsOfServiceUrl || '' %>" placeholder="https://acme.example.com/terms">
+          </div>
+        </div>
+      </div>
+
+      <details class="card">
+        <summary class="card__title" style="cursor: pointer">Address (optional — required by some adapter developer portals)</summary>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-top: var(--space-4)">
+          <div class="field" style="grid-column: span 2">
+            <label class="field__label" for="addressLine1">Street</label>
+            <input class="input" type="text" name="addressLine1" id="addressLine1" value="<%= company.addressLine1 || '' %>" placeholder="1 Main Street">
+          </div>
+          <div class="field" style="grid-column: span 2">
+            <label class="field__label" for="addressLine2">Address line 2</label>
+            <input class="input" type="text" name="addressLine2" id="addressLine2" value="<%= company.addressLine2 || '' %>" placeholder="Suite 200">
+          </div>
+          <div class="field">
+            <label class="field__label" for="city">City</label>
+            <input class="input" type="text" name="city" id="city" value="<%= company.city || '' %>">
+          </div>
+          <div class="field">
+            <label class="field__label" for="region">Region / state</label>
+            <input class="input" type="text" name="region" id="region" value="<%= company.region || '' %>">
+          </div>
+          <div class="field">
+            <label class="field__label" for="postalCode">Postal code</label>
+            <input class="input" type="text" name="postalCode" id="postalCode" value="<%= company.postalCode || '' %>">
+          </div>
+          <div class="field">
+            <label class="field__label" for="country">Country</label>
+            <% const _cur = company.country || ''; const _known = (countries || []).some((c) => c.code === _cur); %>
+            <select class="input" name="country" id="country">
+              <option value="">Select a country…</option>
+              <% if (_cur && !_known) { %><option value="<%= _cur %>" selected><%= _cur %> (current)</option><% } %>
+              <% for (const c of (countries || [])) { %>
+              <option value="<%= c.code %>" <% if (_cur === c.code) { %>selected<% } %>><%= c.name %></option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+      </details>
+
+      <footer class="wizard-footer">
+        <a href="/setup/wizard" class="btn btn--ghost">&larr; Back</a>
+        <div class="wizard-footer__primary">
+          <a href="/setup/wizard/logos" class="btn btn--secondary" title="Fill this in later from My company">Skip for now</a>
+          <button type="submit" class="btn btn--primary">Save and continue</button>
+        </div>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<script src="/public/js/branding-upload.js" defer></script>

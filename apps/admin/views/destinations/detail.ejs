@@ -1,0 +1,155 @@
+<% layout('../layout', { title: dest.name }) -%>
+<%
+  const base = '/destinations/' + encodeURIComponent(dest.id)
+  const statusBadge = { success: 'badge--success', failed: 'badge--danger', running: 'badge--info' }
+  const fmt = (iso) => iso ? new Date(iso).toLocaleString() : '—'
+  const duration = (r) => (r.startedAt && r.finishedAt) ? Math.max(0, Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 100) / 10) + ' s' : '—'
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow"><a href="/destinations">Destinations</a></div>
+    <h1 class="page-header__title"><%= dest.name %></h1>
+    <p class="page-header__desc">
+      <%= type ? type.label : dest.type %><% if (type && type.experimental) { %> <span class="badge badge--warning">experimental</span><% } %>
+      · <% if (dest.enabled) { %>runs <%= intervalText %><% } else { %><span class="badge">disabled</span><% } %>
+      <% if (dest.includePii) { %>· <span class="badge badge--warning" data-pii-destination>exports PII unmasked</span><% } %>
+    </p>
+  </div>
+  <div class="page-header__actions row" style="gap: var(--space-2)">
+    <form method="POST" action="<%= base %>/test">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--secondary btn--sm" data-test-connection>Test connection</button>
+    </form>
+    <form method="POST" action="<%= base %>/run">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--primary btn--sm" data-run-now<%= dest.enabled ? '' : ' disabled title="Enable the destination to run it"' %>>Run now</button>
+    </form>
+  </div>
+</header>
+
+<% if (dest.lastStatus === 'failed' && dest.lastError) { %>
+<div class="alert alert--danger" style="margin-top: var(--space-4)" role="status">
+  <strong>The last run failed.</strong> <span class="mono" style="font-size: var(--text-sm)"><%= dest.lastError %></span>
+</div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-4)">
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4)">
+    <div class="stack stack--sm"><span class="eyebrow">Scope</span><p style="margin: 0"><%= scopeText %><% if (dest.scope && dest.scope.maskFinancial) { %> · financial masked<% } %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Last run</span><p style="margin: 0">
+      <% if (dest.lastStatus) { %><span class="badge <%= statusBadge[dest.lastStatus] || '' %>"><%= dest.lastStatus %></span> <%= fmt(dest.lastRunAt) %><% } else { %><span class="muted">never</span><% } %>
+    </p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Credentials set</span><p style="margin: 0">
+      <% if (dest.secretFieldsSet.length === 0) { %><span class="muted">none (default credential chain)</span><% } %>
+      <% for (const s of dest.secretFieldsSet) { %><span class="badge mono"><%= s %></span> <% } %>
+    </p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Created</span><p style="margin: 0"><%= fmt(dest.createdAt) %></p></div>
+  </div>
+  <table class="table" style="margin-top: var(--space-4)" data-destination-config>
+    <thead><tr><th scope="col">Setting</th><th scope="col">Value</th></tr></thead>
+    <tbody>
+      <% for (const [k, v] of Object.entries(dest.config || {})) { %>
+      <tr><td class="mono"><%= k %></td><td class="mono"><%= typeof v === 'object' ? JSON.stringify(v) : String(v) %></td></tr>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top: var(--space-4); padding: 0">
+  <div style="padding: var(--space-4) var(--space-4) 0"><h2 class="card__title">Run history</h2></div>
+  <div class="table-scroll">
+  <table class="table" data-destination-runs>
+    <thead><tr><th scope="col">Started</th><th scope="col">Trigger</th><th scope="col">Status</th><th scope="col">Rows</th><th scope="col">Deletes</th><th scope="col">Files</th><th scope="col">Duration</th></tr></thead>
+    <tbody>
+      <% if (runs.length === 0) { %>
+      <tr><td colspan="7" class="muted">No runs yet.</td></tr>
+      <% } %>
+      <% for (const r of runs) { %>
+      <tr>
+        <td><%= fmt(r.startedAt) %></td>
+        <td><%= r.trigger %></td>
+        <td>
+          <span class="badge <%= statusBadge[r.status] || '' %>"><%= r.status %></span>
+          <% if (r.error) { %><div class="muted mono" style="font-size: var(--text-xs)"><%= r.error %></div><% } %>
+        </td>
+        <td><%= Number(r.rowsWritten).toLocaleString() %></td>
+        <td><%= Number(r.deletesWritten).toLocaleString() %></td>
+        <td>
+          <% if (!r.files || r.files.length === 0) { %><span class="muted">—</span><% } else { %>
+          <details><summary><%= r.files.length %> file<%= r.files.length === 1 ? '' : 's' %></summary>
+            <ul class="mono" style="margin: var(--space-2) 0 0; font-size: var(--text-xs)">
+              <% for (const f of r.files) { %><li><%= f.path %> (<%= f.kind %>, <%= f.rows %>)</li><% } %>
+            </ul>
+          </details>
+          <% } %>
+        </td>
+        <td><%= duration(r) %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-4); margin-top: var(--space-4)">
+  <form method="POST" action="<%= base %>/settings" class="card stack stack--sm" data-settings-form>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="card__title">Schedule</h2>
+    <label class="field">
+      <span class="field__label">Name</span>
+      <input class="input" type="text" name="name" value="<%= dest.name %>" maxlength="200" required>
+    </label>
+    <label class="field">
+      <span class="field__label">Run every (minutes)</span>
+      <input class="input" type="number" name="interval_min" min="1" max="10080" value="<%= intervalMin %>">
+    </label>
+    <label class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="enabled" <%= dest.enabled ? 'checked' : '' %>> Run on schedule
+    </label>
+    <% if (canReadPii) { %>
+    <input type="hidden" name="pii_control" value="1">
+    <label class="row" style="gap: var(--space-2)" data-include-pii>
+      <input type="checkbox" name="include_pii" <%= dest.includePii ? 'checked' : '' %>> Export personal data unmasked
+    </label>
+    <% } %>
+    <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Save</button>
+  </form>
+
+  <form method="POST" action="<%= base %>/backfill" class="card stack stack--sm" data-backfill-form
+        data-confirm="Re-export every stored record in scope on the next run? Consumers will see the rows again and must deduplicate on _pk.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="card__title">Backfill</h2>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">Reset the export cursors so every stored record in scope is exported again — after widening the scope, or to rebuild a table. A run starts right away when the destination is enabled.</p>
+    <label class="field">
+      <span class="field__label">Vertical</span>
+      <select class="select" name="vertical">
+        <option value="">Every vertical</option>
+        <% for (const v of verticalOptions) { %><option value="<%= v.id %>"><%= v.label %></option><% } %>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field__label">Resource type <span class="muted">(optional, needs a vertical)</span></span>
+      <input class="input" type="text" name="resource_type" placeholder="e.g. contacts" maxlength="100">
+    </label>
+    <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Backfill</button>
+  </form>
+
+  <% if (secretGroups.length > 0) { %>
+  <form method="POST" action="<%= base %>/credentials" class="card stack stack--sm" data-credentials-form
+        data-confirm="Replace this destination's credentials? Fields left blank are cleared.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="card__title">Rotate credentials</h2>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">Replaces every credential: fields left blank are cleared. Values are write-only and never shown again.</p>
+    <%- include('_fields', { groups: secretGroups }) %>
+    <button type="submit" class="btn btn--secondary btn--sm" style="align-self: flex-start">Replace credentials</button>
+  </form>
+  <% } %>
+
+  <form method="POST" action="<%= base %>/delete" class="card stack stack--sm" data-delete-form
+        data-confirm="Delete this destination? Its cursors and run history go too; files and rows it already exported stay where they are.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <h2 class="card__title">Delete</h2>
+    <p class="muted" style="margin: 0; font-size: var(--text-sm)">Stops future exports. Data already exported is not touched — erase it with your storage's own tooling.</p>
+    <button type="submit" class="btn btn--danger btn--sm" style="align-self: flex-start">Delete destination</button>
+  </form>
+</div>

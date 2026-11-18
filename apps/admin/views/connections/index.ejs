@@ -1,0 +1,159 @@
+<% layout('../layout', { title: 'Connections' }) -%>
+<%
+  // Derived from the spec the route already decided, not re-derived from
+  // `user.role` here — connections.ts's connectionsTable() is the one place
+  // that decides whether Actions exists, and reading it back off `tableSpec`
+  // is what keeps this row's cell count from ever disagreeing with
+  // _table-head.ejs's header/filter row, which reads the same spec.
+  const canAct = tableSpec.columns.some((c) => c.key === 'actions')
+%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Activity</div>
+    <h1 class="page-header__title">Connections</h1>
+    <% if (meta.total > 0) { %>
+    <p class="page-header__desc"><%= meta.total %> connected</p>
+    <% } %>
+  </div>
+</header>
+
+<%
+  // The table (filter form + thead) renders unconditionally regardless of
+  // `connections.length` — the property every Tier B table shares (see
+  // /webhooks, /scope-groups, /api-keys): hiding it whenever the current
+  // filter matches nothing would strand an operator with no visible Clear
+  // control and no way back short of hand-editing the URL.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%- include('../_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (connections.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+          <% if (!hasFilters) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon"><i class="ph ph-plugs-connected"></i></div>
+            <h3 class="empty-state__title">No connections yet</h3>
+            <p class="empty-state__body">Connections land here after a customer completes a Connect Link. Send one from the Connect links page or call <code class="mono">POST /v1/customers/&lt;id&gt;/connect-links</code> from your app.</p>
+            <div class="empty-state__actions">
+              <a class="btn btn--primary" href="/connect-links/new">New connect link</a>
+              <a class="btn btn--ghost" href="/customers">Customers →</a>
+            </div>
+          </div>
+          <% } else { %>
+          <div class="empty-state empty-state--no-results">
+            <%# `search` (the hidden id-or-label alias a bookmarked ?search= reads
+                through) takes priority: an operator following an old link typed
+                nothing into Label or Connection id, so those boxes are the wrong
+                thing to name back to them. %>
+            <% if (tableState.filters.search) { %>
+            <h3 class="empty-state__title">No connection matches “<%= tableState.filters.search %>”</h3>
+            <p class="empty-state__body">Search covers the connection id and label. An id prefix is enough — the first block of the UUID will do.</p>
+            <% } else if (tableState.filters.label) { %>
+            <h3 class="empty-state__title">No connection matches “<%= tableState.filters.label %>”</h3>
+            <p class="empty-state__body">Label matches a substring, case-insensitively.</p>
+            <% } else if (tableState.filters.id) { %>
+            <h3 class="empty-state__title">No connection matches “<%= tableState.filters.id %>”</h3>
+            <p class="empty-state__body">Connection id matches a substring — an id prefix is enough, the first block of the UUID will do.</p>
+            <% } else { %>
+            <h3 class="empty-state__title">No connections match your filters</h3>
+            <p class="empty-state__body">Try widening or clearing what you've entered above.</p>
+            <% } %>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+            </div>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const c of connections) { %>
+      <tr>
+        <td>
+          <%# The label is what the operator named this connection, so it is the
+              link. Unlabelled connections are routine — anything created through
+              /auth/{vertical}/{platform}/connect without ?label= has none — so
+              fall back to the id's first block rather than linking a bare dash,
+              which would tell a screen reader nothing.
+              data-modal opens the detail page in a dialog when JS is available;
+              the href is what happens otherwise, and is unchanged. See
+              public/js/resource-modal.js. %>
+          <a href="/connections/<%= c.vertical %>/<%= c.id %>" data-modal style="font-weight: 500"><%= c.label || c.id.slice(0, 8) %></a>
+        </td>
+        <%# The slug stays the visible text — the platform filter and the search
+            key on it — with the catalogue's display name on hover when the two
+            differ. The logo is the same mark the dashboard rows carry; a slug
+            the catalogue does not know shows a monogram of its initials. %>
+        <td class="muted" data-platform-cell>
+          <span class="row" style="gap: var(--space-2); align-items: center">
+            <%- c.logoHtml || '' %>
+            <% if (c.platformName && c.platformName !== c.platform) { %>
+            <span title="<%= c.platformName %>"><%= c.platform %></span>
+            <% } else { %>
+            <span><%= c.platform %></span>
+            <% } %>
+          </span>
+        </td>
+        <td>
+          <%# The id is what every /v1 call needs as ?connection_id=, so it is
+              here in full and copyable rather than truncated for tidiness. %>
+          <span class="row" style="gap: var(--space-2); align-items: center">
+            <code class="mono" style="font-size: var(--text-xs)"><%= c.id %></code>
+            <button type="button" class="btn btn--ghost btn--sm" data-copy="<%= c.id %>"
+              title="Copy connection id" aria-label="Copy connection id">Copy</button>
+          </span>
+        </td>
+        <td><span class="badge" style="text-transform: capitalize"><%= c.vertical %></span></td>
+        <%# Which tenant's traffic flows through this connection — the same
+            tenant a developer key must belong to in order to use it. %>
+        <td style="font-size: var(--text-xs)"><%- include('../_tenant', { tenantId: c.tenantId, tenants: (typeof tenants !== 'undefined' ? tenants : []) }) %></td>
+        <td>
+          <%- statusPill(c.status) %>
+          <%# The dashboard's early warning, so that its "and N more" link
+              lands somewhere that shows what it promised: a token that still
+              works reads Healthy here, and only this says its last refresh
+              failed. -%>
+          <% if (c.lastRefreshStatus === 'failed' && (c.status === 'valid' || c.status === 'expiring_soon')) { %>
+          <%- statusPill('refresh_failed') %>
+          <% } %>
+        </td>
+        <td class="muted"><%= c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—' %></td>
+        <% if (canAct) { %>
+        <td>
+          <form method="POST" action="/connections/<%= c.vertical %>/<%= c.id %>/sync" style="display: inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input type="hidden" name="returnTo" value="list">
+            <button type="submit" class="btn btn--secondary btn--sm"
+              title="Queue a background sync to refresh this connection's cached data">Sync now</button>
+          </form>
+        </td>
+        <% } %>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<%- include('../_pagination', {
+  // `meta.page`, not `tableState.page`: admin-api is the one paginating this
+  // set, so its own echoed page number is the authoritative one, exactly as
+  // the pre-Task-3 view read `_meta.page` here.
+  page: meta.page,
+  pageLimit: meta.limit,
+  total: meta.total,
+  baseUrl: tableSpec.baseUrl,
+  filterQs: tableQs(tableState, tableSpec),
+}) %>

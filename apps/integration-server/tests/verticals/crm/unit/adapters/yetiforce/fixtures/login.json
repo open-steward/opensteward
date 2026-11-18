@@ -1,0 +1,31 @@
+{
+  "status": 1,
+  "result": {
+    "token": "a8f5f167f44f4964e6c998dee827110c5c4b0e1a",
+    "name": "Web service user",
+    "lastLoginTime": "2019-10-07 08:32:38",
+    "lastLogoutTime": "",
+    "language": "pl-PL",
+    "type": 1,
+    "login_method": "PLL_PASSWORD",
+    "logged": true,
+    "preferences": {
+      "hour_format": "24",
+      "start_hour": "08:00",
+      "end_hour": "16:00",
+      "date_format": "yyyy-mm-dd",
+      "time_zone": "Europe/Warsaw",
+      "raw_time_zone": "UTC",
+      "currency_id": 1,
+      "currency_grouping_pattern": "123,456,789",
+      "currency_decimal_separator": ".",
+      "currency_grouping_separator": " ",
+      "currency_symbol_placement": "1.0$",
+      "no_of_currency_decimals": 2,
+      "currency_name": "Poland, Zlotych",
+      "currency_code": "PLN",
+      "currency_symbol": "zł",
+      "conv_rate": 1
+    }
+  }
+}

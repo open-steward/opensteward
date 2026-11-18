@@ -1,0 +1,22 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "opensteward.fullname" $root }}-{{ $name }}
+  labels:
+    {{- include "opensteward.serviceLabels" (dict "root" $root "name" $name) | nindent 4 }}
+spec:
+  # Every service is ClusterIP. admin-api is reached only in-cluster (it is
+  # never placed behind the Ingress); the exposed services are routed by the
+  # Ingress.
+  type: ClusterIP
+  selector:
+    {{- include "opensteward.serviceSelector" (dict "root" $root "name" $name) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $svc.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

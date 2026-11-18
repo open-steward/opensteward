@@ -1,0 +1,355 @@
+name: helm
+
+# Static gate for the OpenSteward Helm chart. Lints, renders both database modes,
+# schema-validates every manifest with kubeconform, and asserts these cross-cutting
+# invariants:
+#   - NODE_ENV=production on every pod (assertSecret fail-closed),
+#   - admin-api is never routed by an Ingress (ClusterIP only),
+#   - sqlite mode => one PVC per stateful service + Recreate; postgres mode => none,
+#   - integration-server cannot scale past 1 replica without Redis.
+# The kind-e2e job then builds the five images, loads them into a kind cluster, and
+# installs the chart end-to-end in both modes (sqlite+generate, postgres) — asserting
+# every Deployment goes Available and `helm test` curls /health x5.
+on:
+  pull_request:
+    paths:
+      - "deploy/helm/**"
+      - ".github/workflows/helm.yml"
+      - "Dockerfile"
+  push:
+    branches:
+      - main
+    paths:
+      - "deploy/helm/**"
+      - ".github/workflows/helm.yml"
+      - "Dockerfile"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CHART: deploy/helm/opensteward
+
+jobs:
+  lint-template:
+    name: lint + template + kubeconform
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.16.3
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o /tmp/kc.tar.gz \
+            https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kc.tar.gz -C /usr/local/bin kubeconform
+
+      - name: Vendored chart dependencies match Chart.lock
+        # The optional Superset dependency is vendored under charts/ so a
+        # checkout installs offline; `helm dependency list` reports anything
+        # but "ok" when the tarball and Chart.yaml/Chart.lock disagree.
+        run: |
+          helm dependency list "$CHART"
+          ! helm dependency list "$CHART" | tail -n +2 | grep -v '^$' | grep -vw ok
+
+      - name: helm lint (both modes, plus embedded Superset)
+        run: |
+          helm lint "$CHART" -f "$CHART/ci/ci-sqlite-values.yaml"
+          helm lint "$CHART" -f "$CHART/ci/ci-postgres-values.yaml"
+          helm lint "$CHART" -f "$CHART/ci/ci-postgres-values.yaml" -f "$CHART/ci/ci-superset-values.yaml"
+          helm lint "$CHART" -f "$CHART/ci/ci-sqlite-values.yaml" --set license.existingSecret=os-license
+
+      - name: Render
+        run: |
+          helm template os "$CHART" -f "$CHART/ci/ci-sqlite-values.yaml"   > /tmp/sqlite.yaml
+          helm template os "$CHART" -f "$CHART/ci/ci-postgres-values.yaml" > /tmp/postgres.yaml
+          helm template os "$CHART" -f "$CHART/ci/ci-postgres-values.yaml" \
+            -f "$CHART/ci/ci-superset-values.yaml" > /tmp/superset.yaml
+
+      - name: kubeconform (Kubernetes schema validation)
+        run: |
+          for f in /tmp/sqlite.yaml /tmp/postgres.yaml /tmp/superset.yaml; do
+            kubeconform -strict -ignore-missing-schemas -summary \
+              -kubernetes-version 1.29.0 "$f"
+          done
+
+      - name: Per-cloud overlays render + schema-validate
+        # The overlays carry literal <PLACEHOLDER> strings; they render as valid YAML,
+        # so this catches drift between an overlay and the chart's value surface.
+        run: |
+          for cloud in aws azure gcp; do
+            echo "── $cloud overlay ──"
+            helm template os "$CHART" -f "deploy/helm/overlays/$cloud-values.yaml" \
+              | kubeconform -strict -ignore-missing-schemas -summary \
+                  -kubernetes-version 1.29.0
+          done
+
+      - name: Invariant — NODE_ENV=production on every Deployment
+        run: |
+          for f in /tmp/sqlite.yaml /tmp/postgres.yaml; do
+            deploys=$(grep -c '^kind: Deployment' "$f")
+            prod=$(grep -c 'value: "production"' "$f")
+            echo "$f: $deploys deployments, $prod NODE_ENV=production"
+            test "$deploys" -eq 5
+            test "$prod" -eq "$deploys"
+          done
+
+      - name: Invariant — admin-api never in an Ingress
+        # Inspect ONLY Ingress documents (split on ---). admin-api is referenced
+        # legitimately elsewhere — the admin-api Service, and the helm-test pod's
+        # in-cluster /health curl — so a whole-file grep would false-positive.
+        run: |
+          for f in /tmp/sqlite.yaml /tmp/postgres.yaml; do
+            if awk 'BEGIN{RS="\n---\n"} /(^|\n)kind: Ingress(\n|$)/{print}' "$f" | grep -q 'admin-api'; then
+              echo "FAIL: admin-api appears in an Ingress in $f"; exit 1
+            fi
+            echo "OK: admin-api not routed in $f"
+          done
+
+      - name: Invariant — admin SSO/SCIM ingress publishes only its paths
+        run: deploy/helm/opensteward/ci/check-sso.sh
+
+      - name: Invariant — license mounts on integration-server only, as an optional directory
+        run: deploy/helm/opensteward/ci/check-license.sh
+
+      - name: Invariant — sqlite mode has 3 PVCs + 3 Recreate; postgres has none
+        run: |
+          test "$(grep -c '^kind: PersistentVolumeClaim' /tmp/sqlite.yaml)" -eq 3
+          test "$(grep -c 'type: Recreate' /tmp/sqlite.yaml)" -eq 3
+          test "$(grep -c '^kind: PersistentVolumeClaim' /tmp/postgres.yaml)" -eq 0
+
+      - name: Invariant — Superset / SQL access need Postgres (fail-closed)
+        run: |
+          for flag in superset.enabled=true analytics.sqlAccess.enabled=true; do
+            if helm template os "$CHART" -f "$CHART/ci/ci-sqlite-values.yaml" \
+                 --set "$flag" >/dev/null 2>/tmp/guard.err; then
+              echo "FAIL: $flag rendered on SQLite"; exit 1
+            fi
+            grep -q "postgres" /tmp/guard.err
+          done
+          # Superset disabled adds nothing to the default renders.
+          ! grep -q 'superset' /tmp/postgres.yaml
+          grep -q 'name: os-opensteward-superset-bootstrap' /tmp/superset.yaml
+          grep -q 'frame-ancestors' /tmp/superset.yaml
+          echo "OK: guards fired, disabled renders untouched"
+
+      - name: Invariant — integration-server > 1 replica requires Redis (fail-closed)
+        run: |
+          if helm template os "$CHART" -f "$CHART/ci/ci-postgres-values.yaml" \
+               --set redis.enabled=false >/dev/null 2>/tmp/guard.err; then
+            echo "FAIL: render succeeded but should have failed without Redis"; exit 1
+          fi
+          grep -q "rate-limit budget" /tmp/guard.err
+          echo "OK: guard fired"
+
+  build-images:
+    name: build ${{ matrix.service }} image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [admin, admin-api, docs-server, webhook-gateway, integration-server]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v4
+      - name: Build ${{ matrix.service }} -> tar
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          build-args: |
+            APP=${{ matrix.service }}
+          tags: opensteward/${{ matrix.service }}:ci
+          outputs: type=docker,dest=/tmp/${{ matrix.service }}.tar
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
+      - uses: actions/upload-artifact@v7
+        with:
+          name: image-${{ matrix.service }}
+          path: /tmp/${{ matrix.service }}.tar
+          retention-days: 1
+
+  kind-e2e:
+    name: kind install + helm test (both modes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: build-images
+    steps:
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
+        with:
+          version: v3.16.3
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: image-*
+          path: /tmp/images
+          merge-multiple: true
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1
+        with:
+          cluster_name: opensteward
+
+      - name: Load images into kind
+        run: |
+          for svc in admin admin-api docs-server webhook-gateway integration-server; do
+            kind load image-archive "/tmp/images/$svc.tar" --name opensteward
+          done
+
+      # ── SQLite mode + the generate hook (one-command trial path) ───────────────
+      - name: Install (sqlite + generate)
+        run: |
+          helm install os "$CHART" \
+            --set image.registry=opensteward --set image.tag=ci --set image.pullPolicy=Never \
+            --set database.mode=sqlite \
+            --set secrets.source=generate \
+            --set secrets.generate.includeAdminSecret=true \
+            --set 'publicUrls.adminUi=https://admin.example.test' \
+            --set ingress.enabled=false --set networkPolicy.enabled=false \
+            --wait --timeout 5m
+      - name: Rollout + helm test (sqlite)
+        run: |
+          for d in admin admin-api docs-server webhook-gateway integration-server; do
+            kubectl rollout status deploy/os-opensteward-$d --timeout=180s
+          done
+          kubectl get secret os-opensteward-secrets -o jsonpath='{.data.STORE_SECRET}' | grep -q . \
+            && echo "OK: generate hook created STORE_SECRET"
+          kubectl get secret os-opensteward-secrets -o jsonpath='{.data.BOOTSTRAP_TOKEN}' | grep -q . \
+            && echo "OK: generate hook minted BOOTSTRAP_TOKEN (setup gated by default)"
+          helm test os --timeout 3m
+          # No license → MISSING (community mode), and every pod still Available.
+          S="$(kubectl get secret os-opensteward-secrets -o jsonpath='{.data.ADMIN_SECRET}' | base64 -d)"
+          state="$(kubectl exec deploy/os-opensteward-integration-server -- \
+            wget -qO- --header "X-Admin-Secret: $S" http://127.0.0.1:3010/admin/license | jq -r '.data.state' || true)"
+          [ "$state" = "MISSING" ] || { echo "FAIL: no license → state='$state' (want MISSING)"; exit 1; }
+          echo "OK: no license → MISSING (community mode) and every pod Available"
+      - name: Diagnostics (sqlite, on failure)
+        if: failure()
+        run: |
+          kubectl get pods -o wide
+          kubectl describe pods | tail -120
+          kubectl logs -l app.kubernetes.io/part-of=opensteward --tail=80 --all-containers || true
+      - name: Uninstall sqlite release
+        run: helm uninstall os --wait || true
+
+      # ── Postgres mode. Smoke test: pin every stateful service to a single replica
+      #    so the install is deterministic — avoids needing Redis (the integration-
+      #    server >1-replica guard) and avoids concurrent first-boot migrations
+      #    racing on one shared DB. Multi-replica HA is exercised by the render-time
+      #    invariants in the lint job, not this smoke. ──────────────────────────────
+      - name: Stand up in-cluster Postgres
+        run: |
+          kubectl apply -f - <<'EOF'
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata: { name: pg, labels: { app: pg } }
+          spec:
+            replicas: 1
+            selector: { matchLabels: { app: pg } }
+            template:
+              metadata: { labels: { app: pg } }
+              spec:
+                containers:
+                  - name: pg
+                    image: postgres:16-alpine
+                    env:
+                      - { name: POSTGRES_USER, value: os }
+                      - { name: POSTGRES_PASSWORD, value: ospw }
+                      - { name: POSTGRES_DB, value: opensteward }
+                    ports: [{ containerPort: 5432 }]
+          ---
+          apiVersion: v1
+          kind: Service
+          metadata: { name: pg }
+          spec:
+            selector: { app: pg }
+            ports: [{ port: 5432, targetPort: 5432 }]
+          EOF
+          kubectl rollout status deploy/pg --timeout=120s
+          kubectl create secret generic os-db \
+            --from-literal=DATABASE_URL='postgres://os:ospw@pg:5432/opensteward'
+      - name: Install (postgres)
+        run: |
+          helm install ospg "$CHART" \
+            --set image.registry=opensteward --set image.tag=ci --set image.pullPolicy=Never \
+            --set database.mode=postgres --set database.external.existingSecret=os-db \
+            --set secrets.source=generate \
+            --set secrets.generate.includeAdminSecret=true --set license.existingSecret=os-license \
+            --set services.admin-api.replicas=1 \
+            --set services.webhook-gateway.replicas=1 \
+            --set services.integration-server.replicas=1 \
+            --set services.admin.replicas=1 --set services.docs-server.replicas=1 \
+            --set ingress.enabled=false --set networkPolicy.enabled=false \
+            --wait --timeout 5m
+      - name: Rollout + helm test (postgres)
+        run: |
+          for d in admin admin-api docs-server webhook-gateway integration-server; do
+            kubectl rollout status deploy/ospg-opensteward-$d --timeout=180s
+          done
+          test "$(kubectl get pvc -l app.kubernetes.io/part-of=opensteward --no-headers 2>/dev/null | wc -l)" -eq 0 \
+            && echo "OK: no PVCs in postgres mode"
+          helm test ospg --timeout 3m
+      - name: License — optional mount, then a renewal without a restart (postgres)
+        run: |
+          set -euo pipefail
+          b64url() { base64 | tr '+/' '-_' | tr -d '=\n'; }
+          # A well-formed v4.public token naming a kid, with an all-zero
+          # signature: enough to prove the file arrives, and which kids the
+          # image trusts.
+          token() { printf 'v4.public.%s.%s' "$(head -c 96 /dev/zero | b64url)" "$(printf '{"kid":"%s"}' "$1" | b64url)"; }
+          S="$(kubectl get secret ospg-opensteward-secrets -o jsonpath='{.data.ADMIN_SECRET}' | base64 -d)"
+          D=deploy/ospg-opensteward-integration-server
+          # The newest Running pod that is not terminating. A pod being replaced
+          # is still phase=Running, so filter on deletionTimestamp as well.
+          newest() {
+            kubectl get pod -l app.kubernetes.io/instance=ospg,app.kubernetes.io/name=integration-server -o json \
+              | jq -r '[.items[] | select(.status.phase == "Running" and .metadata.deletionTimestamp == null)]
+                       | sort_by(.metadata.creationTimestamp) | last | .metadata.name // empty'
+          }
+          lic() { kubectl exec "$1" -- wget -qO- --header "X-Admin-Secret: $S" http://127.0.0.1:3010/admin/license; }
+          # 1. license.existingSecret names a Secret that does not exist: the pod runs, MISSING.
+          pod="$(newest || true)"
+          [ -n "$pod" ] || { echo "FAIL: no Running integration-server pod"; exit 1; }
+          [ "$(lic "$pod" | jq -r .data.state)" = MISSING ] || { echo "FAIL: absent license Secret should read as MISSING"; lic "$pod" || true; exit 1; }
+          # 2. Create it (dev kid) and restart once: the file arrives through the
+          #    mount, and the production image refuses the dev kid.
+          kubectl create secret generic os-license --from-literal=license.key="$(token dev1)"
+          kubectl rollout restart "$D" && kubectl rollout status "$D" --timeout=180s
+          pod="$(newest || true)"
+          [ -n "$pod" ] || { echo "FAIL: no Running integration-server pod after the restart"; exit 1; }
+          body="$(lic "$pod" || true)"
+          [ "$(jq -r .data.source <<<"$body")" = file ] || { echo "FAIL: license not read from the mounted file: $body"; exit 1; }
+          case "$(jq -r '.data.state + "/" + (.data.reason // "")' <<<"$body")" in
+            INVALID/UNKNOWN_KID | INVALID/DEV_KEY_ENV_MISMATCH) echo "OK: dev-kid token refused by the production image" ;;
+            INVALID/BAD_SIGNATURE) echo "FAIL: the image TRUSTS dev1 (built with a development profile?): $body"; exit 1 ;;
+            *) echo "FAIL: dev-kid token → $body"; exit 1 ;;
+          esac
+          # 3. Renew in place with a production kid (still a zero signature).
+          #    Picked up through the ..data swap without a restart (C8).
+          kubectl create secret generic os-license --from-literal=license.key="$(token k2026a)" \
+            --dry-run=client -o yaml | kubectl apply -f -
+          r=""
+          for _ in $(seq 1 36); do
+            r="$(lic "$pod" | jq -r '.data.reason // empty' || true)"
+            case "$r" in BAD_KEY | BAD_SIGNATURE) break ;; esac
+            sleep 5
+          done
+          case "$r" in
+            BAD_KEY | BAD_SIGNATURE) ;; # BAD_KEY while keys are placeholders, BAD_SIGNATURE after A3.9
+            *) echo "FAIL: renewed Secret not picked up within 180s (reason='$r')"; exit 1 ;;
+          esac
+          [ "$(kubectl get pod "$pod" -o jsonpath='{.status.containerStatuses[0].restartCount}')" = 0 ] \
+            || { echo "FAIL: the pod restarted"; exit 1; }
+          echo "OK: renewed license picked up from the Secret without a restart [L7:G11]"
+      - name: Diagnostics (postgres, on failure)
+        if: failure()
+        run: |
+          kubectl get pods -o wide
+          kubectl describe pods | tail -120
+          kubectl logs -l app.kubernetes.io/part-of=opensteward --tail=80 --all-containers || true

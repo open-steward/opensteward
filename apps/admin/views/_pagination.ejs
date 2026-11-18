@@ -1,0 +1,31 @@
+<%
+  // Shared pagination control. Inputs:
+  //   page (1-based), pageLimit, total, baseUrl (e.g. '/connections'),
+  //   filterQs (existing query string without `page`, e.g. 'vertical=crm' or '').
+  const totalPages = Math.max(1, Math.ceil(total / pageLimit))
+  const qs = (p) => (filterQs ? filterQs + '&' : '') + 'page=' + p
+  const from = total === 0 ? 0 : (page - 1) * pageLimit + 1
+  const to = Math.min(page * pageLimit, total)
+-%>
+<% if (totalPages > 1 || total > 0) { %>
+<nav class="row row--between" style="margin-top: var(--space-4); align-items: center" aria-label="Pagination">
+  <span class="muted" style="font-size: var(--text-sm)">
+    <% if (total > 0) { %>Showing <%= from %>–<%= to %> of <%= total %><% } else { %>No results<% } %>
+  </span>
+  <% if (totalPages > 1) { %>
+  <span class="row" style="gap: var(--space-2); align-items: center">
+    <% if (page > 1) { %>
+    <a class="btn btn--ghost btn--sm" href="<%= baseUrl %>?<%= qs(page - 1) %>">← Prev</a>
+    <% } else { %>
+    <span class="btn btn--ghost btn--sm" aria-disabled="true" style="opacity: .4; pointer-events: none">← Prev</span>
+    <% } %>
+    <span class="muted" style="font-size: var(--text-sm)">Page <%= page %> of <%= totalPages %></span>
+    <% if (page < totalPages) { %>
+    <a class="btn btn--ghost btn--sm" href="<%= baseUrl %>?<%= qs(page + 1) %>">Next →</a>
+    <% } else { %>
+    <span class="btn btn--ghost btn--sm" aria-disabled="true" style="opacity: .4; pointer-events: none">Next →</span>
+    <% } %>
+  </span>
+  <% } %>
+</nav>
+<% } %>

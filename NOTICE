@@ -1,0 +1,27 @@
+OpenSteward
+Copyright 2026 Falco Consulting AB
+
+This product includes software developed by Falco Consulting AB
+(Swedish corporate identity number 559484-4838) and the OpenSteward
+contributors.
+
+OpenSteward is source-available software under a split license.
+
+Most of this product — including the integration server, admin, admin API,
+webhook gateway, docs server, and the shared libraries they depend on — is
+licensed under the Elastic License 2.0 together with an Additional Use Grant.
+That grant permits embedding OpenSteward in your own products and exposing it
+to your own customers; what it does not permit is operating OpenSteward as a
+hosted unified-API service offered to third parties. A copy of the license and
+the grant is in the LICENSE file distributed with this product.
+
+The client artifacts — @opensteward/sdk, @opensteward/cli, and
+@opensteward/mcp-server — are licensed under the Apache License, Version 2.0.
+A copy is in licenses/Apache-2.0.txt and alongside each of those components,
+and at http://www.apache.org/licenses/LICENSE-2.0.
+
+Canonical schemas were shape-inspired by public API documentation of
+Unified.to, Shopify, and Stripe.
+
+This product bundles third-party fonts and browser assets under their own
+licenses (SIL OFL 1.1, MIT, 0BSD, Apache-2.0). See THIRD-PARTY-NOTICES.md.

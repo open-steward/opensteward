@@ -1,0 +1,746 @@
+{
+  "layouts": [
+    {
+      "has_more_profiles": false,
+      "created_time": null,
+      "visible": true,
+      "created_for": null,
+      "source": "crm",
+      "created_by": null,
+      "display_label": "Sales - Marketing",
+      "show_business_card": true,
+      "actions_allowed": {
+        "edit": true,
+        "rename": true,
+        "clone": true,
+        "downgrade": false,
+        "delete": false,
+        "deactivate": false,
+        "set_layout_permissions": true
+      },
+      "modified_time": "2023-05-10T19:28:46+05:30",
+      "name": "Sales - Marketing",
+      "modified_by": {
+        "name": "Zylker Travels",
+        "id": "2034020000000457001"
+      },
+      "generated_type": "system",
+      "id": "2034020000000095023",
+      "status": "active",
+      "sections": [
+        {
+          "display_label": "Potential Information",
+          "sequence_number": 2,
+          "isSubformSection": false,
+          "tab_traversal": 2,
+          "api_name": "Deal Information",
+          "column_count": 1,
+          "name": "Potential Information",
+          "generated_type": "default",
+          "id": "2034020000000266016",
+          "type": "used",
+          "fields": [
+            {
+              "api_name": "Sub_Pipeline",
+              "data_type": "picklist",
+              "field_label": "ignite.subpipeline.name",
+              "id": "2034020000000236001",
+              "pick_list_values": [
+                {
+                  "display_value": "Sales Pipeline Standard",
+                  "sequence_number": 1,
+                  "maps": [
+                    {
+                      "api_name": "Stage",
+                      "pick_list_values": [
+                        {
+                          "display_value": "Qualification",
+                          "colour_code": null,
+                          "actual_value": "Qualification",
+                          "id": "2034020000000007104"
+                        },
+                        {
+                          "display_value": "Needs Analysis",
+                          "colour_code": null,
+                          "actual_value": "Needs Analysis",
+                          "id": "2034020000000007106"
+                        },
+                        {
+                          "display_value": "Proposal/Price Quote",
+                          "colour_code": null,
+                          "actual_value": "Proposal/Price Quote",
+                          "id": "2034020000000007112"
+                        },
+                        {
+                          "display_value": "Negotiation/Review",
+                          "colour_code": null,
+                          "actual_value": "Negotiation/Review",
+                          "id": "2034020000000007114"
+                        },
+                        {
+                          "display_value": "Closed Won",
+                          "colour_code": null,
+                          "actual_value": "Closed Won",
+                          "id": "2034020000000007116"
+                        },
+                        {
+                          "display_value": "Closed Lost",
+                          "colour_code": null,
+                          "actual_value": "Closed Lost",
+                          "id": "2034020000000007118"
+                        }
+                      ]
+                    }
+                  ],
+                  "colour_code": null,
+                  "actual_value": "Sales Pipeline Standard",
+                  "id": "2034020000000459501",
+                  "type": "used"
+                },
+                {
+                  "display_value": "Marketing",
+                  "sequence_number": 2,
+                  "maps": [
+                    {
+                      "api_name": "Stage",
+                      "pick_list_values": [
+                        {
+                          "display_value": "Market Research",
+                          "colour_code": null,
+                          "actual_value": "Market Research",
+                          "id": "2034020000000464292"
+                        },
+                        {
+                          "display_value": "Campaign Planning",
+                          "colour_code": null,
+                          "actual_value": "Campaign Planning",
+                          "id": "2034020000000464293"
+                        },
+                        {
+                          "display_value": "Execution and Analysis",
+                          "colour_code": null,
+                          "actual_value": "Execution and Analysis",
+                          "id": "2034020000000464294"
+                        },
+                        {
+                          "display_value": "Closed Won",
+                          "colour_code": null,
+                          "actual_value": "Closed Won",
+                          "id": "2034020000000007116"
+                        },
+                        {
+                          "display_value": "Closed Lost",
+                          "colour_code": null,
+                          "actual_value": "Closed Lost",
+                          "id": "2034020000000007118"
+                        }
+                      ]
+                    }
+                  ],
+                  "colour_code": null,
+                  "actual_value": "Marketing",
+                  "id": "2034020000000464305",
+                  "type": "used"
+                }
+              ]
+            },
+            {
+              "api_name": "Stage",
+              "data_type": "picklist",
+              "field_label": "Stage",
+              "id": "2034020000000000525",
+              "pick_list_values": [
+                {
+                  "display_value": "Qualification",
+                  "sequence_number": 1,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 66,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Qualification",
+                  "id": "2034020000000007104",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Needs Analysis",
+                  "sequence_number": 2,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 66,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Needs Analysis",
+                  "id": "2034020000000007106",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Proposal/Price Quote",
+                  "sequence_number": 3,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 36,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Proposal/Price Quote",
+                  "id": "2034020000000007112",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Negotiation/Review",
+                  "sequence_number": 4,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 48,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Negotiation/Review",
+                  "id": "2034020000000007114",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Market Research",
+                  "sequence_number": 5,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 72,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Market Research",
+                  "id": "2034020000000464292",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Campaign Planning",
+                  "sequence_number": 6,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 72,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Campaign Planning",
+                  "id": "2034020000000464293",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Execution and Analysis",
+                  "sequence_number": 7,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 84,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Execution and Analysis",
+                  "id": "2034020000000464294",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Closed Won",
+                  "sequence_number": 8,
+                  "deal_category": "Closed Won",
+                  "maps": [],
+                  "probability": 100,
+                  "forecast_category": {
+                    "name": "Closed",
+                    "id": "2034020000000007094"
+                  },
+                  "actual_value": "Closed Won",
+                  "id": "2034020000000007116",
+                  "forecast_type": "Closed Won"
+                },
+                {
+                  "display_value": "Closed Lost",
+                  "sequence_number": 9,
+                  "deal_category": "Closed Lost",
+                  "maps": [],
+                  "probability": 0,
+                  "forecast_category": {
+                    "name": "Omitted",
+                    "id": "2034020000000007096"
+                  },
+                  "actual_value": "Closed Lost",
+                  "id": "2034020000000007118",
+                  "forecast_type": "Closed Lost"
+                }
+              ]
+            }
+          ],
+          "properties": null
+        }
+      ]
+    },
+    {
+      "has_more_profiles": false,
+      "created_time": "2023-04-12T12:05:17+05:30",
+      "visible": true,
+      "created_for": null,
+      "source": "crm",
+      "created_by": null,
+      "display_label": "Operations",
+      "show_business_card": false,
+      "actions_allowed": {
+        "edit": true,
+        "rename": true,
+        "clone": true,
+        "downgrade": true,
+        "delete": true,
+        "deactivate": true,
+        "set_layout_permissions": true
+      },
+      "modified_time": "2023-04-12T12:05:19+05:30",
+      "name": "Operations",
+      "modified_by": {
+        "name": "Zylker Travels",
+        "id": "2034020000000457001"
+      },
+      "generated_type": "custom",
+      "id": "2034020000000464021",
+      "status": "active",
+      "sections": [
+        {
+          "display_label": "Potential Information",
+          "sequence_number": 2,
+          "isSubformSection": false,
+          "tab_traversal": 2,
+          "api_name": "Potential Information",
+          "column_count": 1,
+          "name": "Potential Information",
+          "generated_type": "default",
+          "id": "2034020000000464028",
+          "type": "used",
+          "fields": [
+            {
+              "api_name": "Sub_Pipeline",
+              "data_type": "picklist",
+              "field_label": "ignite.subpipeline.name",
+              "id": "2034020000000236001",
+              "pick_list_values": [
+                {
+                  "display_value": "Operations Standard",
+                  "sequence_number": 1,
+                  "maps": [
+                    {
+                      "api_name": "Stage",
+                      "pick_list_values": [
+                        {
+                          "display_value": "Supplier Coordination",
+                          "colour_code": null,
+                          "actual_value": "Supplier Coordination",
+                          "id": "2034020000000464197"
+                        },
+                        {
+                          "display_value": "Itinerary Planning",
+                          "colour_code": null,
+                          "actual_value": "Itinerary Planning",
+                          "id": "2034020000000464198"
+                        },
+                        {
+                          "display_value": "Booking and Confirmation",
+                          "colour_code": null,
+                          "actual_value": "Booking and Confirmation",
+                          "id": "2034020000000464199"
+                        },
+                        {
+                          "display_value": "Pre-Departure Preparation",
+                          "colour_code": null,
+                          "actual_value": "Pre-Departure Preparation",
+                          "id": "2034020000000464200"
+                        },
+                        {
+                          "display_value": "Closed Lost",
+                          "colour_code": null,
+                          "actual_value": "Closed Lost",
+                          "id": "2034020000000007118"
+                        }
+                      ]
+                    }
+                  ],
+                  "colour_code": null,
+                  "actual_value": "Operations Standard",
+                  "id": "2034020000000464209",
+                  "type": "used"
+                }
+              ]
+            },
+            {
+              "api_name": "Stage",
+              "data_type": "picklist",
+              "field_label": "Stage",
+              "id": "2034020000000000525",
+              "pick_list_values": [
+                {
+                  "display_value": "Supplier Coordination",
+                  "sequence_number": 1,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 33,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Supplier Coordination",
+                  "id": "2034020000000464197",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Itinerary Planning",
+                  "sequence_number": 2,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 50,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Itinerary Planning",
+                  "id": "2034020000000464198",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Booking and Confirmation",
+                  "sequence_number": 3,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 75,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Booking and Confirmation",
+                  "id": "2034020000000464199",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Pre-Departure Preparation",
+                  "sequence_number": 4,
+                  "deal_category": "Closed Won",
+                  "maps": [],
+                  "probability": 100,
+                  "forecast_category": {
+                    "name": "Closed",
+                    "id": "2034020000000007094"
+                  },
+                  "actual_value": "Pre-Departure Preparation",
+                  "id": "2034020000000464200",
+                  "forecast_type": "Closed Won"
+                },
+                {
+                  "display_value": "Closed Lost",
+                  "sequence_number": 5,
+                  "deal_category": "Closed Lost",
+                  "maps": [],
+                  "probability": 0,
+                  "forecast_category": {
+                    "name": "Omitted",
+                    "id": "2034020000000007096"
+                  },
+                  "actual_value": "Closed Lost",
+                  "id": "2034020000000007118",
+                  "forecast_type": "Closed Lost"
+                }
+              ]
+            }
+          ],
+          "properties": null
+        }
+      ]
+    },
+    {
+      "has_more_profiles": false,
+      "created_time": "2023-05-10T11:28:53+05:30",
+      "visible": true,
+      "created_for": null,
+      "source": "crm",
+      "created_by": null,
+      "display_label": "Real Estate",
+      "show_business_card": false,
+      "actions_allowed": {
+        "edit": true,
+        "rename": true,
+        "clone": true,
+        "downgrade": true,
+        "delete": true,
+        "deactivate": true,
+        "set_layout_permissions": true
+      },
+      "modified_time": "2023-05-10T16:53:20+05:30",
+      "name": "Real Estate",
+      "modified_by": {
+        "name": "Zylker Travels",
+        "id": "2034020000000457001"
+      },
+      "generated_type": "custom",
+      "id": "2034020000000549001",
+      "status": "active",
+      "sections": [
+        {
+          "display_label": "Potential Information",
+          "sequence_number": 2,
+          "isSubformSection": false,
+          "tab_traversal": 2,
+          "api_name": "Deal Information",
+          "column_count": 1,
+          "name": "Potential Information",
+          "generated_type": "default",
+          "id": "2034020000000549008",
+          "type": "used",
+          "fields": [
+            {
+              "api_name": "Sub_Pipeline",
+              "data_type": "picklist",
+              "field_label": "ignite.subpipeline.name",
+              "id": "2034020000000236001",
+              "pick_list_values": [
+                {
+                  "display_value": "Real Estate Sub-pipeline",
+                  "sequence_number": 1,
+                  "maps": [
+                    {
+                      "api_name": "Stage",
+                      "pick_list_values": [
+                        {
+                          "display_value": "New Inquiry",
+                          "colour_code": null,
+                          "actual_value": "New Inquiry",
+                          "id": "2034020000000549179"
+                        },
+                        {
+                          "display_value": "Site Visit",
+                          "colour_code": null,
+                          "actual_value": "Site Visit",
+                          "id": "2034020000000549180"
+                        },
+                        {
+                          "display_value": "Negotiation",
+                          "colour_code": null,
+                          "actual_value": "Negotiation",
+                          "id": "2034020000000549181"
+                        },
+                        {
+                          "display_value": "Attorney Review",
+                          "colour_code": null,
+                          "actual_value": "Attorney Review",
+                          "id": "2034020000000549182"
+                        },
+                        {
+                          "display_value": "Paperwork",
+                          "colour_code": null,
+                          "actual_value": "Paperwork",
+                          "id": "2034020000000549183"
+                        },
+                        {
+                          "display_value": "Closed Won",
+                          "colour_code": null,
+                          "actual_value": "Closed Won",
+                          "id": "2034020000000007116"
+                        },
+                        {
+                          "display_value": "Closed Lost",
+                          "colour_code": null,
+                          "actual_value": "Closed Lost",
+                          "id": "2034020000000007118"
+                        }
+                      ]
+                    }
+                  ],
+                  "colour_code": null,
+                  "actual_value": "Real Estate Standard",
+                  "id": "2034020000000549194",
+                  "type": "used"
+                },
+                {
+                  "display_value": "Real Estate Marketingg",
+                  "sequence_number": 2,
+                  "maps": [
+                    {
+                      "api_name": "Stage",
+                      "pick_list_values": [
+                        {
+                          "display_value": "Market Research",
+                          "colour_code": null,
+                          "actual_value": "Market Research",
+                          "id": "2034020000000464292"
+                        },
+                        {
+                          "display_value": "Market Analysis",
+                          "colour_code": null,
+                          "actual_value": "Market Analysis",
+                          "id": "2034020000000548138"
+                        },
+                        {
+                          "display_value": "Closed Won",
+                          "colour_code": null,
+                          "actual_value": "Closed Won",
+                          "id": "2034020000000007116"
+                        },
+                        {
+                          "display_value": "Closed Lost",
+                          "colour_code": null,
+                          "actual_value": "Closed Lost",
+                          "id": "2034020000000007118"
+                        }
+                      ]
+                    }
+                  ],
+                  "colour_code": null,
+                  "actual_value": "Real Estate Marketing",
+                  "id": "2034020000000548143",
+                  "type": "used"
+                }
+              ]
+            },
+            {
+              "api_name": "Stage",
+              "data_type": "picklist",
+              "field_label": "Stage",
+              "id": "2034020000000000525",
+              "pick_list_values": [
+                {
+                  "display_value": "New Inquiry",
+                  "sequence_number": 1,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 12,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "New Inquiry",
+                  "id": "2034020000000549179",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Site Visit",
+                  "sequence_number": 2,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 24,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Site Visit",
+                  "id": "2034020000000549180",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Negotiation",
+                  "sequence_number": 3,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 36,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Negotiation",
+                  "id": "2034020000000549181",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Attorney Review",
+                  "sequence_number": 4,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 48,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Attorney Review",
+                  "id": "2034020000000549182",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Paperwork",
+                  "sequence_number": 5,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 60,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Paperwork",
+                  "id": "2034020000000549183",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Market Research",
+                  "sequence_number": 6,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 72,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Market Research",
+                  "id": "2034020000000464292",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Market Analysis",
+                  "sequence_number": 7,
+                  "deal_category": "Open",
+                  "maps": [],
+                  "probability": 84,
+                  "forecast_category": {
+                    "name": "Pipeline",
+                    "id": "2034020000000007092"
+                  },
+                  "actual_value": "Market Analysis",
+                  "id": "2034020000000548138",
+                  "forecast_type": "Open"
+                },
+                {
+                  "display_value": "Closed Won",
+                  "sequence_number": 8,
+                  "deal_category": "Closed Won",
+                  "maps": [],
+                  "probability": 100,
+                  "forecast_category": {
+                    "name": "Closed",
+                    "id": "2034020000000007094"
+                  },
+                  "actual_value": "Closed Won",
+                  "id": "2034020000000007116",
+                  "forecast_type": "Closed Won"
+                },
+                {
+                  "display_value": "Closed Lost",
+                  "sequence_number": 9,
+                  "deal_category": "Closed Lost",
+                  "maps": [],
+                  "probability": 0,
+                  "forecast_category": {
+                    "name": "Omitted",
+                    "id": "2034020000000007096"
+                  },
+                  "actual_value": "Closed Lost",
+                  "id": "2034020000000007118",
+                  "forecast_type": "Closed Lost"
+                }
+              ]
+            }
+          ],
+          "properties": null
+        }
+      ]
+    }
+  ]
+}

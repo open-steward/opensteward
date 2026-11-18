@@ -1,0 +1,54 @@
+# DELIBERATELY BROKEN. Do not copy any of this into docker-compose.yml.
+#
+# This overlay exists to test the test. scripts/compose-smoke.sh claims it can
+# tell "this healthcheck reports health" from "this healthcheck returns
+# success". That claim is worth exactly nothing unless it is demonstrated, so
+# CI runs the smoke script a second time with this file merged on top and
+# asserts the script goes RED.
+#
+# Each entry below is a real fail-open form, one per healthcheck shape the
+# script has to handle:
+#
+#   integration-server  CMD       — node one-liner with an empty 'error'
+#                                   handler. The process drains its event loop
+#                                   and exits 0 whether or not anything
+#                                   answered. This is the form a verifier
+#                                   actually found while researching a
+#                                   distroless migration.
+#   admin               CMD-SHELL — `|| true`. The shell spelling of the same
+#                                   mistake. Compose normalises a bare string
+#                                   to ["CMD-SHELL", …], which is execed
+#                                   differently from the argv form, so both
+#                                   need covering.
+#   webhook-gateway     NONE      — no healthcheck at all. Not fail-open so
+#                                   much as absent: every
+#                                   `condition: service_healthy` gate pointing
+#                                   at it silently degrades to "container
+#                                   started".
+#
+# Only `test:` (and `disable:`) are overridden. Compose merges healthcheck
+# mappings key by key, so interval/timeout/retries stay exactly as
+# docker-compose.yml sets them.
+#
+# Run it by hand:
+#   SMOKE_EXTRA_COMPOSE_FILE=scripts/compose-smoke-fail-open.yml \
+#     scripts/compose-smoke.sh          # MUST exit non-zero
+
+services:
+  integration-server:
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const http=require('http');const req=http.get('http://127.0.0.1:3010/health',res=>{res.resume();if(res.statusCode!==200)process.exitCode=1});req.on('error',()=>{})",
+        ]
+
+  admin:
+    healthcheck:
+      test: "wget -qO- http://127.0.0.1:3000/health || true"
+
+  webhook-gateway:
+    healthcheck:
+      disable: true

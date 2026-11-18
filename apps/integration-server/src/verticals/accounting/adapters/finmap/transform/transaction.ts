@@ -1,0 +1,23 @@
+import type { Transaction } from '../../../schema/transaction'
+
+export interface FinmapTransaction {
+  id: string
+  date: string
+  amount: number
+  currency?: string
+  comment?: string
+  type?: string
+  [key: string]: unknown
+}
+
+export function transformTransaction(raw: FinmapTransaction): Transaction {
+  return {
+    id: String(raw.id),
+    type: raw.type || undefined,
+    memo: raw.comment || undefined,
+    currency: raw.currency || undefined,
+    totalAmount: raw.amount,
+    createdAt: raw.date ? new Date(raw.date) : undefined,
+    metadata: raw as Record<string, unknown>,
+  }
+}

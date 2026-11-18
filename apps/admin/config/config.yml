@@ -1,0 +1,14 @@
+server:
+  port: 3000
+  host: 0.0.0.0
+
+# Local-dev fallback ONLY, so a bare `pnpm dev` boots without an .env.
+# SESSION_SECRET overrides this whenever it is set, and compose always sets it.
+# This value signs admin session cookies: it is committed to a public repo, so
+# anything running on it can have its sessions forged. Starting in production
+# on this placeholder is refused outright.
+session:
+  secret: change-me-to-a-long-random-string-at-least-32-chars
+
+admin_api:
+  url: http://localhost:3001

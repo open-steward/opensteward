@@ -1,0 +1,172 @@
+<% layout('../layout', { title: 'SQL access' }) -%>
+<%
+  const classBadge = { pii: 'badge--warning', financial: 'badge--info', secret: 'badge--danger', public: 'badge--success', internal: '' }
+  const statusBadge = { active: 'badge--success', expired: 'badge--warning', revoked: 'badge--danger' }
+  const fmt = (iso) => iso ? new Date(iso).toLocaleString() : '—'
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Admin</div>
+    <h1 class="page-header__title">SQL access</h1>
+    <p class="page-header__desc">
+      Read-only Postgres logins for BI tools, notebooks and warehouse loaders. Each login sees one
+      view per resource type, only the tenants and verticals it was granted, with personal data
+      masked unless it was created unmasked.
+      <a href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/guides/integrate/sql-access.md" target="_blank" rel="noopener">How it works</a>
+    </p>
+  </div>
+  <% if (canCreate) { %>
+  <div class="page-header__actions">
+    <a href="/sql-access/principals/new" class="btn btn--primary btn--sm">New login</a>
+  </div>
+  <% } %>
+</header>
+
+<% if (!status) { %>
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="empty-state">
+    <div class="empty-state__icon"><i class="ph ph-warning"></i></div>
+    <h3 class="empty-state__title">Status unavailable</h3>
+    <p class="empty-state__body">The SQL access status could not be read. Try again in a moment.</p>
+  </div>
+</div>
+<% } else if (!postgres) { %>
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="empty-state" data-sql-sqlite>
+    <div class="empty-state__icon"><i class="ph ph-database"></i></div>
+    <h3 class="empty-state__title">SQL access needs the Postgres backend</h3>
+    <p class="empty-state__body">This deployment stores its data in SQLite, which has no logins, roles or views to hand a BI tool. Run OpenSteward on Postgres (<code class="mono">DATABASE_URL</code>) to use SQL access — or export records with a <a href="/destinations">destination</a> instead.</p>
+    <div class="empty-state__actions">
+      <a class="btn btn--ghost" href="<%= (typeof docsServerUrl !== 'undefined' && docsServerUrl) || '' %>/guides/deployment/postgres-analytics.md" target="_blank" rel="noopener">Set up Postgres analytics →</a>
+    </div>
+  </div>
+</div>
+<% } else { %>
+
+<div class="card" style="margin-top: var(--space-6)" data-sql-status>
+  <div class="row row--between" style="align-items: flex-start; flex-wrap: wrap; gap: var(--space-3)">
+    <h2 class="card__title" style="margin: 0">Status</h2>
+    <% if (status.mode === 'managed') { %>
+    <form method="POST" action="/sql-access/provision" data-provision-form
+          data-confirm="<%= status.provisioned ? 'Re-provision the SQL views now?' : 'Create the SQL roles, schemas and views now?' %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--sm <%= status.provisioned && status.upToDate ? 'btn--ghost' : 'btn--primary' %>"><%= status.provisioned ? (status.upToDate ? 'Re-provision' : 'Update views') : 'Provision now' %></button>
+    </form>
+    <% } %>
+  </div>
+  <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-top: var(--space-3)">
+    <div class="stack stack--sm"><span class="eyebrow">Backend</span><p style="margin: 0">Postgres<%= status.database ? ' · ' + status.database : '' %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Mode</span><p style="margin: 0">
+      <span class="badge"><%= status.mode %></span>
+      <span class="muted" style="font-size: var(--text-xs)"><%= status.mode === 'managed' ? 'OpenSteward creates roles and views' : 'an operator runs the script below' %></span>
+    </p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Views</span><p style="margin: 0">
+      <% if (!status.provisioned) { %><span class="badge badge--warning">not provisioned</span>
+      <% } else { %>version <%= status.version %> <% if (status.upToDate) { %><span class="badge badge--success">up to date</span><% } else { %><span class="badge badge--warning">update available</span><% } %><% } %>
+    </p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Read host</span><p style="margin: 0" class="mono"><%= status.readHost || '— (the database host)' %></p></div>
+    <div class="stack stack--sm"><span class="eyebrow">Schemas</span><p style="margin: 0" class="mono"><%= status.schemas.masked %> · <%= status.schemas.pii %></p></div>
+  </div>
+  <% if (status.warnings && status.warnings.length) { %>
+  <div class="alert alert--warning" style="margin-top: var(--space-3)" role="status">
+    <% for (const w of status.warnings) { %><div><%= w %></div><% } %>
+  </div>
+  <% } %>
+</div>
+
+<% if (status.mode === 'manual') { %>
+<div class="card" style="margin-top: var(--space-4)" data-provision-script>
+  <div class="row row--between" style="align-items: center">
+    <h2 class="card__title" style="margin: 0">Provisioning script</h2>
+    <% if (script) { %><button type="button" class="btn btn--ghost btn--sm" data-copy="<%= script %>">Copy</button><% } %>
+  </div>
+  <p class="muted" style="font-size: var(--text-sm)">
+    <code class="mono">ANALYTICS_ADMIN_DATABASE_URL</code> is not set, so OpenSteward cannot create roles itself.
+    Run this as a role with <code class="mono">CREATEROLE</code> (for example <code class="mono">psql -f</code>) whenever the views are missing or out of date. It is one transaction and safe to re-run.
+  </p>
+  <% if (scriptError) { %>
+  <div class="alert alert--info" role="status"><%= scriptError.message %></div>
+  <% } else if (script) { %>
+  <details<%= status.provisioned && status.upToDate ? '' : ' open' %>>
+    <summary style="cursor: pointer">Show script (<%= script.split('\n').length %> lines)</summary>
+    <pre class="mono" style="margin-top: var(--space-2); max-height: 480px; overflow: auto; font-size: var(--text-xs); white-space: pre"><%= script %></pre>
+  </details>
+  <% } %>
+</div>
+<% } %>
+
+<div class="card" style="margin-top: var(--space-4); padding: 0">
+  <div style="padding: var(--space-4) var(--space-4) 0"><h2 class="card__title">Logins</h2></div>
+  <% if (principalsError) { %>
+  <div class="alert alert--info" style="margin: var(--space-4)" role="status"><%= principalsError.message %></div>
+  <% } else if (principals.length === 0) { %>
+  <p class="muted" style="padding: var(--space-4); margin: 0" data-principals-empty>
+    No SQL logins yet.<% if (!status.provisioned) { %> Provision the views first.<% } %>
+  </p>
+  <% } else { %>
+  <div class="table-scroll">
+  <table class="table" data-principals>
+    <thead><tr><th scope="col">Login</th><th scope="col">Scope</th><th scope="col">Data</th><th scope="col">Expires</th><th scope="col">Last rotated</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
+    <tbody>
+      <% for (const p of principals) { const active = p.status === 'active' %>
+      <tr>
+        <td><strong><%= p.label %></strong><div class="muted mono" style="font-size: var(--text-xs)"><%= p.username %></div></td>
+        <td style="font-size: var(--text-sm)"><%= p.scopeText %></td>
+        <td><% if (p.pii) { %><span class="badge badge--warning">unmasked (PII)</span><% } else { %><span class="badge">masked</span><% } %></td>
+        <td><%= p.expiresAt ? fmt(p.expiresAt) : 'never' %></td>
+        <td><%= p.lastRotatedAt ? fmt(p.lastRotatedAt) : '—' %></td>
+        <td><span class="badge <%= statusBadge[p.status] || '' %>"><%= p.status %></span><% if (p.revokedAt) { %><div class="muted" style="font-size: var(--text-xs)"><%= fmt(p.revokedAt) %></div><% } %></td>
+        <td>
+          <% if (active) { %>
+          <div class="row" style="gap: var(--space-2); justify-content: flex-end">
+            <form method="POST" action="/sql-access/principals/<%= encodeURIComponent(p.id) %>/rotate"
+                  data-confirm="Rotate the password of <%= p.username %>? The old one stops working and open sessions end.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--ghost btn--sm">Rotate</button>
+            </form>
+            <form method="POST" action="/sql-access/principals/<%= encodeURIComponent(p.id) %>/revoke"
+                  data-confirm="Revoke <%= p.username %>? It can no longer sign in and its open sessions end. This cannot be undone.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn--danger btn--sm">Revoke</button>
+            </form>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+  <% } %>
+</div>
+
+<% if (catalog) { %>
+<div class="card" style="margin-top: var(--space-4)" data-sql-catalog>
+  <h2 class="card__title">Catalog</h2>
+  <p class="muted" style="font-size: var(--text-sm)">
+    The <%= catalog.views.length %> views a login can read, in <code class="mono"><%= catalog.schemas.masked %></code>
+    (masked) and <code class="mono"><%= catalog.schemas.pii %></code> (unmasked). Columns are labelled by
+    classification; a masked login sees PII columns through their mask.
+  </p>
+  <% for (const v of catalog.views) { %>
+  <details class="stack stack--sm" style="border-top: 1px solid var(--border-subtle); padding: var(--space-2) 0">
+    <summary style="cursor: pointer"><span class="mono"><%= v.name %></span> <span class="muted" style="font-size: var(--text-xs)"><%= v.kind === 'system' ? 'system' : (v.vertical + ' · ' + v.resourceType) %> · <%= v.columns.length %> columns</span></summary>
+    <table class="table" style="margin-top: var(--space-2)">
+      <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col">Masked type</th><th scope="col">Class</th><th scope="col">Mask</th></tr></thead>
+      <tbody>
+        <% for (const c of v.columns) { %>
+        <tr>
+          <td class="mono"><%= c.name %></td>
+          <td class="mono"><%= c.type %></td>
+          <td class="mono"><%= c.maskedType %></td>
+          <td><span class="badge <%= classBadge[c.class] || '' %>"><%= c.class === 'pii' ? 'PII' : c.class %></span></td>
+          <td class="muted"><%= c.mask || '—' %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </details>
+  <% } %>
+</div>
+<% } %>
+<% } %>

@@ -1,0 +1,39 @@
+[
+  [
+    {
+      "Codigo": "01",
+      "Comentario": "",
+      "DataHora": "2024-03-01T10:15:00Z",
+      "Descricao": "AWB EMITIDO",
+      "Unidade": "VCP",
+      "UnidadeMunicipio": "CAMPINAS",
+      "UnidadeUF": "SP",
+      "Usuario": "EDI",
+      "Volumes": 1
+    },
+    {
+      "Codigo": "02",
+      "Comentario": "",
+      "DataHora": "2024-03-02T08:00:00Z",
+      "Descricao": "EM TRANSITO",
+      "Unidade": "REC",
+      "UnidadeMunicipio": "RECIFE",
+      "UnidadeUF": "PE",
+      "Usuario": "EDI",
+      "Volumes": 1
+    }
+  ],
+  [
+    {
+      "Codigo": "03",
+      "Comentario": "",
+      "DataHora": "2024-03-03T14:30:00Z",
+      "Descricao": "ENTREGUE",
+      "Unidade": "REC",
+      "UnidadeMunicipio": "RECIFE",
+      "UnidadeUF": "PE",
+      "Usuario": "EDI",
+      "Volumes": 1
+    }
+  ]
+]

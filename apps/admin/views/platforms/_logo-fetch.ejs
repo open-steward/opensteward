@@ -1,0 +1,445 @@
+<%#
+  Logo library status + fetch controls + live progress. Shared by
+  Platforms → Logos and wizard step 3.
+
+  First paint is server-rendered from the job row, so the page is truthful with
+  JavaScript off — it just stops updating. The poller below only mutates
+  existing nodes; it never builds the widget.
+-%>
+<%
+  const job = logoJob
+  const active = job && ['pending', 'running', 'cancelling'].includes(job.status)
+  const p = (job && job.progress) || null
+  const pct = p && p.total ? Math.min(100, Math.round((p.processed / p.total) * 100)) : 0
+  const stored = logoStatus ? logoStatus.count : 0
+  const storedMb = logoStatus ? (logoStatus.totalBytes / (1024 * 1024)).toFixed(1) : '0.0'
+
+  // Only `local` actually serves the stored copies, so only `local` changes
+  // visibly when they are deleted. Saying "reverts to monogram tiles" under
+  // `cdn` would be wrong, and under `none` it is already true.
+  const effectiveSource = (logo && logo.logoSource) || 'none'
+  // Fetching stores logos, and only self-hosting serves them. Fetching in any
+  // other mode burns forty minutes and the deployment's Brandfetch quota to
+  // fill a library nothing reads — and, because storing IS caching under their
+  // terms, it would do so without ever passing the agreement confirm attached
+  // to selecting this mode.
+  const canFetch = effectiveSource === 'local'
+  const deleteEffect =
+    effectiveSource === 'local'
+      ? 'The catalog reverts to monogram tiles until you fetch again.'
+      : effectiveSource === 'cdn'
+        ? 'The catalog is loading logos from Brandfetch’s CDN, so this changes nothing on screen — it only frees the stored copies.'
+        : 'The catalog is already showing monogram tiles, so this changes nothing on screen — it only frees the stored copies.'
+%>
+
+<div class="card" style="margin-bottom: var(--space-4)">
+  <h2 class="card__title">Logo library</h2>
+  <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)"
+     data-logo-region="summary">
+    <% if (stored > 0) { %>
+      <strong data-logo-stored><%= stored.toLocaleString() %></strong> platform<%= stored === 1 ? '' : 's' %>
+      have a stored logo (<span data-logo-size><%= storedMb %></span> MB).
+      <% if (logoStatus && logoStatus.lastFetchedAt) { %>
+      Last fetched <%= new Date(logoStatus.lastFetchedAt).toLocaleString() %>.
+      <% } %>
+    <% } else { %>
+      No logos stored yet. <strong>Fetch and self-host</strong> shows monogram tiles until a fetch completes.
+    <% } %>
+  </p>
+
+  <% if (!readOnly && !canFetch) { %>
+  <div class="alert alert--info">
+    <div>
+      <strong>Fetching needs “Fetch and self-host”.</strong>
+      <% if (effectiveSource === 'cdn') { %>
+        The catalog is loading logos from Brandfetch’s CDN, so stored copies would
+        not be used. Storing them is also caching under Brandfetch’s terms, which
+        needs an agreement on your own account — choosing that mode above is where
+        you confirm you have one.
+      <% } else { %>
+        The catalog is showing monogram tiles, so stored copies would not be used.
+        Choose <strong>Fetch and self-host</strong> above first.
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+
+  <% if (!readOnly && canFetch) { %>
+  <form method="POST" action="<%= actionBase %>/fetch" class="stack" style="gap: var(--space-3)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="row" style="gap: var(--space-4); flex-wrap: wrap; align-items: flex-end">
+      <div class="field" style="margin: 0">
+        <label class="field__label" for="logoScope">What to fetch</label>
+        <select class="input" name="scope" id="logoScope" style="min-width: 220px">
+          <option value="missing">Only platforms with no logo yet</option>
+          <option value="all">Everything, replacing what is stored</option>
+        </select>
+      </div>
+      <div class="field" style="margin: 0">
+        <label class="field__label" for="logoVertical">Limit to a vertical</label>
+        <select class="input" name="vertical" id="logoVertical" style="min-width: 200px">
+          <option value="">All verticals</option>
+          <% for (const v of verticals) { %>
+          <option value="<%= v %>"><%= v %></option>
+          <% } %>
+        </select>
+      </div>
+      <button type="submit" class="btn btn--primary" id="logoFetchStart" <%= active ? 'disabled' : '' %>>
+        <i class="ph ph-download-simple" aria-hidden="true"></i>
+        <%= active ? 'Fetch running…' : 'Start fetch' %>
+      </button>
+    </div>
+
+    <p class="muted" style="font-size: var(--text-sm); margin: 0">
+      Fetching the whole catalog takes roughly 40 minutes — Brandfetch limits requests
+      per IP, so the job deliberately paces itself. You can leave this page; progress is
+      stored server-side and picks up where you left it.
+    </p>
+  </form>
+  <% } %>
+
+  <%# Only meaningful once something is stored — before that "remaining" is
+      just "all", which the form above already does. The obvious case is a
+      cancelled run: some logos landed, the rest did not.
+      Outside the fetch gate on purpose: an operator who has switched to cdn or
+      monograms must still be able to delete what is stored. %>
+  <%# The wrapper renders even when the row inside it does not. A fetch that
+      stores its first logo turns this row on, and a swap needs a node that was
+      already on the page to put it into. %>
+  <div data-logo-region="stored-actions">
+  <% if (!readOnly && stored > 0) { %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-4); flex-wrap: wrap; align-items: center">
+    <% if (canFetch) { %>
+    <form method="POST" action="<%= actionBase %>/fetch" style="display: inline">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <input type="hidden" name="scope" value="missing">
+      <button type="submit" class="btn btn--secondary btn--sm" id="logoFetchRemaining"
+              <%= active ? 'disabled' : '' %>
+              title="Fetch only the platforms that have no stored logo — picks up where a cancelled run stopped">
+        <i class="ph ph-arrows-clockwise" aria-hidden="true"></i> Fetch remaining logos
+      </button>
+    </form>
+    <% } %>
+
+    <form method="POST" action="<%= actionBase %>/purge" style="display: inline"
+          data-logo-purge data-logo-purge-count="<%= stored %>">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--ghost btn--sm" <%= active ? 'disabled' : '' %>>
+        <i class="ph ph-trash" aria-hidden="true"></i> Delete stored logos
+      </button>
+    </form>
+
+    <span class="muted" style="font-size: var(--text-sm)"><%= deleteEffect %></span>
+  </div>
+  <% } %>
+  </div>
+</div>
+
+<div class="card" data-logo-job="<%= job ? job.id : '' %>"
+     data-logo-active="<%= active ? '1' : '' %>"
+     data-logo-status-url="<%= actionBase %>/status"
+     data-logo-panel-url="<%= actionBase %>/panel"
+     data-logo-cancel-url="<%= actionBase %>/cancel"
+     style="<%= active ? '' : 'display: none' %>">
+  <div class="row row--between" style="align-items: center; margin-bottom: var(--space-3)">
+    <%# Live only. A finished run is history and belongs in "Recent fetches"
+        below — rendering it here as well was what forced that list to exclude
+        its own newest entry, which hid the list whenever there was just one. %>
+    <h2 class="card__title" style="margin: 0">Fetch progress</h2>
+    <span class="badge" data-logo-state><%= job ? job.status : '' %></span>
+  </div>
+
+  <div class="alert alert--danger" data-logo-error
+       style="<%= job && job.error ? 'margin-bottom: var(--space-3)' : 'display: none' %>">
+    <div data-logo-error-text><%= job && job.error ? job.error : '' %></div>
+  </div>
+
+  <%# Throttling is the expected path on a full run, not a failure — Brandfetch
+      publishes 1,000 requests per 5 minutes per IP and the catalog is 1,545. %>
+  <div class="alert alert--warning" data-logo-throttle
+       style="<%= p && p.throttled > 0 ? 'margin-bottom: var(--space-3)' : 'display: none' %>">
+    <div>
+      <strong>Brandfetch is rate-limiting.</strong>
+      The job backs off and keeps going; nothing is lost. If it happens constantly,
+      raise <span class="mono">logos.fetch_delay_ms</span> under Settings.
+    </div>
+  </div>
+
+  <div class="row row--between" style="margin-bottom: var(--space-2)">
+    <span class="eyebrow">Progress</span>
+    <span class="mono" style="font-size: var(--text-sm)" data-logo-pct><%= pct %>%</span>
+  </div>
+  <div role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= pct %>"
+       aria-label="Logo fetch progress"
+       style="height: 6px; border-radius: var(--radius-full); background: var(--surface-2); overflow: hidden">
+    <div data-logo-bar style="height: 100%; width: <%= pct %>%; background: var(--accent); transition: width var(--motion-fast)"></div>
+  </div>
+
+  <%# aria-live sits on the text line, not the bar, and the script only rewrites
+      it when the integer percent changes — otherwise a screen reader announces
+      every few seconds for the better part of an hour. %>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-2)"
+     data-logo-line aria-live="polite">
+    <% if (p) { %>
+      <%= p.processed.toLocaleString() %> of <%= p.total.toLocaleString() %> ·
+      <%= p.fetched.toLocaleString() %> stored ·
+      <%= p.notFound.toLocaleString() %> with no logo available<%= p.skipped ? ' · ' + p.skipped.toLocaleString() + ' already had one' : '' %>
+    <% } %>
+  </p>
+
+  <% if (!readOnly) { %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-4)">
+    <button type="button" class="btn btn--secondary btn--sm" data-logo-cancel
+            style="<%= active ? '' : 'display: none' %>">Cancel fetch</button>
+  </div>
+  <% } %>
+</div>
+
+<%# Recent runs. Deliberately not a shared "background jobs" page — this is
+    the one place an operator asks the question, and the answer is short. %>
+<% const history = (typeof logoHistory !== 'undefined' && logoHistory ? logoHistory : [])
+     .filter(function (j) { return j.status !== 'running' && j.status !== 'pending' })
+     .slice(0, 10) %>
+<div data-logo-region="history">
+<% if (history.length) { %>
+<div class="card" style="margin-top: var(--space-4)">
+  <h2 class="card__title">Recent fetches</h2>
+  <div style="overflow-x: auto">
+    <table class="table" style="margin-top: var(--space-3)">
+      <thead>
+        <tr>
+          <th>Started</th>
+          <th>Status</th>
+          <th>Scope</th>
+          <th style="text-align: right">Stored</th>
+          <th style="text-align: right">No logo</th>
+          <th style="text-align: right">Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% for (const h of history) { %>
+        <%
+          const hp = h.progress || {}
+          const tone = h.status === 'completed' ? 'badge--success'
+            : h.status === 'failed' ? 'badge--danger'
+            : h.status === 'cancelled' ? 'badge--warning' : ''
+          const ms = h.startedAt && h.completedAt
+            ? new Date(h.completedAt) - new Date(h.startedAt) : null
+          const mins = ms === null ? null : Math.max(1, Math.round(ms / 60000))
+        %>
+        <tr>
+          <td><%= h.startedAt ? new Date(h.startedAt).toLocaleString() : '—' %></td>
+          <td>
+            <span class="badge <%= tone %>"><%= h.status %></span>
+            <% if (h.error) { %>
+            <div class="muted" style="font-size: var(--text-xs); margin-top: var(--space-1)"><%= h.error %></div>
+            <% } %>
+          </td>
+          <td class="muted" style="font-size: var(--text-sm)">
+            <%= h.vertical || h.slug || 'all platforms' %><%= h.force ? ' · replacing stored' : '' %>
+          </td>
+          <td style="text-align: right"><%= (hp.fetched || 0).toLocaleString() %></td>
+          <td style="text-align: right"><%= (hp.notFound || 0).toLocaleString() %></td>
+          <td style="text-align: right" class="muted"><%= mins === null ? '—' : mins + ' min' %></td>
+        </tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted" style="font-size: var(--text-sm); margin-top: var(--space-3)">
+    Kept for <span class="mono">logos.job_retention_days</span> (default 30), and cleared when
+    you delete the stored logos. Every run is also recorded in the audit log.
+  </p>
+</div>
+<% } %>
+</div>
+
+<script>
+;(function () {
+  var card = document.querySelector('[data-logo-job]')
+  if (!card) return
+
+  var CSRF = <%- jsonForScript(csrfToken) %>
+  var statusUrl = card.getAttribute('data-logo-status-url')
+  var cancelUrl = card.getAttribute('data-logo-cancel-url')
+  var bar = card.querySelector('[data-logo-bar]')
+  var pctEl = card.querySelector('[data-logo-pct]')
+  var lineEl = card.querySelector('[data-logo-line]')
+  var stateEl = card.querySelector('[data-logo-state]')
+  var errEl = card.querySelector('[data-logo-error]')
+  var errText = card.querySelector('[data-logo-error-text]')
+  var throttleEl = card.querySelector('[data-logo-throttle]')
+  var cancelBtn = card.querySelector('[data-logo-cancel]')
+  var startBtn = document.getElementById('logoFetchStart')
+  var storedEl = document.querySelector('[data-logo-stored]')
+  var sizeEl = document.querySelector('[data-logo-size]')
+
+  var TERMINAL = ['completed', 'failed', 'cancelled']
+  var startedAt = Date.now()
+  var lastPct = -1
+  var timer = null
+  var stopped = false
+  // Only announce a run that we watched finish. Without this, every reload of
+  // a tab whose last job was cancelled re-fires the cancellation toast, because
+  // the first poll sees a terminal status and treats it as news.
+  var sawActive = card.getAttribute('data-logo-active') === '1'
+
+  function n(v) { return (v || 0).toLocaleString() }
+
+  // Fast while the operator is likely watching, slower once they have wandered
+  // off. A run is tens of minutes; a fixed 2s poll would be thousands of
+  // requests for a decorative feature.
+  function delay() {
+    var age = Date.now() - startedAt
+    if (age < 120000) return 2000
+    if (age < 600000) return 5000
+    return 10000
+  }
+
+  // What a finished run leaves stale is everything the poller does not touch:
+  // the stored count, both stored-logo buttons, and the run history. All three
+  // are server-rendered from state this page was built before, and two of them
+  // are absent from the DOM entirely until there is something to show — so
+  // there was nothing for a DOM patch to update, and the tab stayed wrong
+  // until the operator reloaded it by hand.
+  //
+  // Refetch the panel and swap those regions in, rather than rebuild their
+  // markup here. A table rendered in both EJS and JavaScript is two renderers
+  // for one thing, and they drift.
+  //
+  // The panel is a fragment, not the page: /platforms renders all nine
+  // verticals and every adapter row, which is a lot of work to throw away for
+  // one card. The fetch form is deliberately not a region — replacing it would
+  // discard a scope the operator had already chosen.
+  function refreshRegions() {
+    var url = card.getAttribute('data-logo-panel-url')
+    if (!url || !window.DOMParser) return
+    fetch(url, { credentials: 'same-origin', headers: { accept: 'text/html' } })
+      .then(function (r) { return r.ok ? r.text() : null })
+      .then(function (html) {
+        if (!html) return
+        var doc = new DOMParser().parseFromString(html, 'text/html')
+        var regions = document.querySelectorAll('[data-logo-region]')
+        for (var i = 0; i < regions.length; i++) {
+          var name = regions[i].getAttribute('data-logo-region')
+          var next = doc.querySelector('[data-logo-region="' + name + '"]')
+          // Only ever replaces the inside of a node the page already had, and
+          // nothing inside a region is a script, so this cannot introduce one.
+          if (next) regions[i].innerHTML = next.innerHTML
+        }
+      })
+      .catch(function () { /* the page stays truthful, just not current */ })
+  }
+
+  function render(payload) {
+    var job = payload && payload.job
+    var status = payload && payload.status
+    if (status && storedEl) storedEl.textContent = n(status.count)
+    if (status && sizeEl) sizeEl.textContent = (status.totalBytes / (1024 * 1024)).toFixed(1)
+    if (!job) return
+
+    card.style.display = ''
+    if (stateEl) stateEl.textContent = job.status
+    var active = ['pending', 'running', 'cancelling'].indexOf(job.status) !== -1
+    if (cancelBtn) cancelBtn.style.display = active ? '' : 'none'
+    if (startBtn) {
+      startBtn.disabled = active
+      startBtn.textContent = active ? 'Fetch running…' : 'Start fetch'
+    }
+
+    if (errEl) {
+      errEl.style.display = job.error ? '' : 'none'
+      if (job.error && errText) errText.textContent = job.error
+    }
+
+    var p = job.progress
+    if (!p) return
+    if (throttleEl) throttleEl.style.display = p.throttled > 0 ? '' : 'none'
+
+    var pct = p.total ? Math.min(100, Math.round((p.processed / p.total) * 100)) : 0
+    if (bar) bar.style.width = pct + '%'
+    if (pctEl) pctEl.textContent = pct + '%'
+    card.querySelector('[role="progressbar"]').setAttribute('aria-valuenow', String(pct))
+
+    if (pct !== lastPct && lineEl) {
+      lastPct = pct
+      var parts = [n(p.processed) + ' of ' + n(p.total), n(p.fetched) + ' stored',
+                   n(p.notFound) + ' with no logo available']
+      if (p.skipped) parts.push(n(p.skipped) + ' already had one')
+      if (p.etaMs && active) parts.push('~' + Math.max(1, Math.round(p.etaMs / 60000)) + ' min remaining')
+      lineEl.textContent = parts.join(' · ')
+    }
+
+    if (TERMINAL.indexOf(job.status) !== -1 && !stopped) {
+      stopped = true
+      if (timer) clearTimeout(timer)
+      refreshRegions()
+      if (window.oiToast && sawActive) {
+        window.oiToast({
+          tone: job.status === 'completed' ? 'success' : 'danger',
+          body: job.status === 'completed'
+            ? 'Logo fetch finished — ' + n(p.fetched) + ' stored.'
+            : 'Logo fetch ' + job.status + '.',
+        })
+      }
+    }
+  }
+
+  function poll() {
+    if (stopped) return
+    // Pause while the tab is hidden; a run left open all afternoon would
+    // otherwise keep polling for nothing.
+    if (document.hidden) { timer = setTimeout(poll, 5000); return }
+    fetch(statusUrl, { credentials: 'same-origin', headers: { accept: 'application/json' } })
+      .then(function (r) { return r.ok ? r.json() : null })
+      .then(function (payload) { if (payload) render(payload) })
+      .catch(function () { /* transient — keep the widget up and retry */ })
+      .then(function () { if (!stopped) timer = setTimeout(poll, delay()) })
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function () {
+      var id = card.getAttribute('data-logo-job')
+      if (!id) return
+      if (!window.confirm('Cancel the running logo fetch? Logos already fetched are kept.')) return
+      cancelBtn.disabled = true
+      cancelBtn.textContent = 'Cancelling…'
+      fetch(cancelUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/x-www-form-urlencoded', accept: 'application/json' },
+        // _csrf MUST be in the body — csrfProtection reads request.body._csrf
+        // and never a header, so a header-only token is a flat 403.
+        body: new URLSearchParams({ _csrf: CSRF, id: id }).toString(),
+      }).catch(function () {}).then(function () {
+        // Never assume it landed; the poller reports the real terminal state.
+        cancelBtn.disabled = false
+        cancelBtn.textContent = 'Cancel fetch'
+      })
+    })
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && !stopped) { if (timer) clearTimeout(timer); poll() }
+  })
+
+  // Delegated rather than bound to the form. The Delete button lives inside a
+  // region that is replaced when a run finishes, and a listener bound to the
+  // old node would be discarded with it — leaving the button with no confirm
+  // at all, which is the worst possible way for this to fail.
+  var DELETE_EFFECT = <%- jsonForScript(deleteEffect) %>
+  document.addEventListener('submit', function (ev) {
+    var form = ev.target && ev.target.closest && ev.target.closest('[data-logo-purge]')
+    if (!form) return
+    var count = form.getAttribute('data-logo-purge-count')
+    if (!window.confirm('Delete all ' + count + ' stored logos?\n\n' + DELETE_EFFECT)) {
+      ev.preventDefault()
+    }
+  })
+
+  // Poll only while something is actually running. A finished job is already
+  // fully rendered server-side and has nothing left to report.
+  if (card.getAttribute('data-logo-active') === '1') poll()
+})()
+</script>

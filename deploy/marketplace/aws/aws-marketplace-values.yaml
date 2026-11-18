@@ -1,0 +1,65 @@
+# AWS Marketplace (Container Product, Helm delivery) — image-source overlay.
+#
+# This is a THIN values overlay. It is layered LAST, on top of the AWS overlay,
+# and overrides ONLY where OpenSteward's container images are pulled from:
+#
+#   helm install os deploy/helm/opensteward \
+#     -f deploy/helm/overlays/aws-values.yaml \              # EKS topology (ingress, ESO, RDS, ...)
+#     -f deploy/marketplace/aws/aws-marketplace-values.yaml \ # this file: AWS Marketplace ECR images
+#     -f my-secrets-and-hosts.yaml                           # buyer's hosts + secret wiring
+#
+# Why a separate file: a buyer who subscribes through AWS Marketplace pulls the
+# five images from the AWS-managed ECR that the Marketplace Management Portal
+# assigns to the Helm delivery option — NOT from ghcr.io/open-steward. The base
+# chart's image.registry is a single overridable "<registry>/<owner>" string and
+# the image helper forms "<registry>/<service>" (see opensteward/_helpers.tpl),
+# so pointing the whole platform at the Marketplace ECR is a one-line override.
+#
+# Keep this file PURE VALUES — no topology, no secrets, no hosts. Those belong to
+# the AWS overlay and the buyer's own values file. The only thing that changes
+# between "pull from GHCR" and "pull from AWS Marketplace" is the block below.
+
+image:
+  # AWS-managed Marketplace ECR registry + path.
+  #
+  # PLACEHOLDER — the AWS Marketplace Management Portal assigns this when you add
+  # the Helm delivery option to the Container Product; copy it verbatim from the
+  # portal's "Push commands" / repository URL. It is account/region-pinned and
+  # looks like:
+  #   <SELLER_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/<MARKETPLACE_PATH>
+  # where <MARKETPLACE_PATH> is the namespace the portal gives you (commonly
+  # of the form <product-uuid>/opensteward). The image helper appends "/<service>"
+  # to this, so each of the five services resolves to:
+  #   <registry>/admin , <registry>/admin-api , <registry>/docs-server ,
+  #   <registry>/webhook-gateway , <registry>/integration-server
+  # Do NOT include a trailing slash and do NOT include a service name here.
+  registry: <SELLER_ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/<MARKETPLACE_PATH>
+
+  # Pin by DIGEST, not tag. AWS Marketplace references every image by digest, and
+  # the chart's image helper prefers digest over tag (forms "<registry>/<service>@<digest>").
+  #
+  # PLACEHOLDER — set to the multi-arch manifest-list digest for the platform
+  # release you are publishing (the same sha256 you pushed to the Marketplace ECR
+  # for ALL five services; the images CI publishes the five services at one
+  # coordinated digest per service). Replace with the real value, e.g.
+  #   digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  #
+  # NOTE: a single image.digest is shared by every service, which assumes the five
+  # services share one manifest-list digest for the release. If your push produced
+  # a distinct digest per service, do NOT use image.digest here — the chart has no
+  # per-service image override, so either publish the five services under one
+  # coordinated manifest-list digest, or leave image.digest empty and pin by tag.
+  digest: sha256:<PLATFORM_RELEASE_MANIFEST_DIGEST>
+
+  # Leave tag empty: digest wins in the helper, and an empty tag falls back to
+  # Chart.appVersion only if no digest is set. Keeping it empty avoids confusion.
+  tag: ""
+
+  # Marketplace ECR content is immutable + digest-pinned, so re-pulling on every
+  # restart is wasteful. IfNotPresent is correct for digest refs.
+  pullPolicy: IfNotPresent
+
+  # No pullSecrets: nodes pull from the Marketplace ECR using the node IAM role /
+  # the AWS Marketplace entitlement, not a registry credential in the cluster.
+  # (Ensure the node role has ECR read + the buyer is subscribed — see README.)
+  pullSecrets: []

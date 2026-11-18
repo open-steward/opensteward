@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Document signing">
+  <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 4 H20 L26 10 V26 a2 2 0 0 1 -2 2 H8 a2 2 0 0 1 -2 -2 V6 a2 2 0 0 1 2 -2 z"></path>
+    <path d="M20 4 V10 H26"></path>
+    <path d="M10 14 H22"></path>
+    <path d="M10 18 H18"></path>
+    <path d="M10 22 c2 -2 4 2 6 0 c2 -2 4 2 6 0" stroke-width="1.6"></path>
+  </g>
+</svg>

@@ -1,0 +1,72 @@
+{
+  "name": "integration-server",
+  "version": "1.0.0",
+  "description": "Self-hosted integration aggregator — unified REST API across all verticals and platforms.",
+  "license": "Elastic-2.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "db-copy": "tsx src/db-copy.ts",
+    "build": "tsc -b",
+    "start": "node dist/index.js",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc -b",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json",
+    "lint": "eslint src",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "generate-openapi": "tsx scripts/generate-openapi.ts",
+    "generate:platforms-doc": "tsx scripts/generate-platforms-doc.ts",
+    "generate:env-doc": "tsx scripts/generate-env-doc.ts",
+    "generate:api-reference": "tsx scripts/generate-api-reference.ts",
+    "generate:postman": "tsx scripts/generate-postman.ts",
+    "generate:all": "pnpm run generate-openapi && pnpm run generate:api-reference && pnpm run generate:postman && pnpm run generate:platforms-doc && pnpm run generate:env-doc",
+    "fetch:logos": "tsx scripts/fetch-logos.ts",
+    "mint-api-key": "tsx scripts/mint-api-key.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.4.2",
+    "@fastify/rate-limit": "^11.2.2",
+    "@fastify/static": "^10.1.10",
+    "@opensteward/design-system": "workspace:*",
+    "@opensteward/destinations": "workspace:*",
+    "@opensteward/license-token": "workspace:*",
+    "@opensteward/shared": "workspace:*",
+    "axios": "^1.21.1",
+    "better-sqlite3": "^13.1.1",
+    "dotenv": "^18.0.10",
+    "fastify": "^5.12.8",
+    "ioredis": "^6.0.0",
+    "jose": "^6.2.17",
+    "js-yaml": "^5.5.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@opensteward/codegen": "workspace:*",
+    "@opensteward/sdk": "workspace:*",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "eslint": "^10.14.0",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "author": {
+    "name": "Falco Consulting AB"
+  },
+  "maintainers": [
+    {
+      "name": "Falco Consulting AB",
+      "url": "https://opensteward.dev"
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+<% layout('../layout', { title: 'API key detail' }) -%>
+<% if (!apiKey) { %>
+<h1>API key not found</h1>
+<p class="muted" style="margin-top: var(--space-2)">
+  No key with this id exists. It may have been created against a different deployment, or the id may be mistyped.
+</p>
+<p style="margin-top: var(--space-4)"><a href="/api-keys">Back to API keys</a></p>
+<% } else { %>
+<%
+  const isAdmin = user && user.role === 'admin'
+  const fmtDate = (n) => n ? new Date(n).toLocaleString() : '—'
+  const scopes = apiKey.scopes
+  const isWildcard = scopes.length === 1 && scopes[0] === '*'
+%>
+<div class="row row--between">
+  <h1><%= apiKey.label || apiKey.prefix %></h1>
+  <%# data-modal-omit: opened as a dialog from the list, the close button is
+      already the way back, so a second one would only compete with it. The
+      page keeps it. %>
+  <a href="/api-keys" class="btn btn--ghost btn--sm" data-modal-omit>Back to API keys</a>
+</div>
+
+<div class="card" style="margin-top: var(--space-6)">
+  <div class="grid" style="grid-template-columns: 1fr 1fr; gap: var(--space-4)">
+    <div class="stack stack--sm">
+      <span class="eyebrow">Key id</span>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm)"><%= apiKey.id %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Tenant</span>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm)"><%= apiKey.tenantId %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Mode</span>
+      <p style="margin: 0; font-size: var(--text-sm)">
+        <span class="badge"><%= apiKey.mode === 'test' ? 'Test' : 'Live' %></span>
+        <span class="muted" style="font-size: var(--text-xs)"><%= apiKey.mode === 'test' ? '— sandbox only, /test/v1/*' : '— live API, /v1/*' %></span>
+      </p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Prefix</span>
+      <p class="mono" style="margin: 0; font-size: var(--text-sm)"><%= apiKey.prefix %>…</p>
+      <%# The question this page gets opened to answer. The secret is hashed on
+          the way in and the mint response is the only time it exists in one
+          piece — saying so here saves a hunt that cannot succeed. %>
+      <p class="muted" style="margin: 0; font-size: var(--text-xs)">
+        The identifying head of the key, not the secret. The full key is shown once at mint time and cannot be recovered — if it is lost, revoke this key and mint another.
+      </p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Label</span>
+      <p style="margin: 0"><%= apiKey.label || '—' %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Status</span>
+      <p style="margin: 0">
+        <% if (apiKey.revokedAt) { %>
+        <span class="badge">Revoked</span>
+        <% } else { %>
+        <span class="badge badge--success">Active</span>
+        <% } %>
+      </p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Created</span>
+      <p style="margin: 0"><%= fmtDate(apiKey.createdAt) %></p>
+    </div>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Last used</span>
+      <p style="margin: 0">
+        <% if (apiKey.lastUsedAt) { %><%= fmtDate(apiKey.lastUsedAt) %><% } else { %>
+        <span class="muted">Never used to authenticate a request</span>
+        <% } %>
+      </p>
+    </div>
+    <% if (apiKey.revokedAt) { %>
+    <div class="stack stack--sm">
+      <span class="eyebrow">Revoked</span>
+      <p style="margin: 0"><%= fmtDate(apiKey.revokedAt) %></p>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="stack stack--sm" style="margin-top: var(--space-6)">
+    <span class="eyebrow">
+      Scopes<% if (!isWildcard) { %> (<%= scopes.length %>)<% } %>
+    </span>
+    <% if (isWildcard) { %>
+    <p style="margin: 0">
+      <span class="badge badge--warning">All access</span>
+    </p>
+    <p class="muted" style="margin: 0; font-size: var(--text-xs)">
+      Minted with the <span class="mono">*</span> wildcard: every endpoint the developer API exposes, reads and writes alike.
+    </p>
+    <% } else { %>
+    <%# The list row shows only the count — a safe-default key has one of these
+        per vertical plus the shared set, and writing one line each there would
+        be unreadable. This page writes them all out. %>
+    <div class="row" style="gap: var(--space-2); flex-wrap: wrap">
+      <% for (const s of scopes) { %><span class="badge mono"><%= s %></span><% } %>
+    </div>
+    <% } %>
+  </div>
+
+  <% if (isAdmin && !apiKey.revokedAt) { %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-6); flex-wrap: wrap">
+    <form method="POST" action="/api-keys/<%= apiKey.id %>/revoke" style="display: inline"
+      onsubmit="return confirm('Revoke this API key? Any service using it will start receiving 401.')">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="btn btn--danger btn--sm">Revoke</button>
+    </form>
+  </div>
+  <% } %>
+</div>
+<% } %>

@@ -1,0 +1,56 @@
+<% layout('../layout', { title: 'New webhook' }) -%>
+<div style="max-width: 720px">
+  <h1>New webhook subscription</h1>
+  <p class="muted" style="margin: var(--space-1) 0 var(--space-6)">
+    Receive HTTPS POSTs when customer or connect-link events occur. Body is JSON; verify the <span class="mono">X-OI-Signature</span> header by HMAC-SHA256-ing the request body with the shared secret returned on the next page.
+  </p>
+
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="/webhooks" class="card stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <%# A <select>, as on /api-keys/new and wizard step 7: a free-text id has
+        to be known and typed exactly, and a typo scopes the subscription to a
+        tenant that does not exist — its events then go nowhere, silently.
+        The select lists every registered tenant, whatever is pre-filled.
+
+        The typeable fallback is not a nicety. `tenants` comes from
+        listTenants(...).catch(() => []), so an admin-api outage would
+        otherwise remove the control entirely and the POST would still need
+        a tenant — the failure class tests/journeys/
+        upstream-failure-is-not-emptiness.test.ts exists to prevent. %>
+    <% const tenantChoices = (typeof tenants !== 'undefined' && tenants) || [] %>
+    <% const currentTenant = defaults.tenantId || 'default' %>
+    <div class="field">
+      <label class="field__label" for="wh-tenant">Tenant *</label>
+      <% if (tenantChoices.length > 0) { %>
+      <select class="select" name="tenantId" id="wh-tenant" required>
+        <%# The echoed value may not be in the list (a tenant removed between
+            renders, or an id typed during an outage). Keep it selectable
+            rather than silently re-scoping the subscription on resubmit. %>
+        <% if (!tenantChoices.some((t) => t.id === currentTenant)) { %>
+        <option value="<%= currentTenant %>" selected><%= currentTenant %> (not in tenant list)</option>
+        <% } %>
+        <% for (const t of tenantChoices) { %>
+        <option value="<%= t.id %>"<%= t.id === currentTenant ? ' selected' : '' %>><%= t.name %> (<%= t.id %>)</option>
+        <% } %>
+      </select>
+      <span class="field__hint">This subscription receives only this tenant's events. Register more at <a href="/tenants">/tenants</a>.</span>
+      <% } else { %>
+      <input class="input mono" name="tenantId" id="wh-tenant" required value="<%= currentTenant %>" placeholder="default" autocomplete="off">
+      <span class="field__hint">The tenant list could not be loaded, so this could not be filled in for you — check the id before saving. Registered tenants are at <a href="/tenants">/tenants</a>.</span>
+      <% } %>
+    </div>
+
+    <%# Same partial wizard step 8 renders. One implementation, two surfaces. %>
+    <%- include('_subscription-fields', { defaults, variant: 'full' }) %>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary">Create subscription</button>
+      <a href="/webhooks" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form>
+</div>

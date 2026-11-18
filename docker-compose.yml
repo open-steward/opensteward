@@ -1,0 +1,608 @@
+# OpenSteward — base compose file. DO NOT edit for operator customizations.
+#
+# Local tweaks (extra ports, replica counts, reverse-proxy network, env
+# overrides, mounted CA certs, etc.) belong in `docker-compose.override.yml`,
+# which is gitignored and automatically merged on top of this file by
+# `docker compose up`. Copy `docker-compose.override.example.yml` to get
+# started.
+#
+# Editing this file directly works, but `git pull` will conflict every
+# time we ship a new release. `pnpm doctor` warns when it sees uncommitted
+# edits on this file with no override present.
+
+services:
+  # ── Auxiliary Apps ─────────────────────────────────────────────────────────
+
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: admin
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    # Published on loopback only, like every port in this file: the services
+    # speak plain http, so 0.0.0.0 would put the admin login (and the other
+    # apps) on the LAN in cleartext. Reach them from another machine through
+    # a TLS reverse proxy (docs/deployment/custom-domain.md), or widen a
+    # mapping deliberately in docker-compose.override.yml.
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - ./apps/admin/config/config.yml:/app/apps/admin/config/config.yml:ro
+      - ./docs/platforms:/app/docs/platforms:ro
+    environment:
+      # ── Platform logos ────────────────────────────────────────────────
+      # OpenSteward ships no logos: Brandfetch's terms prohibit caching their
+      # CDN without an agreement, and the logos are third-party trademarks.
+      # Default (unset) renders brand-tinted monogram tiles and makes no
+      # external requests. See docs/operations/platform-logos.md.
+      #
+      #   cdn   — hotlink Brandfetch (the mode they sanction). No volume
+      #           needed; the browser fetches each logo directly.
+      #   local — serve logos you fetched yourself with
+      #           `BRANDFETCH_CLIENT_ID=<id> pnpm --filter integration-server
+      #           fetch:logos`. They land in docs/platforms/logos, which the
+      #           mount above already exposes, so no extra volume is needed.
+      #
+      # - LOGO_SOURCE=cdn
+      # - BRANDFETCH_CLIENT_ID=your-client-id
+      #
+      # Same value integration-server gets below. The admin does not serve
+      # traffic on it — it prints it, into the agent config snippet handed to a
+      # customer after minting an MCP token. Without it the admin can only fall
+      # back to companyInfo.baseUrl, and a deployment that configures the API's
+      # public URL here alone would hand out a snippet that says it is
+      # incomplete while the value was known all along.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-}
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-to-a-long-random-string-at-least-32-chars}
+      - ADMIN_API_URL=http://admin-api:3001
+      # Browser-facing URL of docs-server — used by the admin to build
+      # absolute hrefs for cross-app links (per-platform Guide link,
+      # wizard step 5 integration-guide callout). Must match what the
+      # operator's browser sees, NOT the docker-service DNS name.
+      - DOCS_SERVER_URL=${DOCS_SERVER_URL:-http://localhost:3003}
+      # Browser-facing admin-api base URL for "Sign in with <IdP>" links and the
+      # SSO handoff round-trip. Must be what the user's browser reaches.
+      - SSO_PUBLIC_BASE_URL=${SSO_PUBLIC_BASE_URL:-http://localhost:3001}
+      # Whether the session and flash cookies carry `Secure`. Unset means
+      # NODE_ENV === 'production', which is what a stock deployment gets.
+      # Set false ONLY to serve the admin UI over plain HTTP to something that
+      # is not localhost — browsers refuse to store a Secure cookie there, so
+      # login silently fails. It puts a control-plane session token on the wire
+      # in cleartext; see apps/admin/src/core/auth/session-cookie.ts.
+      - SESSION_COOKIE_SECURE=${SESSION_COOKIE_SECURE:-}
+    depends_on:
+      admin-api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  admin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: admin-api
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    # Bound to LOOPBACK, not 0.0.0.0. docs/security/README.md requires admin-api
+    # to be internal-only: siblings reach it over the compose network by service
+    # name (admin-api:3001) regardless of this mapping, so publishing on the
+    # host's routable IP would only expose the operator API + first-run setup to
+    # the network. 127.0.0.1 keeps host-local access for debugging; the hardening
+    # overlay drops the mapping entirely.
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - admin-data:/app/apps/admin-api/data
+      - ./apps/admin-api/config/config.yml:/app/apps/admin-api/config/config.yml:ro
+    environment:
+      # Shared secret that sibling services present as X-Service-Secret to read
+      # runtime settings. Distinct from ADMIN_SECRET, which authenticates the
+      # opposite direction (admin-api → integration-server): one secret for both
+      # would mean a compromise of either service opened both paths.
+      # Unset means services cannot read settings — the guard never falls open.
+      - SERVICE_SECRET=${SERVICE_SECRET:-}
+      - JWT_SECRET=${JWT_SECRET:-change-me-jwt-secret-at-least-32-chars}
+      # Lifetime of an operator session token (ms/zeit string). Defaults to
+      # 24h; shorten it where operators sign in from shared machines.
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-}
+      # Encrypts SSO provider secrets at rest (AES-256-GCM). Reuse the same
+      # deployment-wide secret as the integration-server credential store.
+      - STORE_SECRET=${STORE_SECRET:-change-me-store-secret-at-least-32-chars}
+      # Public URLs for the SSO round-trip. SSO_PUBLIC_BASE_URL is where IdPs
+      # send SAML ACS / OIDC callbacks and where SCIM clients connect;
+      # ADMIN_UI_URL is where the post-login handoff lands.
+      - SSO_PUBLIC_BASE_URL=${SSO_PUBLIC_BASE_URL:-http://localhost:3001}
+      - ADMIN_UI_URL=${ADMIN_UI_URL:-http://localhost:3000}
+      # admin-api is a CLIENT of integration-server's /admin/* routes — it
+      # forwards the operator's JWT-authenticated request on with this header
+      # (core/proxy/client.ts:79, gated on `config.adminSecret`). Without it the
+      # ternary sends no header at all and every passthrough 403s: api-keys,
+      # connect-sessions, end-users, end-user-tokens, platforms, sync-jobs,
+      # webhook-subscriptions — i.e. most of the admin UI.
+      - ADMIN_SECRET=${ADMIN_SECRET:-}
+      # First-run gate. POST /api/auth/setup creates the initial admin account
+      # and only demands X-Bootstrap-Token when this is set (core/routes/auth.ts).
+      # scripts/generate-secrets.sh mints one; it must be forwarded here —
+      # without it, POST /api/auth/setup on a fresh deployment is open to
+      # whoever reaches published :3001 first, whatever the operator put in
+      # their .env.
+      - BOOTSTRAP_TOKEN=${BOOTSTRAP_TOKEN:-}
+      # Optional embedded Apache Superset dashboards (the `analytics` profile
+      # below; docs/deployment/superset.md). Off while SUPERSET_URL is empty.
+      # SUPERSET_URL is how admin-api reaches Superset (compose DNS);
+      # SUPERSET_PUBLIC_URL is what the operator's browser frames.
+      - SUPERSET_URL=${SUPERSET_URL:-}
+      - SUPERSET_PUBLIC_URL=${SUPERSET_PUBLIC_URL:-}
+      - SUPERSET_SERVICE_USERNAME=${SUPERSET_SERVICE_USERNAME:-}
+      - SUPERSET_SERVICE_PASSWORD=${SUPERSET_SERVICE_PASSWORD:-}
+      - INTEGRATION_SERVER_URL=http://integration-server:3010
+      - ACCOUNTING_URL=http://integration-server:3010
+      - CRM_URL=http://integration-server:3010
+      - ECOMMERCE_URL=http://integration-server:3010
+      - LOGISTICS_URL=http://integration-server:3010
+    depends_on:
+      integration-server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Dev only: a mock identity provider for rehearsing admin SSO ──────────
+  # Off unless the profile is asked for — most operators never need it:
+  #
+  #   docker compose --profile sso-dev up -d      (or COMPOSE_PROFILES=sso-dev in .env)
+  #
+  # `sso-dev-idp` is the mock OpenID Provider (scripts/dev-oidc-issuer.ts):
+  # authorization-code sign-in with a persona picker, plus client_credentials
+  # tokens. Published on the host's loopback only, so a browser reaches it at
+  # http://localhost:9400. `sso-dev-proxy` shares admin-api's network
+  # namespace and forwards the container's localhost:9400 to it, because
+  # admin-api accepts a plain-http issuer on loopback only (oidc-provider.ts
+  # isLoopback): one issuer string, http://localhost:9400, for the browser
+  # and for admin-api alike. Sharing the namespace means the bridge must be
+  # recreated whenever admin-api is — `up` with the profile active does that
+  # itself; a redeploy without it leaves the bridge on a dead container.
+  # See docs/operations/sso-testing.md.
+  sso-dev-idp:
+    build:
+      context: .
+      dockerfile: scripts/dev-oidc-issuer.Dockerfile
+    profiles: ["sso-dev"]
+    ports:
+      - "127.0.0.1:9400:9400"
+    restart: unless-stopped
+  sso-dev-proxy:
+    image: alpine/socat:1.8.0.0
+    profiles: ["sso-dev"]
+    network_mode: "service:admin-api"
+    depends_on:
+      - admin-api
+      - sso-dev-idp
+    command: TCP-LISTEN:9400,fork,reuseaddr TCP:sso-dev-idp:9400
+    restart: unless-stopped
+
+  docs-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: docs-server
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    ports:
+      - "127.0.0.1:3003:3003"
+    volumes:
+      # Mount the entire docs folder so /guides/* can render every markdown
+      # file (architecture diagrams, dev-api walkthrough, etc.). The image
+      # ships its own copy of docs/ (see the Dockerfile's /docs-out stage);
+      # this mount overrides it, so local edits show without a rebuild.
+      - ./docs:/app/docs:ro
+    environment:
+      # ── Platform logos ────────────────────────────────────────────────
+      # OpenSteward ships no logos: Brandfetch's terms prohibit caching their
+      # CDN without an agreement, and the logos are third-party trademarks.
+      # Default (unset) renders brand-tinted monogram tiles and makes no
+      # external requests. See docs/operations/platform-logos.md.
+      #
+      #   cdn   — hotlink Brandfetch (the mode they sanction). No volume
+      #           needed; the browser fetches each logo directly.
+      #   local — serve logos you fetched yourself with
+      #           `BRANDFETCH_CLIENT_ID=<id> pnpm --filter integration-server
+      #           fetch:logos`. They land in docs/platforms/logos, which the
+      #           mount above already exposes, so no extra volume is needed.
+      #
+      # - LOGO_SOURCE=cdn
+      # - BRANDFETCH_CLIENT_ID=your-client-id
+      # docs-server overlays /openapi/server-variables (admin-DB + config.yml
+      # merged) onto the on-disk openapi.json at request time. Unset → the
+      # served spec is the static on-disk artifact.
+      - INTEGRATION_SERVER_URL=http://integration-server:3010
+      # Reads runtime settings from admin-api — specifically the operator's
+      # logo source and Brandfetch client ID, so the public catalog agrees with
+      # the admin's. Without it docs-server falls back to LOGO_SOURCE from the
+      # environment and the two pages can disagree about whether logos exist.
+      - SERVICE_SECRET=${SERVICE_SECRET:-}
+      # Operator branding for the portal (/branding.css + /branding/favicon).
+      # Fetched from admin-api's public company-info endpoint. Unset → the
+      # portal renders with the default OpenSteward design-system styling.
+      - ADMIN_API_URL=http://admin-api:3001
+    depends_on:
+      integration-server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  webhook-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: webhook-gateway
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    ports:
+      - "127.0.0.1:3004:3004"
+    volumes:
+      - webhook-data:/app/apps/webhook-gateway/data
+      - ./apps/webhook-gateway/config/config.yml:/app/apps/webhook-gateway/config/config.yml:ro
+    environment:
+      # config.yml ships `url: http://localhost:3010` per platform, which is
+      # correct for local dev but points at the gateway container itself in
+      # here, so every forward would hit ECONNREFUSED. loadConfig applies this
+      # over every platform's url (env wins over YAML), so the mounted file
+      # stays valid for both. Same upstream the admin-api and docs-server use.
+      - INTEGRATION_SERVER_URL=http://integration-server:3010
+      # The gateway's /webhooks/log and /webhooks/dlq are adminGuard-gated and
+      # expose captured webhook bodies + delivery replay. The images set
+      # NODE_ENV=production, so without ADMIN_SECRET adminGuard fails closed
+      # (403 ADMIN_DISABLED); pass the secret so the routes are usable *and*
+      # protected. Same value as integration-server's admin surface.
+      - ADMIN_SECRET=${ADMIN_SECRET:-}
+    depends_on:
+      integration-server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Unified service ───────────────────────────────────────────────────────
+  # Single backend serving every vertical (accounting, crm, ecommerce,
+  # logistics).
+
+  integration-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: integration-server
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    ports:
+      - "127.0.0.1:3010:3010"
+    volumes:
+      - integration-server-data:/app/apps/integration-server/data
+      - ./apps/integration-server/config/config.example.yml:/app/apps/integration-server/config/config.yml:ro
+      # The OpenSteward license (docs/deployment/license.md): put license.key
+      # in ./opensteward-license, next to this file. A DIRECTORY mount, never a
+      # single file, so a renewed license.key reaches the container without a
+      # restart (OPENSTEWARD_LICENSE_FILE below points into it). Read-only, and
+      # on integration-server only: it is the single license authority. If
+      # ./opensteward-license does not exist yet, Docker creates it empty and
+      # the service runs in community mode and says so. Not ./license: on macOS
+      # and Windows that name is this repository's LICENSE file.
+      - ./opensteward-license:/etc/opensteward/license:ro
+    environment:
+      # Per-IP rate limit. Must be forwarded here for the .env knob documented
+      # in .env.example to take effect — env overrides config.yml.
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-}
+      # Timeout budget. Without these a platform that accepts the connection
+      # and goes quiet blocks the request indefinitely — the shape of two
+      # separate multi-minute hangs with no status, error or log line.
+      - UPSTREAM_TIMEOUT_MS=${UPSTREAM_TIMEOUT_MS:-}
+      - HANDLER_TIMEOUT_MS=${HANDLER_TIMEOUT_MS:-}
+      - TRUST_PROXY=${TRUST_PROXY:-}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-}
+      - PORT=3010
+      - STORE_SECRET=${STORE_SECRET:-change-me-store-secret-at-least-32-chars}
+      - ADMIN_SECRET=${ADMIN_SECRET:-}
+      # Source of host branding (name/logo/colour) for the Connect Link page.
+      - ADMIN_API_URL=http://admin-api:3001
+      # Canonical public URL — overrides company-info baseUrl + Host header.
+      # Defaults to the port this compose file publishes, so Connect Links are
+      # addressable out of the box. Without it the fallback is the inbound
+      # request's Host, and admin-created links arrive from admin-api over the
+      # compose network — which would emit http://integration-server/connect/…,
+      # an address no customer's browser can resolve.
+      # SET THIS whenever the service is reachable anywhere but this machine.
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-http://localhost:3010}
+      # Presented to admin-api when polling runtime settings. Without it the
+      # poll 401s every 60s and operator-tuned limits never arrive.
+      - SERVICE_SECRET=${SERVICE_SECRET:-}
+      # Which developer credential /v1/* accepts. Boot-time defaults only —
+      # the admin UI settings (auth.dev_api_keys_enabled, auth.dev_oauth_enabled)
+      # override them and are read per request. Here so a deployment provisioned
+      # from infrastructure-as-code can start with OAuth on, before anyone has
+      # opened the admin UI. Neither gates X-Admin-Secret.
+      - AUTH_DEV_API_KEYS_ENABLED=${AUTH_DEV_API_KEYS_ENABLED:-}
+      - AUTH_DEV_OAUTH_ENABLED=${AUTH_DEV_OAUTH_ENABLED:-}
+      # License (docs/deployment/license.md). Only this service reads it.
+      # The token itself, or a file: unset or empty, it reads
+      # /etc/opensteward/license/license.key. Mount the license DIRECTORY there,
+      # never the single file, so a renewal is picked up without a restart. No
+      # license, or a broken one, never stops the service: it runs in community
+      # mode (1 connection, 1 tenant) and says so in its startup log.
+      - OPENSTEWARD_LICENSE=${OPENSTEWARD_LICENSE:-}
+      - OPENSTEWARD_LICENSE_FILE=${OPENSTEWARD_LICENSE_FILE:-/etc/opensteward/license/license.key}
+      # Origins allowed to call this API from a browser. Defaults to the
+      # docs-server origin so the Swagger console at :3003/unified-api can
+      # actually issue its "Try it out" requests — it is served from a
+      # different origin, so the browser preflights every call and blocks it
+      # unless this API answers. Empty disables CORS entirely (the library
+      # default); set your real docs origin when deploying behind a domain.
+      # Never widen this to "*" on a deployment whose API keys grant writes.
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3003}
+      # Optional. When set, per-API-key rate limits use Redis instead of the
+      # in-process token bucket so multiple replicas share one budget per
+      # key. The `scale` profile below brings up a local Redis.
+      - REDIS_URL=${REDIS_URL:-}
+      # Data-store mode for canonical resources fetched from upstream:
+      #   database    — local SQLite read-through cache (default).
+      #                 ?is_live=true forces an upstream fetch (writes back).
+      #   passthrough — every request live; nothing cached. Set this when
+      #                 your app already has its own persistence layer.
+      #   external    — `database` cache plus outbound `resource.*` events
+      #                 fired through the existing webhook subscription system.
+      - DATA_STORE_MODE=${DATA_STORE_MODE:-database}
+      # SQLite file path. Defaults to a sibling of STORE_PATH.
+      - DATA_STORE_PATH=${DATA_STORE_PATH:-/app/apps/integration-server/data/resources.db}
+      # `external`-mode tuning. When true, sync emits one event per page
+      # (items[]) instead of one event per resource.
+      - DATA_STORE_EXTERNAL_BATCH_EVENTS=${DATA_STORE_EXTERNAL_BATCH_EVENTS:-}
+      # Destinations (scheduled exports to S3/GCS/Azure/Postgres — see
+      # docs/integrate/destinations.md). `off` stops the scheduler; manual
+      # runs still work. DESTINATIONS_ALLOW_PRIVATE_HOSTS lists host names a
+      # destination may use although they resolve privately (e.g. `minio`).
+      - DESTINATIONS_WORKER=${DESTINATIONS_WORKER:-}
+      - DESTINATIONS_WORKER_INTERVAL_MS=${DESTINATIONS_WORKER_INTERVAL_MS:-}
+      - DESTINATIONS_ALLOW_PRIVATE_HOSTS=${DESTINATIONS_ALLOW_PRIVATE_HOSTS:-}
+      # Read-only SQL access (Postgres only). ANALYTICS_ADMIN_DATABASE_URL is a
+      # role with CREATEROLE used to provision the analytics views and SQL
+      # logins; without it the console offers a script for a DBA to run.
+      - ANALYTICS_ADMIN_DATABASE_URL=${ANALYTICS_ADMIN_DATABASE_URL:-}
+      - ANALYTICS_ROLE_PREFIX=${ANALYTICS_ROLE_PREFIX:-}
+      - ANALYTICS_READ_HOST=${ANALYTICS_READ_HOST:-}
+      # Cold-start warm-up. When true, on boot enqueue one sync job per
+      # active connection so the cache is warm before traffic arrives.
+      # Recommended for the first restart after upgrading from
+      # `passthrough` to `database` mode. Default false.
+      - DATA_STORE_AUTO_SYNC_ON_BOOT=${DATA_STORE_AUTO_SYNC_ON_BOOT:-}
+      # Soft size budget (MB) for resources.db. WARN at this value, ERROR
+      # at 10× it. Default 100 (so ERROR at 1000). Set 0 to disable.
+      - DATA_STORE_MAX_SIZE_MB=${DATA_STORE_MAX_SIZE_MB:-}
+      # Stale-cache TTL in seconds. Cached rows older than this are
+      # treated as a miss and re-fetched from upstream on next read.
+      # Unset = no TTL (manual invalidation only).
+      - DATA_STORE_STALE_AFTER_SECONDS=${DATA_STORE_STALE_AFTER_SECONDS:-}
+      # Upstream pagination size for sync jobs. Default 500. Lower for
+      # adapters that rate-limit aggressively or return huge rows.
+      - DATA_STORE_SYNC_PAGE_SIZE=${DATA_STORE_SYNC_PAGE_SIZE:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3010/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Opt-in local HTTPS for OAuth providers that refuse an http:// redirect
+  # URI even on localhost. Serves https://localhost (loopback only) with a
+  # certificate from Caddy's own local CA and proxies to integration-server,
+  # so http://localhost:3010 keeps working untouched: only the adapters that
+  # need https get https://localhost/auth/{vertical}/{platform}/callback as
+  # their Redirect URI. The provider never connects here — the callback is a
+  # browser redirect — so nothing has to be reachable from outside.
+  #     docker compose --profile https up -d
+  #     scripts/trust-local-https-ca.sh      # once per CA
+  # The volume holds the CA; drop it and the CA must be trusted again.
+  # See docs/operations/local-https.md.
+  caddy:
+    image: caddy:2.11.4-alpine
+    profiles: ["https"]
+    ports:
+      - "127.0.0.1:443:443"
+    volumes:
+      - ./deploy/local-https/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+    depends_on:
+      - integration-server
+    restart: unless-stopped
+
+  # Opt-in Redis for shared rate-limit buckets across multiple
+  # integration-server replicas. Bring up with:
+  #     docker compose --profile scale up -d
+  # and set REDIS_URL=redis://redis:6379 on integration-server.
+  redis:
+    image: redis:7-alpine
+    profiles: ["scale"]
+    # No password: never publish beyond loopback.
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ── Optional: Postgres + embedded Apache Superset (`analytics` profile) ──
+  # Off unless asked for. Read-only SQL access and Superset need the Postgres
+  # backend, so this profile brings up a Postgres for OpenSteward (database
+  # `opensteward`) and for Superset's own metadata (database `superset`) —
+  # but it does NOT move OpenSteward onto it by itself. Merge the example
+  # overlay, which points integration-server and admin-api at it and turns
+  # the admin UI's Superset dashboards on:
+  #
+  #   docker compose -f docker-compose.yml -f docker-compose.analytics.example.yml \
+  #     --profile analytics up -d
+  #
+  # Starting it over an existing SQLite deployment gives the services an
+  # empty database; `scripts/switch-db.sh postgres --copy` carries the data
+  # across (docs/operations/switching-databases.md). See also
+  # docs/deployment/superset.md.
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["analytics"]
+    environment:
+      - POSTGRES_USER=opensteward
+      # URL-safe, e.g. `openssl rand -hex 32` — it is spliced into URLs.
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-me-postgres-password}
+      - POSTGRES_DB=opensteward
+      - SUPERSET_DB_PASSWORD=${SUPERSET_DB_PASSWORD:-change-me-superset-db-password}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./deploy/superset/postgres-init.sh:/docker-entrypoint-initdb.d/10-superset.sh:ro
+    # Loopback only, for BI tools on this machine using read-only SQL access.
+    ports:
+      - "127.0.0.1:5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opensteward -d opensteward"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  superset-redis:
+    image: redis:7-alpine
+    profiles: ["analytics"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # One-shot: metadata schema, built-in roles, then OpenSteward's guest role
+  # and service account (deploy/superset/bootstrap-roles.py).
+  superset-init:
+    build:
+      context: ./deploy/superset
+    image: opensteward-superset:6.1.0
+    profiles: ["analytics"]
+    command:
+      - /bin/sh
+      - -c
+      - superset db upgrade && superset init && python /app/opensteward/bootstrap-roles.py
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-}
+      - SUPERSET_GUEST_TOKEN_SECRET=${SUPERSET_GUEST_TOKEN_SECRET:-}
+      - SUPERSET_METADATA_DB_URI=postgresql+psycopg2://superset:${SUPERSET_DB_PASSWORD:-change-me-superset-db-password}@postgres:5432/superset
+      - SUPERSET_REDIS_URL=redis://superset-redis:6379
+      - OPENSTEWARD_ADMIN_ORIGIN=${ADMIN_UI_URL:-http://localhost:3000}
+      - SUPERSET_SESSION_COOKIE_SECURE=${SUPERSET_SESSION_COOKIE_SECURE:-false}
+      - SUPERSET_SERVICE_USERNAME=${SUPERSET_SERVICE_USERNAME:-opensteward-service}
+      - SUPERSET_SERVICE_PASSWORD=${SUPERSET_SERVICE_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      superset-redis:
+        condition: service_healthy
+    restart: "no"
+
+  superset:
+    # Same image superset-init builds (deploy/superset/Dockerfile).
+    build:
+      context: ./deploy/superset
+    image: opensteward-superset:6.1.0
+    profiles: ["analytics"]
+    # Browsers load dashboards from here (SUPERSET_PUBLIC_URL). Loopback only;
+    # put it behind the same TLS proxy as the admin UI for anything else.
+    ports:
+      - "127.0.0.1:8088:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY:-}
+      - SUPERSET_GUEST_TOKEN_SECRET=${SUPERSET_GUEST_TOKEN_SECRET:-}
+      - SUPERSET_METADATA_DB_URI=postgresql+psycopg2://superset:${SUPERSET_DB_PASSWORD:-change-me-superset-db-password}@postgres:5432/superset
+      - SUPERSET_REDIS_URL=redis://superset-redis:6379
+      # The only origin allowed to frame Superset (CSP frame-ancestors).
+      - OPENSTEWARD_ADMIN_ORIGIN=${ADMIN_UI_URL:-http://localhost:3000}
+      # false = plain-HTTP localhost trial; set true behind HTTPS.
+      - SUPERSET_SESSION_COOKIE_SECURE=${SUPERSET_SESSION_COOKIE_SECURE:-false}
+      - SUPERSET_ENABLE_PROXY_FIX=${SUPERSET_ENABLE_PROXY_FIX:-}
+      # Optional OIDC sign-in for dashboard authors (deploy/superset/superset_config.py).
+      - SUPERSET_OIDC_ISSUER=${SUPERSET_OIDC_ISSUER:-}
+      - SUPERSET_OIDC_CLIENT_ID=${SUPERSET_OIDC_CLIENT_ID:-}
+      - SUPERSET_OIDC_CLIENT_SECRET=${SUPERSET_OIDC_CLIENT_SECRET:-}
+      - SUPERSET_OIDC_ROLES_MAPPING=${SUPERSET_OIDC_ROLES_MAPPING:-}
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8088/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # One-shot, idempotent: connects Superset to the masked analytics views,
+  # creates the datasets and the default dashboard, enables embedding and
+  # registers the dashboards with admin-api. Re-run after upgrades:
+  #   docker compose ... --profile analytics run --rm superset-bootstrap
+  superset-bootstrap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        APP: admin-api
+        GIT_SHA: "${GIT_SHA:-dev}"
+        BUILD_TIME: "${BUILD_TIME:-dev}"
+    profiles: ["analytics"]
+    command: ["node", "dist/scripts/superset-bootstrap.js"]
+    volumes:
+      - ./deploy/superset/assets:/app/deploy/superset/assets:ro
+    environment:
+      - SUPERSET_URL=http://superset:8088
+      - SUPERSET_SERVICE_USERNAME=${SUPERSET_SERVICE_USERNAME:-opensteward-service}
+      - SUPERSET_SERVICE_PASSWORD=${SUPERSET_SERVICE_PASSWORD:-}
+      - INTEGRATION_SERVER_URL=http://integration-server:3010
+      - ADMIN_SECRET=${ADMIN_SECRET:-}
+      - ADMIN_API_URL=http://admin-api:3001
+      - SERVICE_SECRET=${SERVICE_SECRET:-}
+      - OPENSTEWARD_ADMIN_ORIGIN=${ADMIN_UI_URL:-http://localhost:3000}
+      # Where Superset (inside the compose network) reaches the analytics views.
+      - SUPERSET_ANALYTICS_DB_HOST=${SUPERSET_ANALYTICS_DB_HOST:-postgres}
+      - SUPERSET_ANALYTICS_DB_NAME=${SUPERSET_ANALYTICS_DB_NAME:-opensteward}
+      # Optional: a full SQLAlchemy URI instead of the managed `superset` SQL principal.
+      - SUPERSET_DB_URI=${SUPERSET_DB_URI:-}
+      - SUPERSET_ASSETS_DIR=/app/deploy/superset/assets/dashboards
+    depends_on:
+      superset:
+        condition: service_healthy
+      admin-api:
+        condition: service_healthy
+      integration-server:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  admin-data:
+  webhook-data:
+  integration-server-data:
+  caddy-data:
+  postgres-data:

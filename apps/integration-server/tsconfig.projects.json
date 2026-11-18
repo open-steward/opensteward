@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-projects"
+  },
+  "include": [
+    "src/verticals/projects/**/*",
+    "src/types/**/*"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.kernel.json"
+    }
+  ]
+}

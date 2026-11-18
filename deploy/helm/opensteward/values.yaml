@@ -1,0 +1,390 @@
+# OpenSteward Helm values. See values.schema.json for the validated surface and
+# README.md for the deployment guide.
+
+image:
+  # Registry + owner; each service image is <registry>/<service>.
+  registry: ghcr.io/open-steward
+  # Image tag. Empty → Chart.appVersion. Pin to a digest in production via
+  # image.digest for reproducible, signature-verifiable deploys.
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# MUST stay "production": it is what makes assertSecret() fail closed on a
+# weak/missing secret (a weak secret CrashLoops the pod instead of running
+# insecurely). Do not change.
+nodeEnv: production
+
+database:
+  # sqlite  → each stateful service gets a PVC (RWO), runs a single replica.
+  # postgres → stateful services are stateless; set external.* to a managed db.
+  mode: sqlite
+  external:
+    # Secret holding the DATABASE_URL (postgres mode). Required when
+    # mode=postgres unless you template it via secrets.* below.
+    existingSecret: ""
+    secretKey: DATABASE_URL
+  # PVCs for the three stateful services in sqlite mode.
+  persistence:
+    storageClass: ""
+    size: 1Gi
+    accessMode: ReadWriteOnce
+
+redis:
+  # integration-server shares a per-API-key rate-limit budget across replicas
+  # via Redis. REQUIRED before scaling integration-server past 1 replica.
+  enabled: false
+  url: ""
+
+license:
+  # The OpenSteward license (docs/deployment/license.md). Create a Secret from
+  # the downloaded file, then point at it:
+  #   kubectl create secret generic opensteward-license --from-file=license.key=./<label>-license.key
+  # Mounted as a DIRECTORY (never subPath) at /etc/opensteward/license on
+  # integration-server only, the single license authority, so a renewal
+  # applied to the Secret reaches the pod without a restart. The volume is
+  # optional: a missing Secret or key leaves the pod running in community mode
+  # (all current verticals, 1 connection, 1 tenant), and it says so.
+  # Empty = no license mounted.
+  existingSecret: ""
+  # Key inside that Secret holding the license token.
+  secretKey: license.key
+
+secrets:
+  # How the JWT_SECRET / SESSION_SECRET / STORE_SECRET (+ optional ADMIN_SECRET)
+  # the pods envFrom are supplied. All four sources resolve to ONE Secret named
+  # <release>-secrets (or secrets.existingSecret). Keys must be >=32 chars with
+  # real entropy — under NODE_ENV=production a weak/missing one CrashLoops the pod.
+  #   existingSecret  → reference an operator-managed Secret (recommended prod;
+  #                     also how sealed-secrets / SOPS land — point at their output).
+  #   externalSecrets → External Secrets Operator syncs it from a cloud secret
+  #                     store (AWS SM / Azure KV / GCP SM). See secrets.externalSecrets.
+  #   generate        → a pre-install/pre-upgrade hook Job creates+maintains it
+  #                     (one-command trial). See secrets.generate.
+  #   plain           → render it from the values below (DEV/TRIAL ONLY — lands in
+  #                     Helm release history).
+  source: existingSecret
+  existingSecret: ""
+  plain:
+    jwtSecret: ""
+    sessionSecret: ""
+    storeSecret: ""
+    adminSecret: ""
+    # Shared secret sibling services present as X-Service-Secret to read runtime
+    # settings from admin-api. Distinct from adminSecret, which authenticates
+    # the opposite direction. Without it the runtime-settings mechanism is inert
+    # on Kubernetes — integration-server's poll 401s and operator-tunable
+    # settings (rate limits, feature flags, logo source) never take effect.
+    serviceSecret: ""
+    # Optional. When set, gates POST /api/auth/setup behind X-Bootstrap-Token.
+    bootstrapToken: ""
+  # secrets.source=externalSecrets. ESO is a cluster prerequisite. Either point
+  # at an operator-managed (Cluster)SecretStore, or have the chart render one
+  # (createStore) — provider auth then uses the chart ServiceAccount, so set
+  # serviceAccount.annotations for IRSA / Workload Identity (see per-cloud overlays).
+  externalSecrets:
+    apiVersion: external-secrets.io/v1
+    refreshInterval: 1h
+    secretStore:
+      name: ""
+      kind: ClusterSecretStore # or SecretStore
+    createStore: false
+    provider: aws # aws | azure | gcp
+    aws:
+      region: ""
+    azure:
+      vaultUrl: ""
+      tenantId: ""
+    gcp:
+      projectID: ""
+      clusterLocation: ""
+      clusterName: ""
+    # If remoteSecretName is set, pull JWT_SECRET/SESSION_SECRET/... as PROPERTIES
+    # of that one remote secret (a JSON blob). Otherwise each key below is its own
+    # remote secret. adminSecret empty => not synced.
+    remoteSecretName: ""
+    keys:
+      jwtSecret: JWT_SECRET
+      sessionSecret: SESSION_SECRET
+      storeSecret: STORE_SECRET
+      adminSecret: ""
+      serviceSecret: "" # optional; empty => not synced (runtime settings stay inert)
+      bootstrapToken: "" # optional; empty => not synced (no setup gate)
+  # secrets.source=generate. The hook Job creates <release>-secrets if absent and
+  # fills any MISSING JWT/SESSION. It creates STORE_SECRET only when absent and
+  # NEVER overwrites an existing one (overwrite = orphans all encrypted data). The
+  # resulting Secret is NOT Helm-owned, so `helm uninstall` leaves it (keeps the
+  # decryption key). image needs kubectl + a shell; override for locked registries.
+  generate:
+    # Needs kubectl + a POSIX shell. alpine/k8s is maintained and has both.
+    # (Bitnami's free Docker Hub catalog was sunset in 2025.) Override + pin by
+    # digest for locked-down registries.
+    image: docker.io/alpine/k8s:1.31.1
+    imagePullPolicy: IfNotPresent
+    includeAdminSecret: false
+    # Mint a BOOTSTRAP_TOKEN so first-run setup is gated by default (secure by
+    # default for internet-exposed installs). Retrieve it to complete setup — see
+    # NOTES. Set false for a zero-friction trial (setup then needs no token).
+    bootstrapToken: true
+
+# STORE_SECRET rotation (re-encrypt every encrypted-at-rest column under a new key).
+# Disabled by default; render the Job with rotation.enabled=true and run it inside a
+# maintenance window per the README runbook. The Job refuses to start unless the
+# stateful Deployments are scaled to 0 (no live writers).
+rotation:
+  # Setting enabled=true ALSO scales the stateful Deployments to 0 (the same
+  # `helm upgrade` quiesces writers and renders the Job — see the README runbook).
+  enabled: false
+  # postgres → rotate the external DB via DATABASE_URL (no PVC). Or admin-api /
+  # integration-server → mount THAT PVC and rotate its SQLite file(s). Only those
+  # two hold encrypted-at-rest data; webhook-gateway has none, so it is not a target.
+  target: postgres
+  # Secret holding OLD_STORE_SECRET + NEW_STORE_SECRET for the re-encrypt.
+  existingSecret: ""
+  # Defaults to the integration-server image (bundles the rotate-store-secret tool).
+  image: ""
+  # Override the SQLite files to rotate (absolute paths). Empty => chart defaults
+  # per target (admin.db / credentials.db + resources.db).
+  sqlitePaths: []
+  # SQLite only: wait this long after quiescing so the WAL ages past the tool's
+  # 60s live-writer guard before rotating.
+  quiesceWaitSeconds: 75
+
+# Browser-facing base URLs for the SSO round-trip and cross-app links. Default
+# to in-cluster Service DNS (boots, but real OAuth/SSO needs the public URLs an
+# operator's browser reaches). Set these to your ingress hosts in production.
+publicUrls:
+  scheme: https
+  adminApi: "" # SSO_PUBLIC_BASE_URL — where IdPs send SAML ACS / OIDC callbacks
+  adminUi: "" # ADMIN_UI_URL — where post-login handoff lands
+  docsServer: "" # DOCS_SERVER_URL — cross-app guide links
+  integrationServer: "" # PUBLIC_BASE_URL — canonical Connect-Link domain
+
+# Platform logos. OpenSteward ships none: Brandfetch's terms prohibit caching
+# their CDN without an agreement, and the logos are third-party trademarks.
+# The default renders brand-tinted monogram tiles and makes no external
+# requests — the right choice for regulated or air-gapped clusters.
+#
+# See docs/operations/platform-logos.md for the full walkthrough, including
+# how to mount a fetched set via PVC for `local`.
+logos:
+  # none | cdn | local
+  #   none  — monogram tiles, no external calls, no account (default)
+  #   cdn   — hotlink Brandfetch (the mode they sanction). Needs clientId.
+  #           No volume required. Note this makes the browser call a third
+  #           party on every logo, revealing your origin and which platforms
+  #           are viewed.
+  #   local — serve logos fetched ahead of time. Needs a volume mounted at
+  #           /app/docs/platforms/logos on the admin and docs-server pods;
+  #           the chart does not create one for you.
+  source: none
+  # Brandfetch client ID. Required for `cdn`. Not a secret — Brandfetch
+  # designed it to be embedded in public <img> tags — so plain values here
+  # rather than a Secret is fine.
+  brandfetchClientId: ""
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  # Each entry routes a host (or host+path) to one EXPOSED service. admin-api is
+  # never exposed (ClusterIP only). service ∈ admin|docs-server|webhook-gateway|integration-server.
+  hosts: []
+  # - host: app.example.com
+  #   service: admin
+  #   paths: [{ path: /, pathType: Prefix }]
+  tls:
+    enabled: false
+    # certManager.clusterIssuer → cert-manager provisions per-host certs.
+    certManager:
+      enabled: false
+      clusterIssuer: ""
+    # OR reference an existing TLS secret.
+    existingSecret: ""
+  # admin SSO/SCIM only. admin-api is never published as a whole: this renders
+  # a separate Ingress with Exact paths /api/sso/<slug>/{login,callback,acs}
+  # per slug (+ Prefix /scim/v2/ when scim), and a NetworkPolicy that admits
+  # only `allowFrom` to admin-api. Set publicUrls.adminApi to https://<host>.
+  sso:
+    enabled: false
+    host: ""
+    # IdP slugs configured in admin → Identity providers.
+    slugs: []
+    scim: false
+    # NetworkPolicy peers allowed to reach admin-api:3001. Required when
+    # enabled, e.g. the ingress controller's namespace:
+    # - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ingress-nginx } }
+    allowFrom: []
+
+serviceAccount:
+  create: true
+  name: ""
+  # IRSA / Workload-Identity / Pod-Identity annotation (set in per-cloud overlay).
+  annotations: {}
+
+networkPolicy:
+  enabled: true
+
+podDisruptionBudget:
+  enabled: false # rendered for stateless services in postgres (HA) mode
+
+# Per-service knobs. `stateful`/`exposed`/`port` are topology — don't change.
+services:
+  admin:
+    port: 3000
+    stateful: false
+    exposed: true
+    replicas: 2
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 256Mi }
+    autoscaling: { enabled: false, minReplicas: 2, maxReplicas: 5, targetCPU: 75 }
+  admin-api:
+    port: 3001
+    stateful: true
+    exposed: false
+    replicas: 2
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: "1", memory: 512Mi }
+    autoscaling: { enabled: false, minReplicas: 2, maxReplicas: 5, targetCPU: 75 }
+  docs-server:
+    port: 3003
+    stateful: false
+    exposed: true
+    replicas: 2
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: 500m, memory: 256Mi }
+    autoscaling: { enabled: false, minReplicas: 2, maxReplicas: 5, targetCPU: 75 }
+  webhook-gateway:
+    port: 3004
+    stateful: true
+    exposed: true
+    replicas: 2
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: "1", memory: 512Mi }
+    autoscaling: { enabled: false, minReplicas: 2, maxReplicas: 5, targetCPU: 75 }
+  integration-server:
+    port: 3010
+    stateful: true
+    exposed: true
+    replicas: 2
+    resources:
+      requests: { cpu: 250m, memory: 512Mi }
+      limits: { cpu: "2", memory: 1Gi }
+    autoscaling: { enabled: false, minReplicas: 2, maxReplicas: 8, targetCPU: 75 }
+
+# ── Optional analytics: read-only SQL access and embedded Superset ────────
+# Postgres only (database.mode=postgres); rendering fails otherwise. See
+# docs/deployment/postgres-analytics.md and docs/deployment/superset.md.
+analytics:
+  sqlAccess:
+    # Wires integration-server's ANALYTICS_* settings and (managed mode) a
+    # post-install/upgrade hook that (re)provisions the masked views.
+    enabled: false
+    # Secret + key holding ANALYTICS_ADMIN_DATABASE_URL: a role with
+    # CREATEROLE that owns (or may GRANT on) the store tables. Empty =
+    # manual mode (the admin UI offers the provisioning script instead).
+    adminDatabaseUrl:
+      existingSecret: ""
+      secretKey: ANALYTICS_ADMIN_DATABASE_URL
+    # Host BI tools should use (e.g. a read replica). Advertised only.
+    readHost: ""
+    # Postgres role prefix (roles are cluster-global). Empty = "os".
+    rolePrefix: ""
+    provisionJob:
+      enabled: true
+      # Needs a POSIX shell and curl. Empty = secrets.generate.image.
+      image: ""
+  superset:
+    # Secret (operator-managed) read by admin-api, the bootstrap job and the
+    # Superset pods (superset.envFromSecrets below). Keys:
+    #   SUPERSET_SERVICE_USERNAME, SUPERSET_SERVICE_PASSWORD  (service account)
+    #   SUPERSET_SECRET_KEY                                   (Superset's own)
+    #   SUPERSET_METADATA_DB_URI   postgresql+psycopg2://… for Superset's
+    #                              metadata database (not OpenSteward's)
+    #   SUPERSET_GUEST_TOKEN_SECRET                           (optional)
+    # Empty = "<release>-opensteward-superset". If you rename it, set
+    # superset.envFromSecrets to the same name.
+    existingSecret: ""
+    # How admin-api reaches Superset in-cluster. Empty = the Superset
+    # chart's Service, http://<release>-superset:8088.
+    internalUrl: ""
+    # Browser-facing Superset URL (its own Ingress: superset.ingress.*).
+    # REQUIRED when superset.enabled — the admin UI frames it.
+    publicUrl: ""
+    bootstrap:
+      # post-install/post-upgrade hook: connect Superset to the masked views,
+      # create datasets + the default dashboard, enable embedding, register
+      # the dashboards with admin-api (needs secrets ADMIN_SECRET and
+      # SERVICE_SECRET).
+      enabled: true
+      backoffLimit: 6
+      activeDeadlineSeconds: 1800
+      # Extra env for the job, e.g. SUPERSET_ANALYTICS_DB_HOST (a replica)
+      # or SUPERSET_DB_URI (from a secret).
+      extraEnv: []
+    networkPolicy:
+      # Peers allowed to reach the Superset web pods on :8088 — the ingress
+      # controller that serves superset.ingress. Required when
+      # networkPolicy.enabled and superset.enabled, e.g.
+      # - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ingress-nginx } }
+      allowFrom: []
+
+# The Apache Superset chart (dependency, condition superset.enabled). Only the
+# values OpenSteward depends on are set here; see the chart's own values for
+# the rest (https://github.com/apache/superset/tree/master/helm/superset).
+superset:
+  enabled: false
+  image:
+    repository: docker.io/apache/superset
+    tag: "6.1.0"
+    pullPolicy: IfNotPresent
+  # The official ("lean") image ships no Postgres driver. This installs it at
+  # container start, which needs PyPI egress and root (runAsUser 0, the
+  # chart's default). In production prefer an image with the driver baked in
+  # (deploy/superset/Dockerfile) and an empty script.
+  bootstrapScript: |
+    #!/bin/bash
+    python -c "import psycopg2" 2>/dev/null || (. /app/.venv/bin/activate && uv pip install --no-cache psycopg2-binary==2.9.9)
+  envFromSecrets:
+    - '{{ .Release.Name }}-opensteward-superset'
+  extraEnv:
+    # REQUIRED: the admin UI origin, the only site allowed to frame Superset
+    # (CSP frame-ancestors, CORS, embedded allowed_domains).
+    OPENSTEWARD_ADMIN_ORIGIN: ""
+    SUPERSET_SESSION_COOKIE_SECURE: "true"
+    SUPERSET_ENABLE_PROXY_FIX: "true"
+  # OpenSteward's settings (deploy/superset/superset_config.py, shipped in
+  # this chart's files/superset/) mounted from a ConfigMap and exec'd after
+  # the chart's generated config: guest role, 5-minute guest tokens, CSP
+  # frame-ancestors, cookies, CORS, optional OIDC for authors.
+  extraVolumes:
+    - name: opensteward-superset
+      configMap:
+        name: '{{ .Release.Name }}-opensteward-superset-files'
+  extraVolumeMounts:
+    - name: opensteward-superset
+      mountPath: /app/opensteward
+      readOnly: true
+  configOverrides:
+    opensteward: |
+      exec(compile(open("/app/opensteward/superset_config.py").read(), "/app/opensteward/superset_config.py", "exec"))
+  init:
+    # The service account comes from the secret (bootstrap-roles.py), not
+    # from a password in values.
+    createAdmin: false
+    command:
+      - /bin/sh
+      - -c
+      - ". {{ .Values.configMountPath }}/superset_bootstrap.sh; . {{ .Values.configMountPath }}/superset_init.sh; python /app/opensteward/bootstrap-roles.py"
+  # Superset's metadata lives in your Postgres (SUPERSET_METADATA_DB_URI);
+  # host/port only drive the chart's wait-for-postgres init containers.
+  postgresql:
+    enabled: false
+  database:
+    host: ""
+    port: 5432

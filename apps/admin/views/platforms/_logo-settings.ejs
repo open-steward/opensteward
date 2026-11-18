@@ -1,0 +1,150 @@
+<%#
+  Logo source picker. Shared verbatim by Platforms → Logos and wizard step 3;
+  `action` is the only thing that differs, and `readOnly` hides the controls for
+  a non-admin walking the wizard.
+
+  The three modes and their trade-off badges mirror the comparison table in
+  docs/operations/platform-logos.md — that page carries the argument, this is
+  the same information at the point of decision.
+-%>
+<form method="POST" action="<%= action %>" class="card" id="logoSettingsForm"
+      style="margin-bottom: var(--space-4)">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <h2 class="card__title">Logo source</h2>
+  <p class="muted" style="font-size: var(--text-sm); margin: var(--space-1) 0 var(--space-4)">
+    OpenSteward ships no platform logos — they are 1,548 other companies’ trademarks,
+    and Brandfetch’s terms do not allow redistributing them. Pick the trade-off that
+    suits this deployment.
+  </p>
+
+  <div class="choice-group" data-logo-modes>
+    <% for (const mode of logoModes) { %>
+    <%
+      const selected = logo && logo.requestedSource === mode.value
+    %>
+    <label class="choice-card" aria-checked="<%= selected ? 'true' : 'false' %>">
+      <span class="choice-card__radio" aria-hidden="true"></span>
+      <span>
+        <input type="radio" name="source" value="<%= mode.value %>"
+               <%= selected ? 'checked' : '' %> <%= readOnly ? 'disabled' : '' %>
+               style="position: absolute; opacity: 0; pointer-events: none">
+        <span class="choice-card__title">
+          <%= mode.title %>
+          <% if (mode.value === 'none') { %><span class="badge">default</span><% } %>
+          <% if (mode.value === 'cdn') { %><span class="badge badge--info">Brandfetch sanctions this</span><% } %>
+        </span>
+        <span class="choice-card__desc">
+          <%= mode.desc %>
+          <% if (mode.warning) { %>
+          <strong><%= mode.warning %></strong>
+          <% } %>
+        </span>
+        <span class="row" style="gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-2)">
+          <span class="badge <%= mode.external ? 'badge--warning' : 'badge--success' %>">
+            <%= mode.external ? 'External requests' : 'No external requests' %>
+          </span>
+          <span class="badge <%= mode.airgap ? 'badge--success' : 'badge--warning' %>">
+            <%= mode.airgap ? 'Air-gap safe' : 'Needs internet' %>
+          </span>
+          <span class="badge"><%= mode.disk %></span>
+          <span class="badge <%= mode.privacyTone %>"><%= mode.privacy %></span>
+        </span>
+      </span>
+    </label>
+    <% } %>
+  </div>
+
+  <div class="field" style="margin-top: var(--space-4); max-width: 480px">
+    <label class="field__label" for="brandfetchClientId">Brandfetch client ID</label>
+    <input class="input input--mono" type="text" id="brandfetchClientId"
+           name="brandfetchClientId" autocomplete="off" spellcheck="false"
+           <%= readOnly ? 'disabled' : '' %>
+           value="<%= (logo && logo.origin.clientId === 'db' && logo.requestedClientId) || '' %>"
+           placeholder="<%= logo && logo.origin.clientId === 'env'
+             ? 'Set via BRANDFETCH_CLIENT_ID — leave blank to keep using it'
+             : 'e.g. 1idAbCdEfGh' %>">
+    <span class="field__hint">
+      Not a secret — Brandfetch designed it to be embedded in public
+      <span class="mono">&lt;img&gt;</span> tags, so it is stored in plaintext and is
+      safe in a compose file or ConfigMap. Required for <strong>Brandfetch CDN</strong>,
+      and required to run a fetch for <strong>Fetch and self-host</strong>.
+      <a href="https://brandfetch.com/developers" target="_blank" rel="noopener">Get a free client ID</a>.
+      <% if (logo && logo.origin.clientId === 'env') { %>
+      <br>Currently supplied by the environment; a value here overrides it.
+      <% } %>
+    </span>
+  </div>
+
+  <%# Pre-submit guard. The server refuses this combination too — this only
+      saves the operator a round trip and explains it in place. %>
+  <div class="alert alert--warning" id="cdnNeedsIdWarning" style="display: none; margin-top: var(--space-4)">
+    <div>
+      <strong>Brandfetch CDN needs a client ID.</strong>
+      Saving without one falls back to monogram tiles — the same as choosing Monogram tiles.
+    </div>
+  </div>
+
+  <% if (!readOnly) { %>
+  <div class="row" style="gap: var(--space-2); margin-top: var(--space-4); align-items: center">
+    <button type="submit" class="btn btn--primary" id="logoSettingsSave">Save logo settings</button>
+    <% if (logo && logo.isExplicitChoice) { %>
+    <span class="muted" style="font-size: var(--text-sm)">Set by an operator · applies without a restart</span>
+    <% } %>
+  </div>
+  <% } %>
+</form>
+
+<script>
+;(function () {
+  var group = document.querySelector('[data-logo-modes]')
+  if (!group) return
+  var input = document.getElementById('brandfetchClientId')
+  var warn = document.getElementById('cdnNeedsIdWarning')
+  var save = document.getElementById('logoSettingsSave')
+  var HAS_ENV_CLIENT_ID = <%- (logo && logo.origin.clientId === 'env') ? 'true' : 'false' %>
+  var MODE_CONFIRMS = <%- jsonForScript(Object.fromEntries(logoModes.filter(function (m) { return m.confirm }).map(function (m) { return [m.value, m.confirm] }))) %>
+  var form = document.getElementById('logoSettingsForm')
+
+  function refresh() {
+    var checked = group.querySelector('input[name="source"]:checked')
+    var mode = checked ? checked.value : null
+    var typed = input && input.value ? input.value.trim() : ''
+    var bad = mode === 'cdn' && !typed && !HAS_ENV_CLIENT_ID
+
+    group.querySelectorAll('.choice-card').forEach(function (card) {
+      var radio = card.querySelector('input[name="source"]')
+      card.setAttribute('aria-checked', radio && radio.checked ? 'true' : 'false')
+    })
+
+    if (warn) {
+      // Toggle inline display, never [hidden]: .alert sets display:flex, which
+      // beats the user-agent [hidden] rule. Same trap as branding-upload.js.
+      warn.style.display = bad ? '' : 'none'
+    }
+    if (input) input.classList.toggle('input--invalid', bad)
+    if (save) {
+      save.disabled = bad
+      save.title = bad ? 'Enter a Brandfetch client ID, or choose another mode' : ''
+    }
+  }
+
+  group.addEventListener('change', refresh)
+  if (input) input.addEventListener('input', refresh)
+
+  // Modes with a compliance caveat ask before they can be saved. Server-side
+  // nothing is refused — an operator who has the agreement is entitled to pick
+  // this — so the check belongs here, at the point of choosing.
+  if (form) {
+    form.addEventListener('submit', function (ev) {
+      var checked = group.querySelector('input[name="source"]:checked')
+      var mode = checked ? checked.value : null
+      var question = mode ? MODE_CONFIRMS[mode] : null
+      if (question && !window.confirm(question)) {
+        ev.preventDefault()
+      }
+    })
+  }
+
+  refresh()
+})()
+</script>

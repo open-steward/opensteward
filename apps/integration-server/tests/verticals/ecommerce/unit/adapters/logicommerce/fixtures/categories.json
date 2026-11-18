@@ -1,0 +1,245 @@
+{
+ "CATEGORIES": [
+  {
+   "ACTIVE": true,
+   "ACTIVITYLIMITS": [
+    {
+     "ACTIVATIONDATE": "2021-10-21T20:00:00+02:00",
+     "EXPIRATIONDATE": "2024-12-31T23:00:00+02:00",
+     "ID": 23535
+    }
+   ],
+   "AREA": {
+    "ID": 123,
+    "PID": "abc"
+   },
+   "AVAILABILITY": {
+    "ID": 123,
+    "PID": "abc"
+   },
+   "CATEGORYITEMS": [
+    {
+     "ID": 134564,
+     "ITEM": {
+      "ID": 10,
+      "PID": "df4"
+     },
+     "ITEMTYPE": 2
+    }
+   ],
+   "CUSTOMTAGS": {
+    "GENERAL": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUE": "123"
+     }
+    ],
+    "LANGUAGES": [
+     {
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "LANGUAGES": [
+       {
+        "ACTIVE": 1,
+        "ID": 123,
+        "LANGUAGEID": 2,
+        "VALUE": "123"
+       }
+      ]
+     }
+    ],
+    "MULTISELECTABLE": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUES": [
+       {
+        "ID": 1,
+        "PID": "abc"
+       },
+       {
+        "ID": 3,
+        "PID": "def"
+       }
+      ]
+     }
+    ],
+    "SELECTABLE": [
+     {
+      "ACTIVE": 1,
+      "CUSTOMTAG": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "GROUP": {
+       "ID": 123,
+       "PID": "abc"
+      },
+      "ID": 123,
+      "VALUE": {
+       "ID": 123,
+       "PID": "abc"
+      }
+     }
+    ]
+   },
+   "DATEADDED": "2015-01-10",
+   "HIGHLIGHT": false,
+   "ID": 1,
+   "LANGUAGES": [
+    {
+     "DESTINATIONURL": "",
+     "LANGUAGE": "ES",
+     "LARGEIMAGE": "",
+     "LARGETITLEIMAGE": "",
+     "LONGDESCRIPTION": "",
+     "NAME": "",
+     "SHORTDESCRIPTION": "",
+     "SMALLIMAGE": "",
+     "SMALLTITLEIMAGE": "",
+     "TARGET": ""
+    }
+   ],
+   "PARENT": {
+    "ID": 9,
+    "PID": "abc"
+   },
+   "PID": "sdfsdf",
+   "PRIORITY": 34,
+   "PRODFIRST": false,
+   "PRODUCTS": [
+    {
+     "ID": 123,
+     "PID": "abc"
+    }
+   ],
+   "RELATEDITEMS": [
+    {
+     "ID": 2,
+     "ITEMS": {
+      "BANNERS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "BLOGPOSTS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "BRANDS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "CATEGORIES": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "NEWS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "PAGES": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ],
+      "PRODUCTS": [
+       {
+        "ID": 123,
+        "ITEM": {
+         "ID": 13,
+         "PID": "abc"
+        },
+        "PRIORITY": 1
+       }
+      ]
+     },
+     "PID": "abc"
+    }
+   ],
+   "SALE": false,
+   "SEO": {
+    "LANGUAGES": [
+     {
+      "KEYWORDKS": "",
+      "METADESCRIPTION": "",
+      "PARTICULARTITLE": "",
+      "URL": ""
+     }
+    ]
+   },
+   "SUBCATEGORIES": [
+    {
+     "ID": 123,
+     "PID": "abc"
+    }
+   ]
+  }
+ ],
+ "CURSORS": {
+  "NEXT": "http://api.logicommerce.net/v1/categories?page=2&perPage=100",
+  "PREVIOUS": ""
+ },
+ "ITEMS": 10,
+ "PAGERPARAMETERS": {
+  "PAGE": 1,
+  "PERPAGE": 100
+ }
+}

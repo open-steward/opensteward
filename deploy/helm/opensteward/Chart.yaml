@@ -1,0 +1,37 @@
+apiVersion: v2
+name: opensteward
+description: >-
+  OpenSteward — self-hosted unified integration platform. Your customers'
+  data, on your servers. Runs on SQLite (single-node) or an external Postgres
+  (HA).
+type: application
+# Source-available: Elastic-2.0 plus an Additional Use Grant. See the repo LICENSE.
+annotations:
+  licenses: Elastic-2.0
+# Chart version — bump on chart changes.
+version: 0.1.0
+# Platform image version. Matches the repo VERSION file and the
+# `platform/vX.Y.Z` tag that publishes the five images; image.tag defaults to
+# this. Bump together with a coordinated image release.
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+keywords:
+  - integration-platform
+  - unified-api
+  - self-hosted
+home: https://github.com/open-steward/opensteward
+sources:
+  - https://github.com/open-steward/opensteward
+maintainers:
+  - name: Falco Consulting AB
+    url: https://opensteward.dev
+# Optional embedded Apache Superset (docs/deployment/superset.md). Rendered
+# only with superset.enabled=true (and database.mode=postgres). The packaged
+# chart is vendored under charts/ so installs from a checkout work offline;
+# refresh it with `helm dependency update` when bumping the version, together
+# with superset.image.tag in values.yaml and deploy/superset/Dockerfile.
+dependencies:
+  - name: superset
+    version: 0.22.7
+    repository: https://apache.github.io/superset
+    condition: superset.enabled

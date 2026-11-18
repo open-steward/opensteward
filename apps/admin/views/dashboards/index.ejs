@@ -1,0 +1,132 @@
+<% layout('../layout', { title: 'Dashboards' }) -%>
+<%
+  const card = (d) => '/dashboards/' + encodeURIComponent(d.id)
+  const charts = (n) => n + ' chart' + (n === 1 ? '' : 's')
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Overview</div>
+    <h1 class="page-header__title">Dashboards</h1>
+    <p class="page-header__desc">
+      Charts over the data your connections have synced. Every chart is computed for the tenants you
+      can see, and no chart reads personal data.
+    </p>
+  </div>
+  <% if (canEdit) { %>
+  <div class="page-header__actions">
+    <a href="/dashboards/new" class="btn btn--primary btn--sm">New dashboard</a>
+  </div>
+  <% } %>
+</header>
+
+<%# Search and vertical chips. Plain GET, so the URL carries the filter and it
+    works without script; each keeps the other (indexHref, routes/dashboards.ts). -%>
+<form method="GET" action="/dashboards" class="filterbar dash-index__filter" role="search" data-dashboards-filter>
+  <% if (filter.vertical) { %><input type="hidden" name="vertical" value="<%= filter.vertical %>"><% } %>
+  <input class="input input--sm dash-index__search" type="search" name="q" value="<%= filter.q %>" maxlength="100"
+         placeholder="Search dashboards…" aria-label="Search dashboards by name or description">
+  <button class="btn btn--secondary btn--sm" type="submit">Search</button>
+  <% if (filter.active) { %><a class="filterbar__clear" href="/dashboards">Clear</a><% } %>
+  <nav class="dash-chips" aria-label="Show one vertical">
+    <a class="dash-chip" href="<%= indexHref({ vertical: '' }) %>"<%- filter.vertical ? '' : ' aria-current="true"' %> data-dashboards-chip="">All</a>
+    <% for (const c of chips) { %>
+    <a class="dash-chip" href="<%= indexHref({ vertical: c.key }) %>"<%- filter.vertical === c.key ? ' aria-current="true"' : '' %> data-dashboards-chip="<%= c.key %>"><%= c.label %></a>
+    <% } %>
+  </nav>
+</form>
+
+<% if (nothingMatches) { %>
+<div class="empty-state empty-state--no-results" style="margin-top: var(--space-4)" data-dashboards-nomatch>
+  <h3 class="empty-state__title">No dashboards match</h3>
+  <p class="empty-state__body">Nothing<%= filter.q ? ' with “' + filter.q + '” in its name or description' : '' %><%= filter.vertical ? ' under ' + (chips.find((c) => c.key === filter.vertical) || {}).label : '' %>.</p>
+  <div class="empty-state__actions"><a class="btn btn--secondary" href="/dashboards">Clear</a></div>
+</div>
+<% } %>
+
+<%# Your dashboards first: they are the ones people come back for. -%>
+<% if (sections.length > 0 || (custom.length === 0 && !filter.active)) { %>
+<section data-dashboards-yours>
+<h2 class="dash-index__h2">Your dashboards</h2>
+<% if (custom.length === 0) { %>
+<div class="card dash-index__none" data-dashboards-none>
+  <span class="muted">No custom dashboards yet. Build one from the metric catalog<%= canEdit ? '' : ' (needs the dashboards:edit permission)' %>, or share one with the rest of your team.</span>
+  <% if (canEdit) { %><a class="btn btn--secondary btn--sm" href="/dashboards/new">New dashboard</a><% } %>
+</div>
+<% } %>
+<% for (const s of sections) { %>
+<h3 class="dash-index__h3"><%= s.label %></h3>
+<div class="card" style="padding: 0">
+  <div class="table-scroll">
+  <table class="table table--compact" data-dashboards-custom>
+    <thead><tr><th scope="col">Dashboard</th><th scope="col">Shared with</th><th scope="col">Data from</th><th scope="col">Charts</th><th scope="col">Updated</th></tr></thead>
+    <tbody>
+      <% for (const d of s.rows) { %>
+      <tr>
+        <td><a href="<%= card(d) %>"><strong><%= d.name %></strong></a><% if (d.description) { %><div class="muted" style="font-size: var(--text-xs)"><%= d.description %></div><% } %></td>
+        <td><span class="badge<%= d.audience.kind === 'private' ? '' : ' badge--accent' %>"><%= audienceLabel(d.audience, tenantNames) %></span><% if (d.editable) { %> <span class="muted" style="font-size: var(--text-xs)">yours to edit</span><% } %></td>
+        <td class="muted"><%= d.pinnedTenants && d.pinnedTenants.length ? d.pinnedTenants.map((t) => tenantNames.get(t) || t).join(', ') : 'Viewer’s tenants' %></td>
+        <td><%= d.widgets.length %></td>
+        <td class="muted"><%= d.updatedAt ? new Date(d.updatedAt).toLocaleString() : '—' %></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<% } %>
+</section>
+<% } %>
+
+<%# Built in: one row per vertical (builtinGroups, routes/dashboards.ts
+    groupBuiltins), its dashboards side by side. The description is cut to one
+    line; the tile's title carries all of it. -%>
+<% if (builtinGroups.length > 0) { %>
+<section data-dashboards-builtin>
+<h2 class="dash-index__h2">Built in</h2>
+<div class="dash-rows">
+<% for (const g of builtinGroups) { %>
+<div class="dash-row">
+  <h3 class="dash-row__label" data-dashboards-group="<%= g.key || 'system' %>"><%= g.label %></h3>
+  <div class="dash-row__tiles">
+    <% for (const d of g.rows) { %>
+    <a class="dash-tile" href="<%= card(d) %>" title="<%= d.description || '' %>">
+      <span class="dash-tile__head"><strong><%= d.name %></strong><span class="dash-tile__count"><%= charts(d.widgets.length) %></span></span>
+      <% if (d.description) { %><span class="dash-tile__desc"><%= d.description %></span><% } %>
+    </a>
+    <% } %>
+  </div>
+</div>
+<% } %>
+</div>
+</section>
+<% } %>
+
+<%# Superset: hidden while a filter matches none of them, where its own empty
+    state ("none available to you") would read as untrue. -%>
+<% if (supersetDashboards && (supersetDashboards.length > 0 || !filter.active)) { %>
+<section>
+<h2 class="dash-index__h2">Custom dashboards (Superset)</h2>
+<% if (supersetDashboards.length === 0) { %>
+<div class="card" data-dashboards-superset>
+  <div class="empty-state">
+    <div class="empty-state__icon"><i class="ph ph-chart-pie-slice"></i></div>
+    <h3 class="empty-state__title">No Superset dashboards available to you</h3>
+    <p class="empty-state__body">Dashboards appear here once the superset-bootstrap job has registered them. Only dashboards shared with you, about verticals in your scope, are listed.</p>
+  </div>
+</div>
+<% } else { %>
+<div class="dash-tiles" data-dashboards-superset>
+  <% for (const d of supersetDashboards) { %>
+  <a class="dash-tile" href="/dashboards/superset/<%= encodeURIComponent(d.id) %>" title="<%= d.description || '' %>">
+    <span class="dash-tile__head">
+      <strong><%= d.title %></strong>
+      <% if (d.verticals && d.verticals.length) { %><span class="badge" style="text-transform: capitalize"><%= d.verticals.join(', ') %></span><% } else { %><span class="badge">Superset</span><% } %>
+    </span>
+    <% if (d.description) { %><span class="dash-tile__desc"><%= d.description %></span><% } %>
+    <span class="dash-tile__desc">Shared with: <%= audienceLabel(d.audience, tenantNames) %></span>
+  </a>
+  <% } %>
+</div>
+<% } %>
+</section>
+<% } %>

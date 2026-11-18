@@ -1,0 +1,15 @@
+<%# One tenant, rendered the way /customers renders it: name AND id. The name
+    is what an operator recognises; the id is what actually appears on API
+    keys, Connect Links and tenant_id filters, so both are load-bearing.
+
+    Every route that includes this fetches `tenants` non-fatally — an
+    unreachable admin-api must not take an activity page down — so when the
+    name cannot be resolved the bare id is shown rather than an em-dash: the
+    id still identifies the tenant. Only a row with no tenant at all gets the
+    dash.
+
+    Included with `{ tenantId, tenants }` — see connections/index.ejs. (No
+    literal example here: an EJS close tag inside this comment would end it.)
+-%>
+<% const _tenant = tenantId ? ((tenants || []).find((x) => x.id === tenantId) || null) : null -%>
+<% if (tenantId) { %><% if (_tenant) { %><%= _tenant.name %> <% } %><span class="mono muted"><%= tenantId %></span><% } else { %><span class="muted">—</span><% } %>

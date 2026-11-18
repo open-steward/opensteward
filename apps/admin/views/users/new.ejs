@@ -1,0 +1,36 @@
+<% layout('../layout', { title: 'Add user' }) -%>
+<% const v = (typeof values !== 'undefined' && values) ? values : {} %>
+<div style="max-width: 480px">
+  <h1>Add user</h1>
+  <% if (error) { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+  <% } %>
+  <form method="POST" action="/users" class="card stack" style="margin-top: var(--space-6)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field__label" for="username">Username</label>
+      <input class="input" type="text" name="username" id="username" value="<%= v.username || '' %>" required>
+    </div>
+    <div class="field">
+      <label class="field__label" for="email">Email <span class="muted" style="font-weight: 400">(optional)</span></label>
+      <input class="input" type="email" name="email" id="email" value="<%= v.email || '' %>" maxlength="254" autocomplete="off">
+      <span class="field__hint">Set here, the identity provider never overwrites it.</span>
+    </div>
+    <div class="field">
+      <label class="field__label" for="password">Password</label>
+      <input class="input" type="password" name="password" id="password" required minlength="8">
+    </div>
+    <div class="field">
+      <label class="field__label" for="role">Role</label>
+      <select class="select" name="role" id="role">
+        <option value="viewer"<%= v.role === 'viewer' ? ' selected' : '' %>>Viewer — read-only access</option>
+        <option value="operator"<%= v.role === 'operator' ? ' selected' : '' %>>Operator — manage connections</option>
+        <option value="admin"<%= v.role === 'admin' ? ' selected' : '' %>>Admin — full access including user management</option>
+      </select>
+    </div>
+    <div class="row">
+      <button type="submit" class="btn btn--primary">Add user</button>
+      <a href="/users" class="btn btn--ghost">Cancel</a>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "declarationMap": false,
+    "sourceMap": false,
+    "tsBuildInfoFile": "dist/.tsbuildinfo-kernel"
+  },
+  "include": [
+    "src/sandbox/resource-spec.ts",
+    "src/verticals/shared/**/*",
+    "src/types/**/*"
+  ]
+}

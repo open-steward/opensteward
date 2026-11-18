@@ -1,0 +1,15 @@
+# Terraform / OpenTofu working artifacts — never commit.
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+!*.tfvars.example
+
+# Local secret state (Azure deploy.sh) — contains STORE_SECRET, the data-at-rest key.
+.opensteward-secrets.json
+*.pgpass
+
+# Bicep build output
+main.json

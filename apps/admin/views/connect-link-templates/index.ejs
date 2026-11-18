@@ -1,0 +1,83 @@
+<% layout('../layout', { title: 'Connect link templates' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+
+<div class="row row--between" style="align-items: center">
+  <div>
+    <h1 style="margin: 0">Connect link templates</h1>
+    <p class="muted" style="margin: var(--space-1) 0 0">
+      Reusable presets for the new-link form. Pick a template at mint time to prefill mode, restrictions, scope group, and expiry.
+    </p>
+  </div>
+  <% if (canAct) { %><a href="/connect-link-templates/new" class="btn btn--primary btn--sm">New template</a><% } %>
+</div>
+
+
+<%
+  // The filter form and the table render unconditionally — must-fix 2, the
+  // same correction already made on /webhooks, /api-keys, /scope-groups and
+  // /platforms. Hiding them whenever `templates` (the current, possibly
+  // filtered view) is empty stranded an operator whose filter matched
+  // nothing with no visible Clear control. Only the <tbody> below branches,
+  // telling a filtered-to-zero result apart from a genuinely empty
+  // deployment.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+<div class="card" style="padding: 0; margin-top: var(--space-3)">
+<div class="table-scroll">
+<table class="table">
+  <%- include('../_table-head', { tableSpec, tableState }) %>
+  <tbody>
+    <% if (templates.length === 0) { %>
+    <tr>
+      <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+        <% if (hasFilters) { %>
+        <p class="muted" style="margin: var(--space-4) 0">
+          No templates match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+        </p>
+        <% } else { %>
+        <p class="muted" style="margin: var(--space-4) 0">No templates yet. Create one to skip re-entering form fields for repeat customers.</p>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const t of templates) { %>
+    <tr>
+      <td class="mono" style="font-size: var(--text-xs)"><%= t.tenantId %></td>
+      <td>
+        <strong><%= t.name %></strong>
+        <% if (t.description) { %><div class="muted" style="font-size: var(--text-xs)"><%= t.description %></div><% } %>
+        <% if (t.allowedPlatforms.length === 1) { %>
+          <div class="muted" style="font-size: var(--text-xs)"><%= t.allowedPlatforms[0].vertical %>/<%= t.allowedPlatforms[0].slug %></div>
+        <% } else if (t.allowedVerticals.length === 1) { %>
+          <div class="muted" style="font-size: var(--text-xs)">vertical: <%= t.allowedVerticals[0] %></div>
+        <% } %>
+      </td>
+      <td><span class="mono" style="font-size: var(--text-xs)"><%= t.linkMode %></span></td>
+      <td style="font-size: var(--text-xs)">
+        <% if (t.scopeGroupId) { %><span class="muted">group #<%= t.scopeGroupId %></span><% } else { %><span class="muted">platform default</span><% } %>
+      </td>
+      <td style="font-size: var(--text-xs)"><%= t.expiryDays %>d</td>
+      <td style="font-size: var(--text-xs)"><%= t.oneTimeOnly ? 'yes' : 'no' %></td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= new Date(t.createdAt).toLocaleString() %></td>
+      <td style="white-space: nowrap">
+        <a href="/connect-link-templates/<%= t.id %>/edit" class="btn btn--ghost btn--sm">Edit</a>
+        <% if (canAct) { %><form method="POST" action="/connect-link-templates/<%= t.id %>/delete" style="display: inline"
+          onsubmit="return confirm('Delete this template?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+        </form><% } %>
+      </td>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>

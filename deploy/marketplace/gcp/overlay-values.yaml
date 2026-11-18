@@ -1,0 +1,89 @@
+# =============================================================================
+# OpenSteward — GCP Marketplace deployer overlay
+# =============================================================================
+# Baked into the deployer image and applied BENEATH the schema-driven values
+# (the Marketplace UI / mpdev passes the operator's answers as `--set` on top of
+# this file, so anything they fill in wins). It pins the Marketplace-supported
+# topology so the deploy form only has to ask for environment-specific values:
+#
+#   - Postgres/HA mode (Marketplace deploys are not single-node SQLite trials)
+#   - External Secrets Operator → GCP Secret Manager
+#   - ingress-nginx + cert-manager TLS
+#   - Production HA: PodDisruptionBudgets + integration-server autoscaling
+#
+# This mirrors deploy/helm/overlays/gcp-values.yaml. The values left empty here
+# (project IDs, hosts, GSA email, secret/db names) are REQUIRED in schema.yaml,
+# so the operator must supply them in the deploy form. Every value path is
+# validated by deploy/helm/opensteward/values.schema.json.
+# =============================================================================
+
+# Fail-closed secret assertion. MUST stay "production" (do not override).
+nodeEnv: production
+
+database:
+  mode: postgres
+  external:
+    # Operator supplies the actual Secret name in the deploy form (defaults to
+    # opensteward-db in schema.yaml). Holds the Cloud SQL DATABASE_URL.
+    existingSecret: opensteward-db
+    secretKey: DATABASE_URL
+  persistence:
+    storageClass: premium-rwo # sqlite-mode trials only; unused in postgres mode
+
+redis:
+  # Memorystore — required to scale integration-server past 1 replica. The
+  # operator sets redis.url in the deploy form.
+  enabled: true
+  url: ""
+
+secrets:
+  source: externalSecrets
+  externalSecrets:
+    createStore: true
+    provider: gcp
+    gcp:
+      projectID: ""        # deploy form (required)
+      clusterLocation: ""  # deploy form (required)
+      clusterName: ""      # deploy form (required)
+    # Secret Manager secret holding a JSON object with keys
+    # JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET).
+    remoteSecretName: opensteward-app-secrets
+
+serviceAccount:
+  create: true
+  annotations:
+    # Workload Identity binding (roles/secretmanager.secretAccessor). The
+    # operator supplies the GSA email in the deploy form.
+    iam.gke.io/gcp-service-account: ""
+
+ingress:
+  enabled: true
+  className: nginx
+  # cert-manager.io/cluster-issuer is added automatically from tls.certManager.
+  tls:
+    enabled: true
+    certManager:
+      enabled: true
+      clusterIssuer: letsencrypt-prod
+  hosts:
+    - host: admin.example.com
+      service: admin
+    - host: api.example.com
+      service: integration-server
+
+publicUrls:
+  scheme: https
+  adminUi: https://admin.example.com
+  adminApi: https://admin-api.example.com
+  integrationServer: https://api.example.com
+
+# Production HA defaults.
+podDisruptionBudget:
+  enabled: true
+services:
+  integration-server:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 75

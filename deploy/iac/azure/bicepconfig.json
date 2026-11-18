@@ -1,0 +1,24 @@
+{
+  "$comment": "Lint config for this module. `bicep build`/`bicep lint` and `az bicep` honour it. Keeps the template 'fmt'-clean and flags secrets-in-outputs / stale apiVersions.",
+  "analyzers": {
+    "core": {
+      "enabled": true,
+      "verbose": false,
+      "rules": {
+        "no-hardcoded-env-urls": { "level": "warning" },
+        "outputs-should-not-contain-secrets": { "level": "error" },
+        "secure-parameter-default": { "level": "error" },
+        "use-recent-api-versions": { "level": "warning" },
+        "no-unused-params": { "level": "warning" },
+        "no-unused-vars": { "level": "warning" },
+        "prefer-unquoted-property-names": { "level": "warning" },
+        "simplify-interpolation": { "level": "warning" }
+      }
+    }
+  },
+  "formatting": {
+    "indentKind": "Space",
+    "indentSize": 2,
+    "insertFinalNewline": true
+  }
+}

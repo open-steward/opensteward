@@ -1,0 +1,51 @@
+<%#
+  Inputs generated from a destination type's JSON Schema (see
+  groupsFromSchema in src/core/routes/destinations.ts). Locals: groups — the
+  top-level fields, then one fieldset per nested object (input names dotted,
+  e.g. `cfg_stage.url`, mapped back to nested JSON on post). Secret fields are
+  write-only: rendered empty, autocomplete off.
+-%>
+<% for (const g of groups) { %>
+<% if (g.key !== null) { %>
+<fieldset class="stack stack--sm" style="border: 1px solid var(--border-subtle); border-radius: var(--radius-md, 8px); padding: var(--space-3); margin: var(--space-3) 0 0" data-fieldset="<%= g.key %>">
+  <legend class="field__label" style="padding: 0 var(--space-2)"><%= g.label %><% if (g.required) { %> <span class="muted">(required)</span><% } %></legend>
+  <% if (g.description) { %><span class="field__hint"><%= g.description %></span><% } %>
+<% } %>
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4)">
+  <% for (const f of g.fields) { %>
+  <% if (f.kind === 'checkbox') { %>
+  <label class="field" data-field="<%= f.key %>">
+    <span class="row" style="gap: var(--space-2)">
+      <input type="checkbox" name="<%= f.name %>" <%= f.checked ? 'checked' : '' %>>
+      <span class="field__label" style="margin: 0"><%= f.label %></span>
+    </span>
+    <% if (f.description) { %><span class="field__hint"><%= f.description %></span><% } %>
+  </label>
+  <% } else { %>
+  <label class="field" data-field="<%= f.key %>">
+    <span class="field__label"><%= f.label %><% if (f.required) { %> <span class="muted">(required)</span><% } %></span>
+    <% if (f.kind === 'select') { %>
+    <select class="select" name="<%= f.name %>">
+      <% if (!f.required && !f.value) { %><option value="">—</option><% } %>
+      <% for (const o of f.options) { %>
+      <option value="<%= o %>"<%= f.value === o ? ' selected' : '' %>><%= o %></option>
+      <% } %>
+    </select>
+    <% } else if (f.kind === 'textarea') { %>
+    <textarea class="textarea mono" name="<%= f.name %>" rows="4" autocomplete="off" spellcheck="false" placeholder="write-only — paste to set"></textarea>
+    <% } else if (f.kind === 'password') { %>
+    <input class="input" type="password" name="<%= f.name %>" value="" autocomplete="new-password" placeholder="write-only">
+    <% } else if (f.kind === 'number') { %>
+    <input class="input" type="number" name="<%= f.name %>" value="<%= f.value %>" placeholder="<%= f.placeholder %>"<%= f.required ? ' required' : '' %>>
+    <% } else { %>
+    <input class="input" type="text" name="<%= f.name %>" value="<%= f.value %>" placeholder="<%= f.placeholder %>" autocomplete="off"<%= f.required ? ' required' : '' %>>
+    <% } %>
+    <% if (f.description) { %><span class="field__hint"><%= f.description %></span><% } %>
+  </label>
+  <% } %>
+  <% } %>
+</div>
+<% if (g.key !== null) { %>
+</fieldset>
+<% } %>
+<% } %>

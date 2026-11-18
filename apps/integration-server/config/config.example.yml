@@ -1,0 +1,54 @@
+# OpenSteward — single unified service config.
+#
+# Most settings come from env vars (PORT, STORE_PATH, STORE_SECRET,
+# ADMIN_SECRET, RATE_LIMIT_*). Anything you set here is overridden by the
+# corresponding env var.
+
+port: 3000
+host: 0.0.0.0
+
+storePath: ./data/credentials.db
+
+# Override per environment:
+# storeSecret: change-me-to-a-long-random-string-at-least-32-chars
+# Rotate via the offline `pnpm rotate-store-secret` tool — see
+# docs/deployment/key-rotation.md. Changing this value without first
+# re-encrypting the data makes every encrypted blob undecryptable.
+# adminSecret: change-me-or-leave-unset-in-dev
+
+# Per-IP request budget. docker-compose mounts THIS file as the container's
+# config.yml, so whatever is here is what a deployment actually runs — it shipped
+# at 100/min, six times tighter than the 600 the code defaults to, and tight
+# enough that the admin UI throttled itself: one Connect Links page render spends
+# ~10 requests (a catalog call plus one per vertical) and the wizard ~12, so
+# roughly ten page views a minute returned 429. Requests carrying ADMIN_SECRET
+# (i.e. admin-api on the operator's behalf) are exempt; this budget is for
+# anonymous callers. RATE_LIMIT_MAX / RATE_LIMIT_WINDOW_MS override it.
+rateLimitMax: 600
+rateLimitWindowMs: 60000
+
+# ── OpenAPI Servers dropdown — optional ────────────────────────────────────
+# Operator-tunable Swagger UI "Servers" dropdown. Four variables —
+# scheme, host, port, version — each with a default and an enum. The
+# served /specs/openapi.json picks these up at build time; admin /settings
+# can additionally override them at runtime (60 s propagation).
+#
+# Omit this whole section for the fresh-clone path (http://localhost:3010/v1).
+#
+# openapi:
+#   servers:
+#     scheme:
+#       default: https
+#       enum: [https, http]
+#     host:
+#       default: oi.example.com
+#       enum:
+#         - oi.example.com
+#         - oi-staging.example.com
+#         - localhost
+#     port:
+#       default: '443'                 # quoted: OpenAPI server variables are strings
+#       enum: ['443', '3010']
+#     version:
+#       default: v1
+#       enum: [v1]                     # add 'v2' here when a versioned route ships

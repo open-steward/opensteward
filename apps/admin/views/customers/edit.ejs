@@ -1,0 +1,125 @@
+<% layout('../layout', { title: customer ? 'Edit customer' : 'New customer' }) -%>
+<%
+  const piiFields = (typeof pii !== 'undefined' && pii) ? pii : {}
+  const addr = piiFields.address || {}
+  // Chosen once, at creation. A customer's tenant decides which Connect Links
+  // may name them and which tenant owns the connections they authorize, so
+  // moving them later would orphan both — hence read-only on edit.
+  const tenantChoices = (typeof tenants !== 'undefined' && tenants) || []
+  const pickTenant = !customer && tenantChoices.length > 1
+%>
+<div style="max-width: 640px">
+  <h1><%= customer ? 'Edit customer' : 'New customer' %></h1>
+  <% if (typeof error !== 'undefined' && error) { %>
+  <div class="alert alert--danger" style="margin-bottom: var(--space-4)"><%= error %></div>
+  <% } %>
+
+  <form method="POST" action="<%= customer ? '/customers/' + customer.id : '/customers' %>" class="card stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <% if (pickTenant) { %>
+    <div class="field">
+      <label class="field__label" for="cust-tenant">Tenant</label>
+      <select class="select" name="tenantId" id="cust-tenant">
+        <% for (const t of tenantChoices) { %>
+        <option value="<%= t.id %>"><%= t.name %> (<%= t.id %>)</option>
+        <% } %>
+      </select>
+      <span class="field__hint">
+        Fixed once created. Connect Links for this customer must belong to the same tenant.
+      </span>
+    </div>
+    <% } else if (!customer && tenantChoices.length === 0) { %>
+    <%# Zero tenants cannot happen: the `default` tenant is seeded by migration
+        (admin-store.ts), so an empty list means listTenants() failed and its
+        `.catch(() => [])` swallowed it. Hiding the control then assigned the
+        customer to `default` silently — and a customer's tenant is fixed at
+        creation, so that is not a mistake anyone can correct afterwards; it
+        decides which Connect Links may name them for the rest of their life.
+        Typeable, and it says why. %>
+    <div class="field">
+      <label class="field__label" for="cust-tenant">Tenant</label>
+      <input class="input mono" name="tenantId" id="cust-tenant" value="default" autocomplete="off">
+      <span class="field__hint">
+        The tenant list could not be loaded, so this could not be filled in for you. It is fixed once this customer is created — check it before saving. Registered tenants are at <a href="/tenants">/tenants</a>.
+      </span>
+    </div>
+    <% } else if (customer && customer.tenantId) { %>
+    <div class="field">
+      <span class="field__label">Tenant</span>
+      <span class="mono"><%= customer.tenantId %></span>
+      <span class="field__hint">Set at creation and not changed here — moving a customer would orphan their connections and links.</span>
+    </div>
+    <% } %>
+    <div class="field">
+      <span class="field__label">Email *</span>
+      <input class="input" name="email" type="email" required value="<%= customer ? customer.email : '' %>" <%= customer ? 'readonly' : '' %>>
+    </div>
+    <div class="field">
+      <span class="field__label">Display name</span>
+      <input class="input" name="displayName" value="<%= (customer && customer.displayName) || '' %>" placeholder="Jane (Acme)">
+    </div>
+    <div class="field">
+      <span class="field__label">External reference</span>
+      <input class="input" name="externalReference" value="<%= (customer && customer.externalReference) || '' %>" placeholder="Your CRM / billing ID">
+      <span class="field__hint">Maps this customer back to your own system.</span>
+    </div>
+
+    <details style="margin-top: var(--space-4)">
+      <summary style="cursor: pointer; font-weight: 500">Personal information (encrypted at rest, all optional)</summary>
+      <div class="stack" style="margin-top: var(--space-4)">
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">First name</span>
+            <input class="input" name="firstName" value="<%= piiFields.firstName || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Last name</span>
+            <input class="input" name="lastName" value="<%= piiFields.lastName || '' %>">
+          </div>
+        </div>
+        <div class="field">
+          <span class="field__label">Phone</span>
+          <input class="input" name="phone" value="<%= piiFields.phone || '' %>" placeholder="+15555550123">
+        </div>
+        <div class="field">
+          <span class="field__label">Personal ID number</span>
+          <input class="input" name="personalIdNumber" value="<%= piiFields.personalIdNumber || '' %>" placeholder="National ID / SSN / passport / fiscal">
+          <span class="field__hint">Encrypted at rest. Masked in admin views; revealing writes an audit entry.</span>
+        </div>
+        <div class="field">
+          <span class="field__label">Address line 1</span>
+          <input class="input" name="addressLine1" value="<%= addr.line1 || '' %>">
+        </div>
+        <div class="field">
+          <span class="field__label">Address line 2</span>
+          <input class="input" name="addressLine2" value="<%= addr.line2 || '' %>">
+        </div>
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">City</span>
+            <input class="input" name="city" value="<%= addr.city || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Region</span>
+            <input class="input" name="region" value="<%= addr.region || '' %>">
+          </div>
+        </div>
+        <div class="row" style="gap: var(--space-3)">
+          <div class="field" style="flex: 1">
+            <span class="field__label">Postal code</span>
+            <input class="input" name="postalCode" value="<%= addr.postalCode || '' %>">
+          </div>
+          <div class="field" style="flex: 1">
+            <span class="field__label">Country</span>
+            <input class="input" name="country" maxlength="2" value="<%= addr.country || '' %>" placeholder="US">
+          </div>
+        </div>
+      </div>
+    </details>
+
+    <div class="row" style="margin-top: var(--space-4); gap: var(--space-3)">
+      <button type="submit" class="btn btn--primary"><%= customer ? 'Save' : 'Create customer' %></button>
+      <a href="<%= customer ? '/customers/' + customer.id : '/customers' %>" class="btn btn--secondary">Cancel</a>
+    </div>
+  </form>
+</div>

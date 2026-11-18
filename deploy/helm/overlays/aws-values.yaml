@@ -1,0 +1,75 @@
+# AWS / EKS overlay — layer on top of the base chart:
+#   helm install os deploy/helm/opensteward \
+#     -f deploy/helm/overlays/aws-values.yaml -f my-secrets-and-hosts.yaml
+#
+# Prerequisites (see deploy/iac/aws for reference Terraform):
+#   - EKS with the AWS Load Balancer Controller + External Secrets Operator installed
+#   - An IRSA role the chart ServiceAccount assumes, with secretsmanager:GetSecretValue
+#   - RDS for PostgreSQL reachable from the cluster; ElastiCache for Redis (optional)
+# Replace every <PLACEHOLDER>.
+
+database:
+  mode: postgres
+  external:
+    # Secret holding DATABASE_URL for RDS. Have ESO sync it from Secrets Manager too,
+    # or create it once: kubectl create secret generic opensteward-db --from-literal=DATABASE_URL=...
+    existingSecret: opensteward-db
+    secretKey: DATABASE_URL
+  # sqlite-mode trials only (ignored in postgres mode):
+  persistence:
+    storageClass: gp3
+
+redis:
+  enabled: true
+  url: rediss://<ELASTICACHE_PRIMARY_ENDPOINT>:6379
+
+secrets:
+  source: externalSecrets
+  externalSecrets:
+    createStore: true
+    provider: aws
+    aws:
+      region: <REGION>
+    # One Secrets Manager secret holding a JSON object with keys
+    # JWT_SECRET / SESSION_SECRET / STORE_SECRET (and optionally ADMIN_SECRET).
+    remoteSecretName: opensteward/app-secrets
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<ACCOUNT_ID>:role/opensteward-eso
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    # ACM cert covering the hosts below — the ALB terminates TLS, so no in-cluster Secret.
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<REGION>:<ACCOUNT_ID>:certificate/<CERT_ID>
+  tls:
+    enabled: false
+  hosts:
+    - host: admin.example.com
+      service: admin
+    - host: api.example.com
+      service: integration-server
+
+# Browser-facing URLs (SSO callbacks, cross-app links). Must match the hosts above.
+publicUrls:
+  scheme: https
+  adminUi: https://admin.example.com
+  adminApi: https://admin-api.example.com
+  integrationServer: https://api.example.com
+
+# Production HA.
+podDisruptionBudget:
+  enabled: true
+services:
+  integration-server:
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPU: 75

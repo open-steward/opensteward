@@ -1,0 +1,137 @@
+<% layout('../layout', { title: 'Scope groups' }) -%>
+<% const canAct = user && (user.role === 'admin' || user.role === 'operator') %>
+<%
+  // The table (filter form + thead) renders unconditionally regardless of
+  // `groups.length` — fix-round-1, Critical 1/2. Two independent reasons
+  // land on the same fix:
+  //   - The Vertical/Platform selects are how an operator would clear back
+  //     down from zero results in the first place; hiding them exactly when
+  //     the count is zero strands that operator with no visible Clear
+  //     control.
+  //   - `pnpm docs:screenshots`' scope-groups-list spec waits on
+  //     `select[name="f_platform"]` (specs.ts). scripts/screenshots/seed.ts's
+  //     seedScopeGroup can skip seeding (any non-2xx from the create call is
+  //     swallowed to a warning) and leave a deployment with zero groups — if
+  //     the select only rendered inside a `groups.length > 0` branch, that
+  //     selector would never appear and the screenshot run would hang. This
+  //     is the exact failure corrected-manifests.md's "/scope-groups is NOT a
+  //     plain filter form" section was written to prevent; nesting the
+  //     filter markup inside the non-empty branch reintroduced it.
+  const hasFilters = Object.keys(tableState.filters).length > 0
+%>
+
+<div class="row row--between" style="align-items: center">
+  <div>
+    <h1 style="margin: 0">Scope groups</h1>
+    <p class="muted" style="margin: var(--space-1) 0 0">
+      Operator-defined OAuth scope bundles. They surface as one-click presets on each platform's configure page.
+    </p>
+  </div>
+  <% if (canAct) { %><a href="/scope-groups/new" class="btn btn--primary btn--sm">New group</a><% } %>
+</div>
+
+<%- include('../_table-filters-form', { tableSpec, tableState }) %>
+<div class="row" style="margin-top: var(--space-4); justify-content: flex-end">
+  <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+  <% if (hasFilters) { %>
+  <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top: var(--space-3); padding: 0">
+<div class="table-scroll">
+<table class="table">
+  <%- include('../_table-head', { tableSpec, tableState }) %>
+  <tbody>
+    <% if (groups.length === 0) { %>
+    <tr>
+      <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+        <% if (hasFilters) { %>
+        <p class="muted" style="margin: var(--space-4) 0">
+          No scope groups match your filters. <a href="<%= tableSpec.baseUrl %>">Clear filters</a>
+        </p>
+        <% } else { %>
+        <p class="muted" style="margin: var(--space-4) 0">No scope groups yet.</p>
+        <% } %>
+      </td>
+    </tr>
+    <% } else { %>
+    <% for (const g of groups) { %>
+    <tr>
+      <td class="mono" style="font-size: var(--text-xs)"><%= g.vertical %></td>
+      <td class="mono" style="font-size: var(--text-xs)">
+        <a href="/platforms/<%= g.vertical %>/<%= g.platform %>"><%= g.platform %></a>
+      </td>
+      <td><strong><%= g.name %></strong></td>
+      <td style="font-size: var(--text-xs)">
+        <% g.scopes.forEach((s, i) => { %><% if (i > 0) { %><br><% } %><span class="mono"><%= s %></span><% }) %>
+      </td>
+      <td class="muted" style="font-size: var(--text-xs)"><%= new Date(g.createdAt).toLocaleString() %></td>
+      <td style="white-space: nowrap">
+        <a href="/scope-groups/<%= g.id %>/edit" class="btn btn--ghost btn--sm">Edit</a>
+        <% if (canAct) { %><form method="POST" action="/scope-groups/<%= g.id %>/delete" style="display: inline"
+          onsubmit="return confirm('Delete this scope group? This cannot be undone.')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn--danger btn--sm">Delete</button>
+        </form><% } %>
+      </td>
+    </tr>
+    <% } %>
+    <% } %>
+  </tbody>
+</table>
+</div>
+</div>
+
+<%#
+  The cascade script MUST come after the table above, not before it
+  (fix-round-1, Critical 1). A plain `<script>` runs synchronously the
+  instant the parser reaches it — which, when this block sat between the
+  filter buttons and the table, was BEFORE the browser had parsed the
+  `<select>` elements `_table-head.ejs` renders inside the `<thead>` further
+  down the page. `document.querySelector(...)` found nothing, hit the
+  `if (!verticalEl || !platformEl) return` guard, and the cascade never ran
+  on any load — the exact "dead JavaScript" failure mode the original
+  corrections file was written to prevent, reintroduced by moving the script
+  early enough to fix the (unrelated) XSS-escaping concern below. Placing it
+  after the table's closing tag, with no wrapping DOMContentLoaded needed,
+  is what makes both true at once: the escaped value is always in the page
+  (script always renders, per the comment at the top of this file), and the
+  elements it queries for already exist in the DOM by the time it runs.
+%>
+<script>
+  // Cascading platform filter. Reuses the same provider catalog that
+  // /scope-groups/new + /scope-groups/:id/edit serialise into the page
+  // (apiClient.listCatalog → TaggedPlatform[]). Empty vertical shows every
+  // platform; picking a vertical narrows to that vertical's set.
+  //
+  // Repointed at the filter-row controls by name+form rather than an id:
+  // _table-head.ejs (which renders both) emits no id on a filter control, and
+  // a form-scoped selector is what keeps this from ever picking up a
+  // same-named control on a different table sharing the page.
+  (function () {
+    const PROVIDERS = <%- jsonForScript(typeof providers !== 'undefined' ? providers : []) %>;
+    const SELECTED = <%- jsonForScript(tableState.filters.platform || '') %>;
+    const verticalEl = document.querySelector('select[name="f_vertical"][form="scope-groups-filters"]');
+    const platformEl = document.querySelector('select[name="f_platform"][form="scope-groups-filters"]');
+    if (!verticalEl || !platformEl) return;
+
+    function refresh() {
+      const v = verticalEl.value;
+      platformEl.innerHTML = '<option value="">All</option>';
+      PROVIDERS
+        .filter((p) => !v || p.vertical === v)
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .forEach((p) => {
+          const opt = document.createElement('option');
+          opt.value = p.slug;
+          opt.textContent = p.name + ' (' + p.slug + ')';
+          if (p.slug === SELECTED) opt.selected = true;
+          platformEl.appendChild(opt);
+        });
+    }
+    verticalEl.addEventListener('change', refresh);
+    refresh();
+  })();
+</script>

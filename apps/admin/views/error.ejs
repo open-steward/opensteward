@@ -1,0 +1,19 @@
+<% layout('layout', { title: 'Something went wrong' }) -%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Error</div>
+    <h1 class="page-header__title"><%= status === 404 ? 'Not found' : status === 403 ? 'Not allowed' : 'Something went wrong' %></h1>
+  </div>
+</header>
+
+<div class="card">
+  <p><%= message %></p>
+  <% if (requestId) { %>
+  <p class="muted" style="margin-top: var(--space-3); font-size: var(--text-sm)">
+    Reference: <code class="mono"><%= requestId %></code> — quote this id if you contact support.
+  </p>
+  <% } %>
+  <div style="margin-top: var(--space-4)">
+    <a class="btn btn--secondary btn--sm" href="/">Back to Status</a>
+  </div>
+</div>

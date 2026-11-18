@@ -1,0 +1,28 @@
+<% layout('../layout', { title: 'Initial setup' }) -%>
+<div class="auth-card">
+  <h1 style="text-align: center">Welcome to OpenSteward</h1>
+  <p class="muted" style="text-align: center; margin-top: var(--space-2)">Create your admin account to get started.</p>
+  <% if (error) { %>
+  <div class="alert alert--danger" style="margin-top: var(--space-4)"><%= error %></div>
+  <% } %>
+  <form method="POST" action="/setup/init" class="stack" style="margin-top: var(--space-6)">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field__label" for="username">Username</label>
+      <input class="input" type="text" name="username" id="username" required autofocus>
+    </div>
+    <div class="field">
+      <label class="field__label" for="password">Password</label>
+      <input class="input" type="password" name="password" id="password" required minlength="8">
+    </div>
+    <div class="field">
+      <label class="field__label" for="confirm_password">Confirm password</label>
+      <input class="input" type="password" name="confirm_password" id="confirm_password" required minlength="8">
+    </div>
+    <div class="field">
+      <label class="field__label" for="bootstrap_token">Bootstrap token <span class="field__hint">(only if this deployment sets <code>BOOTSTRAP_TOKEN</code>)</span></label>
+      <input class="input" type="password" name="bootstrap_token" id="bootstrap_token" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn--primary btn--lg" style="width: 100%">Create admin account</button>
+  </form>
+</div>

@@ -1,0 +1,161 @@
+# OpenSteward — Azure Marketplace Kubernetes-app (cluster-extension) bundle manifest.
+#
+# This is a REFERENCE descriptor for the CNAB bundle Partner Center wraps when you
+# publish an "Azure Container / Kubernetes application" offer. The Marketplace
+# tooling (`az k8s-extension`/ Partner Center ingestion) produces the real
+# bundle.json; this file documents the inputs that go into it so the packaging is
+# reproducible and reviewable in git. It is NOT applied directly by Helm or kubectl.
+#
+# Packaging model
+#   buyer-facing form  ->  createUiDefinition.json  ->  outputs (helm value paths)
+#   outputs            ->  cluster-extension configurationSettings (flattened keys)
+#   cluster extension  ->  installs the wrapped Helm chart onto the buyer's AKS
+#
+# What the bundle wraps
+#   - deploy/helm/opensteward                     (the base chart)
+#   - deploy/helm/overlays/azure-values.yaml      (the Azure overlay defaults)
+#   The createUiDefinition outputs are layered LAST, so buyer choices win over the
+#   overlay defaults. Anything the buyer leaves blank falls back to the overlay,
+#   then to the chart's own values.yaml.
+
+schemaVersion: 1.0.0
+
+metadata:
+  name: opensteward
+  # Mirrors deploy/helm/opensteward/Chart.yaml appVersion. Bump together with a
+  # coordinated image release.
+  version: "0.1.0"
+  description: >-
+    OpenSteward — self-hosted unified integration platform. Your customers' data,
+    on your servers. Deploys five services (admin, admin-api, docs-server,
+    webhook-gateway, integration-server) onto an existing AKS cluster.
+  publisher: Falco Consulting AB
+  # BYOL: this package collects NO marketplace metering or entitlement. There is
+  # no marketplace SaaS fulfillment webhook and no usage events. The OpenSteward
+  # license is a file the buyer puts in a Kubernetes Secret and names in the
+  # form (license.existingSecret); the product verifies it offline and reports
+  # nothing to the publisher or to Azure.
+  licensing: byol
+
+# How the offer is delivered to the buyer's cluster.
+clusterExtension:
+  # AKS cluster extension type the Marketplace registers for this offer.
+  extensionType: openSteward.opensteward
+  # The buyer-facing form. Its outputs become configurationSettings below.
+  createUiDefinition: ./createUiDefinition.json
+  # The cluster-extension scope. OpenSteward is namespaced (one release/namespace).
+  scope: namespace
+  defaultReleaseNamespace: opensteward
+  # In-cluster prerequisites the buyer must have BEFORE install. The extension does
+  # not install these; createUiDefinition surfaces them as info/warning boxes.
+  prerequisites:
+    - "AKS with an ingress controller (app-routing add-on, or self-managed ingress-nginx)"
+    - "cert-manager with the ClusterIssuer named in Ingress & TLS (if TLS = cert-manager)"
+    - "External Secrets Operator + OIDC issuer + a federated user-assigned managed identity (if Secrets = Key Vault)"
+    - "Azure Database for PostgreSQL Flexible Server reachable from the cluster (if Database = postgres)"
+
+# The Helm chart the extension installs.
+helm:
+  chart:
+    # Path within the bundle to the chart copied at build time.
+    path: ./chart/opensteward
+    source: ../../helm/opensteward
+    # Chart version (deploy/helm/opensteward/Chart.yaml version field).
+    version: "0.1.0"
+  # Static values layered before the createUiDefinition outputs. Mirrors
+  # deploy/helm/overlays/azure-values.yaml. Buyer outputs override these.
+  valuesFiles:
+    - source: ../../helm/overlays/azure-values.yaml
+      path: ./values/azure-values.yaml
+  # nodeEnv is pinned by the chart and MUST stay "production" (fail-closed secret
+  # assertion). It is deliberately NOT a buyer-editable control.
+
+# Container images mirrored from GHCR into the Marketplace-managed ACR at
+# publish time. The chart's image.registry is overridden to that ACR and images
+# are pulled by DIGEST (multi-arch, cosign-signed, SBOM + trivy-gated upstream).
+# The chart image helper forms "<registry>/<owner>/<service>@<digest>".
+images:
+  # Source registry/owner (GHCR). image.registry default in the chart.
+  sourceRegistry: ghcr.io/open-steward
+  # Destination the chart's image.registry is set to in the Marketplace listing.
+  # The createUiDefinition default (image.registry output) matches this.
+  targetRegistry: mcr.microsoft.com/open-steward
+  # Pull policy in the Marketplace ACR mirror.
+  pullPolicy: IfNotPresent
+  # IMPORTANT — single vs per-service digest. The chart exposes ONE image.digest
+  # shared by all five services (the helper appends "/<service>@<digest>"), so a
+  # digest-pinned install requires the five services to publish under ONE
+  # coordinated manifest-list digest. The per-service `digest:` entries below are
+  # the source-of-truth the bundle build records; the createUiDefinition's
+  # image.digest default must be set to that single shared digest at build time
+  # (README step 3). If a release produces a DISTINCT digest per service, a
+  # single image.digest cannot pin them; the chart has no per-service digest
+  # override, so publish all five under one coordinated digest (same caveat as
+  # deploy/marketplace/aws/aws-marketplace-values.yaml).
+  # The five services. Each is mirrored as <targetRegistry>/<service>@<digest>.
+  # Replace each <DIGEST> with the published multi-arch digest at bundle build.
+  services:
+    - name: admin
+      source: ghcr.io/open-steward/admin
+      digest: sha256:<ADMIN_DIGEST>
+    - name: admin-api
+      source: ghcr.io/open-steward/admin-api
+      digest: sha256:<ADMIN_API_DIGEST>
+    - name: docs-server
+      source: ghcr.io/open-steward/docs-server
+      digest: sha256:<DOCS_SERVER_DIGEST>
+    - name: webhook-gateway
+      source: ghcr.io/open-steward/webhook-gateway
+      digest: sha256:<WEBHOOK_GATEWAY_DIGEST>
+    - name: integration-server
+      source: ghcr.io/open-steward/integration-server
+      digest: sha256:<INTEGRATION_SERVER_DIGEST>
+
+# Mapping from createUiDefinition outputs (left) to cluster-extension
+# configurationSettings keys (right). Cluster-extension settings are FLAT
+# dot-path strings; this is exactly the set the UI emits. Array and annotation
+# keys use the cluster-extension escaping convention (".\" / quoted index).
+# Booleans/numbers are passed as the buyer selected them.
+configurationSettingsMapping:
+  image.registry: image.registry
+  image.digest: image.digest
+  image.tag: image.tag
+
+  database.mode: database.mode
+  database.external.existingSecret: database.external.existingSecret
+  database.external.secretKey: database.external.secretKey
+  database.persistence.storageClass: database.persistence.storageClass
+
+  redis.enabled: redis.enabled
+  redis.url: redis.url
+
+  secrets.source: secrets.source
+  secrets.existingSecret: secrets.existingSecret
+  secrets.externalSecrets.provider: secrets.externalSecrets.provider
+  secrets.externalSecrets.createStore: secrets.externalSecrets.createStore
+  secrets.externalSecrets.secretStore.name: secrets.externalSecrets.secretStore.name
+  secrets.externalSecrets.azure.vaultUrl: secrets.externalSecrets.azure.vaultUrl
+  secrets.externalSecrets.azure.tenantId: secrets.externalSecrets.azure.tenantId
+  secrets.externalSecrets.remoteSecretName: secrets.externalSecrets.remoteSecretName
+
+  ingress.enabled: ingress.enabled
+  ingress.className: ingress.className
+  ingress.hosts[0].host: ingress.hosts[0].host
+  ingress.hosts[0].service: ingress.hosts[0].service
+  ingress.hosts[1].host: ingress.hosts[1].host
+  ingress.hosts[1].service: ingress.hosts[1].service
+  ingress.tls.enabled: ingress.tls.enabled
+  ingress.tls.certManager.enabled: ingress.tls.certManager.enabled
+  ingress.tls.certManager.clusterIssuer: ingress.tls.certManager.clusterIssuer
+  ingress.tls.existingSecret: ingress.tls.existingSecret
+
+  publicUrls.scheme: publicUrls.scheme
+  publicUrls.adminUi: publicUrls.adminUi
+  publicUrls.integrationServer: publicUrls.integrationServer
+  publicUrls.adminApi: publicUrls.adminApi
+
+  # Annotation key contains dots and a slash — escaped per cluster-extension rules.
+  serviceAccount.annotations.azure\.workload\.identity/client-id: serviceAccount.annotations.azure\.workload\.identity/client-id
+
+  license.existingSecret: license.existingSecret
+  license.secretKey: license.secretKey

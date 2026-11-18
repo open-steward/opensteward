@@ -1,0 +1,59 @@
+{
+  "status": 1,
+  "result": {
+    "fields": {
+      "subject": {
+        "name": "subject",
+        "label": "Subject",
+        "type": "string",
+        "mandatory": true,
+        "defaultvalue": "",
+        "presence": true,
+        "quickcreate": true,
+        "masseditable": true,
+        "header_field": [],
+        "maxlengthtext": 0,
+        "maximumlength": "255",
+        "maxwidthcolumn": 0,
+        "tabindex": 0,
+        "fieldtype": "V",
+        "id": 1765,
+        "uitype": 2,
+        "sequence": 1,
+        "fieldparams": "",
+        "blockId": 272,
+        "helpInfo": ""
+      },
+      "ssalesprocesses_status": {
+        "name": "ssalesprocesses_status",
+        "label": "Status",
+        "type": "picklist",
+        "mandatory": false,
+        "defaultvalue": "",
+        "presence": true,
+        "quickcreate": false,
+        "masseditable": true,
+        "header_field": { "type": "progress", "class": "badge-info" },
+        "maxlengthtext": 0,
+        "maximumlength": "255",
+        "maxwidthcolumn": 0,
+        "tabindex": 0,
+        "fieldtype": "V",
+        "picklistvalues": {
+          "PLL_DRAFT": "Draft",
+          "PLL_FOR_REALIZATION": "For realization",
+          "PLL_NEGOTIATIONS": "Negotiations",
+          "PLL_SALE_COMPLETED": "Sale completed",
+          "PLL_SALE_FAILED": "Sale failed"
+        },
+        "id": 1788,
+        "uitype": 15,
+        "sequence": 5,
+        "fieldparams": "",
+        "blockId": 272,
+        "helpInfo": ""
+      }
+    },
+    "blocks": {}
+  }
+}

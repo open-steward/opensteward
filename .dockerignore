@@ -1,0 +1,95 @@
+# What never belongs in a build context.
+#
+# The Dockerfile needs exactly: pnpm-workspace.yaml, pnpm-lock.yaml,
+# package.json, tsconfig.base.json, packages/, apps/${APP}/, docs/, scripts/.
+# Dependencies are installed and TypeScript is compiled INSIDE the builder
+# stage, so nothing here is a build input — shipping it only slows the context
+# transfer and risks baking local state into an image.
+#
+# Two concrete problems this file prevents:
+#   1. Stale build output. `tsc` does not delete orphaned files, so a
+#      copied-in local dist/ would survive the in-container compile — and the
+#      image could serve adapters that no longer exist in the source.
+#   2. Local secrets and operator data. .env files and the SQLite databases
+#      under data/ would otherwise be readable in any published image layer.
+
+# ── Version control and CI ───────────────────────────────────────────────
+.git
+.gitignore
+.github
+.dockerignore
+
+# ── Installed and generated ──────────────────────────────────────────────
+# Installed by `pnpm install --frozen-lockfile` in the builder.
+node_modules
+**/node_modules
+# Compiled in the builder; a copied-in dist would shadow it with stale files.
+**/dist
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+**/*.js.map
+
+# ── Secrets and operator data ────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+!.env.scripts.example
+data
+**/data
+# …except the admin's data-viewer templates, which are source, not data.
+# `**/data` matched apps/admin/views/data/ too, so every admin image shipped
+# without them and /data, /data/connections/:id and the record view all
+# answered 500 (ENOENT …/views/data/index.ejs). No other tracked directory is
+# named data; a new one needs its own exception here.
+!apps/admin/views/data
+!apps/admin/views/data/**
+*.db
+*.db-shm
+*.db-wal
+# Any depth: an anchored pattern would miss token files nested in adapter
+# live-test folders, and Docker layers are additive — a later `rm -rf` cannot
+# remove a file from a published layer.
+**/.tokens.json
+# The dev1 license-signing keypair is public on purpose (anyone may mint local dev
+# licenses with it), but no build stage needs it and no image may carry it.
+packages/license-token/fixtures
+# Operator license files: mounted into integration-server at runtime
+# (docker-compose.yml, Helm), never baked into an image.
+opensteward-license
+**/license.key
+
+# ── Local operator overrides ─────────────────────────────────────────────
+# The image ships config.example.yml; compose mounts the real one at runtime.
+docker-compose.override.yml
+**/config/config.yml
+
+# ── Development and agent tooling ────────────────────────────────────────
+.claude
+.superpowers
+.playwright-mcp
+.worktrees
+tasks
+CLAUDE.md
+.vscode
+.idea
+
+# ── Internal notes (also excluded from git; docs-server serves docs/) ─────
+docs/superpowers
+docs/research
+
+# ── Local noise ──────────────────────────────────────────────────────────
+.DS_Store
+*.log
+/swagger-*.png
+/invoice-*.png
+/accounting-*.png
+/crm-*.png
+/landing-*.png
+/combined-*.png
+
+# Platform logos are never baked into an image — see .gitignore and
+# docs/operations/platform-logos.md. The `local` LOGO_SOURCE mode expects a
+# volume mount at runtime, so a populated working copy must not leak in
+# through `COPY docs/ docs/`.
+docs/platforms/logos/

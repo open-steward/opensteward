@@ -1,0 +1,61 @@
+{{- $sso := .Values.ingress.sso }}
+{{- if and $sso.enabled (not .Values.ingress.enabled) }}{{ fail "ingress.sso.enabled requires ingress.enabled=true" }}{{ end }}
+{{- if $sso.enabled }}
+{{- $full := include "opensteward.fullname" . -}}
+{{- $tls := .Values.ingress.tls -}}
+{{- if not $sso.host }}{{ fail "ingress.sso.host is required when ingress.sso.enabled" }}{{ end }}
+{{- if and (empty $sso.slugs) (not $sso.scim) }}{{ fail "ingress.sso: set at least one slug in ingress.sso.slugs, or scim: true" }}{{ end }}
+{{- if empty $sso.allowFrom }}{{ fail "ingress.sso.allowFrom is required: the NetworkPolicy peers (your ingress controller) allowed to reach admin-api" }}{{ end }}
+{{- if not .Values.publicUrls.adminApi }}{{ fail (printf "ingress.sso: set publicUrls.adminApi to %s://%s (SSO_PUBLIC_BASE_URL)" .Values.publicUrls.scheme $sso.host) }}{{ end }}
+# admin-api SSO/SCIM ONLY. Exact paths, so nothing else under /api/sso/
+# (handoff/exchange, login-options, <slug>/ldap-login) is reachable.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $full }}-sso
+  labels:
+    {{- include "opensteward.labels" . | nindent 4 }}
+  {{- if or .Values.ingress.annotations $tls.certManager.enabled }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if $tls.certManager.enabled }}
+    cert-manager.io/cluster-issuer: {{ required "ingress.tls.certManager.clusterIssuer is required" $tls.certManager.clusterIssuer | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if $tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $sso.host | quote }}
+      secretName: {{ default (printf "%s-%s-tls" $full ($sso.host | replace "." "-")) $tls.existingSecret }}
+  {{- end }}
+  rules:
+    - host: {{ $sso.host | quote }}
+      http:
+        paths:
+          {{- range $slug := $sso.slugs }}
+          {{- range $leaf := list "login" "callback" "acs" }}
+          - path: /api/sso/{{ $slug }}/{{ $leaf }}
+            pathType: Exact
+            backend:
+              service:
+                name: {{ $full }}-admin-api
+                port:
+                  number: {{ (index $.Values.services "admin-api").port }}
+          {{- end }}
+          {{- end }}
+          {{- if $sso.scim }}
+          - path: /scim/v2/
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $full }}-admin-api
+                port:
+                  number: {{ (index $.Values.services "admin-api").port }}
+          {{- end }}
+{{- end }}

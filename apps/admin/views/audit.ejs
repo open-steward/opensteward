@@ -1,0 +1,120 @@
+<% layout('layout', { title: 'Audit log' }) -%>
+<%
+  const totalCount = (typeof total !== 'undefined') ? total : entries.length
+  const pageLimit = (typeof limit !== 'undefined') ? limit : 50
+  const hasFilters = Object.keys(tableState.filters).length > 0
+  // The export link is built in routes/audit.ts, NOT here and NOT from
+  // `tableQs`: /audit/export reads the legacy param names (`action`,
+  // `user_id`, `target_id`, `vertical`, `from`, `to`), so a link carrying
+  // `f_action=…` would export the whole log while the operator believed they
+  // had exported what is on screen.
+  const exportBase = '/audit/export' + (exportQs ? '?' + exportQs + '&' : '?')
+-%>
+<header class="page-header">
+  <div class="page-header__group">
+    <div class="page-header__eyebrow">Activity</div>
+    <h1 class="page-header__title">Audit log</h1>
+  </div>
+  <div class="page-header__actions">
+    <a class="btn btn--ghost btn--sm" href="<%= exportBase %>format=csv">Export CSV</a>
+    <a class="btn btn--ghost btn--sm" href="<%= exportBase %>format=json">Export JSON</a>
+  </div>
+</header>
+
+<%- include('_table-filters-form', { tableSpec, tableState }) %>
+<%# The date range stays above the table: `from`/`to` is one filter with TWO
+    values, and the per-column filter row has one control per column. Its two
+    columns are `hidden` + `rendered` in the spec (routes/audit.ts), so
+    _table-head.ejs draws no `<th>` for them and _table-filters-form.ejs emits
+    no hidden mirror either — these two inputs are the only controls carrying
+    those names, and they associate with the filter form by `form=`. -%>
+<div class="row" style="margin-top: var(--space-4); gap: var(--space-3); align-items: flex-end; flex-wrap: wrap">
+  <div class="field" style="flex: 0 1 160px">
+    <label class="field__label" for="f_from">From</label>
+    <input class="input input--sm" type="date" form="<%= tableSpec.id %>" name="f_from" id="f_from" value="<%= tableState.filters.from || '' %>">
+  </div>
+  <div class="field" style="flex: 0 1 160px">
+    <label class="field__label" for="f_to">To</label>
+    <input class="input input--sm" type="date" form="<%= tableSpec.id %>" name="f_to" id="f_to" value="<%= tableState.filters.to || '' %>">
+  </div>
+  <div class="row" style="margin-left: auto; gap: var(--space-2)">
+    <button class="btn btn--secondary btn--sm" type="submit" form="<%= tableSpec.id %>">Search</button>
+    <% if (hasFilters) { %>
+    <a class="btn btn--ghost btn--sm" href="<%= tableSpec.baseUrl %>">Clear</a>
+    <% } %>
+  </div>
+</div>
+
+<% if (totalCount > 0) { %>
+<p class="muted" style="margin-top: var(--space-4); font-size: var(--text-sm)"><%= totalCount %> matching entr<%= totalCount === 1 ? 'y' : 'ies' %></p>
+<% } %>
+<div class="card" style="margin-top: var(--space-3); padding: 0; overflow: hidden">
+  <div class="table-scroll">
+  <table class="table">
+    <%# The table (filter form + thead) renders unconditionally regardless of
+        `entries.length` — the property every converted table shares (see
+        /connections, /customers, /webhooks): hiding it whenever the current
+        filter matches nothing would strand an operator with no visible Clear
+        control and no way back short of hand-editing the URL. %>
+    <%- include('_table-head', { tableSpec, tableState }) %>
+    <tbody>
+      <% if (entries.length === 0) { %>
+      <tr>
+        <td colspan="<%= tableSpec.columns.filter((c) => !c.hidden).length %>">
+          <% if (!hasFilters) { %>
+          <div class="empty-state">
+            <div class="empty-state__icon"><i class="ph ph-list-magnifying-glass"></i></div>
+            <h3 class="empty-state__title">No audit entries yet</h3>
+            <p class="empty-state__body">Every operator mutation — a connection created, a key minted, a user's PII revealed — lands here the moment it happens.</p>
+          </div>
+          <% } else { %>
+          <div class="empty-state empty-state--no-results">
+            <%# Both exact-match filters name themselves back, because a text box
+                implies a substring and these two do not behave that way. %>
+            <% if (tableState.filters.target) { %>
+            <h3 class="empty-state__title">No audit entry matches “<%= tableState.filters.target %>”</h3>
+            <p class="empty-state__body">Target id matches exactly — paste the whole id.</p>
+            <% } else if (tableState.filters.user) { %>
+            <h3 class="empty-state__title">No audit entry matches “<%= tableState.filters.user %>”</h3>
+            <p class="empty-state__body">User matches a username or a user id exactly.</p>
+            <% } else if (tableState.filters.vertical) { %>
+            <h3 class="empty-state__title">No audit entry matches “<%= tableState.filters.vertical %>”</h3>
+            <p class="empty-state__body">Vertical matches a substring, case-insensitively. Entries with no vertical of their own never match it.</p>
+            <% } else if (tableState.filters.action) { %>
+            <h3 class="empty-state__title">No audit entry matches “<%= tableState.filters.action %>”</h3>
+            <p class="empty-state__body">Nothing has been recorded under that action — or nothing within the dates above.</p>
+            <% } else { %>
+            <h3 class="empty-state__title">No audit entries match your filters</h3>
+            <p class="empty-state__body">Try widening the date range or clearing what you've entered above.</p>
+            <% } %>
+            <div class="empty-state__actions">
+              <a class="btn btn--ghost" href="<%= tableSpec.baseUrl %>">Clear filters</a>
+            </div>
+          </div>
+          <% } %>
+        </td>
+      </tr>
+      <% } else { %>
+      <% for (const e of entries) { %>
+      <tr>
+        <td class="muted"><%= new Date(e.createdAt).toLocaleString() %></td>
+        <%# Username, not the uuid — a raw id tells an operator nothing about
+            who did this. `username` falls back to the id for a deleted
+            account, and reads "system" for a background worker. The id stays
+            available on hover for correlating with other records, and is also
+            what the User column SORTS on: the username is resolved per page
+            after the SQL slice, so it is not orderable in the query. %>
+        <td title="<%= e.userId %>"><%= e.username || e.userId %></td>
+        <td class="mono" style="font-size: var(--text-xs)"><%= e.action %></td>
+        <td><%= e.vertical || '—' %></td>
+        <td class="mono" style="font-size: var(--text-xs)"><%= e.targetId || '—' %></td>
+      </tr>
+      <% } %>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%# admin-api is the one paginating, so its echoed `meta.page` is authoritative
+    — same as connections/index.ejs. -%>
+<%- include('_pagination', { page: meta.page, pageLimit, total: totalCount, baseUrl: tableSpec.baseUrl, filterQs: tableQs(tableState, tableSpec) }) %>
