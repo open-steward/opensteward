@@ -75,7 +75,7 @@
     "@types/node": "^26.6.6",
     "@types/pg": "^8.23.1",
     "@types/tar": "^7.0.0",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.72.2",
