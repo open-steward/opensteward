@@ -38,10 +38,11 @@ describe('fetchToken (Cdiscount Marketplace / Octopia)', () => {
     vi.mocked(axios.post).mockResolvedValue({ data: { access_token: 'tok_abc', expires_in: 7200 } })
     const before = Date.now()
     const { expiresAt } = await fetchToken('client-1', 'secret-1')
-    const ttlMs = expiresAt.getTime() - before
-    // 7200s - 300s margin = 6900s, with tolerance for test execution time.
-    expect(ttlMs).toBeGreaterThan(6890 * 1000)
-    expect(ttlMs).toBeLessThanOrEqual(6900 * 1000)
+    const after = Date.now()
+    // 7200s - 300s margin = 6900s, counted from the moment fetchToken read
+    // the clock, which lies somewhere in [before, after].
+    expect(expiresAt.getTime()).toBeGreaterThanOrEqual(before + 6900 * 1000)
+    expect(expiresAt.getTime()).toBeLessThanOrEqual(after + 6900 * 1000)
   })
 
   it('falls back to the documented 2h-minus-margin lifetime when expires_in is absent', async () => {

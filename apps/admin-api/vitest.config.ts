@@ -9,7 +9,12 @@ export default defineConfig({
       'tests/integration/**/*.test.ts',
       'tests/journeys/**/*.test.ts',
     ],
-    testTimeout: 20_000,
+    // CI runners execute these suites several times slower than a laptop
+    // (the journeys file: ~20 s locally, ~140 s on CI). Hooks build a full
+    // Fastify app per test, so they get the same budget as tests, in line
+    // with the other workspace packages.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     // The dual-backend store suites reset Postgres state with
     // `DROP SCHEMA public CASCADE` in beforeEach. When the Postgres leg runs
     // (TEST_DATABASE_URL set) those files share ONE database, so running them
