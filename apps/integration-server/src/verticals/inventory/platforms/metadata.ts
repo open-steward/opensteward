@@ -1174,7 +1174,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Kinaxis API documentation is available only to customers, so the hosts, token endpoint and resource paths this adapter uses cannot be verified.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {

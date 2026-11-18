@@ -833,7 +833,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'This adapter calls a host that does not exist. The Gmarket ESM Trading API uses signed JWT requests and needs a rewrite.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -1323,7 +1322,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Bold Commerce is a checkout and subscription add-on rather than a store backend, and its catalog and order APIs are not publicly available.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -1574,7 +1572,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     founded_year: 1997,
     unsupported: {
       reason: 'GoDaddy does not offer a public commerce API for Websites + Commerce stores.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -1695,7 +1692,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     founded_year: 2007,
     unsupported: {
       reason: 'Jimdo does not offer a developer API.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -1791,7 +1787,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'LogiCommerce API access is partner-gated and its reference documentation is not publicly readable.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -1809,7 +1804,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'The documented Loja Integrada API is discontinued, and the current API specification is not publicly readable.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -2151,7 +2145,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     founded_year: 2011,
     unsupported: {
       reason: 'Sellfy does not offer a public integration API.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -2195,7 +2188,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Shogun retired the product this adapter targeted, and its API is no longer available.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -2212,7 +2204,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     founded_year: 2015,
     unsupported: {
       reason: 'Shopaccino publishes no developer API documentation.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {
@@ -2481,7 +2472,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'The Weebly developer platform has been shut down, and Square offers no replacement API for these sites.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
     },
   },
   {

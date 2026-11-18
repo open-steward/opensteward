@@ -155,7 +155,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'The AccountsIQ API is SOAP, but this adapter sends its data calls to REST endpoints that do not exist.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -186,7 +185,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Acumatica are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -725,7 +723,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'The ContPAQi data host this adapter calls refuses every request, and the public developer portal only offers the CFDI stamping and cancellation API, so there is no documented accounting API to connect to.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -912,7 +909,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Ecount requires a zone lookup and a session login, but this adapter calls a fixed host with a bearer token Ecount does not accept.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -1249,7 +1245,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'FrontAccounting has no token API, and this adapter calls an endpoint that does not exist.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -1280,7 +1275,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Giddh endpoints include the company in every path and could not be verified, and this adapter calls paths without it.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {
@@ -2883,7 +2877,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Abacus are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -3408,7 +3401,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'MRI Software uses Basic authentication against MRIAPIServices, but this adapter calls OAuth and REST endpoints MRI does not provide.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
     },
   },
   {

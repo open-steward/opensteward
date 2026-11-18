@@ -1015,13 +1015,16 @@ describe('Journey: An operator sees an unsupported platform but can never connec
       },
     })
 
-  it('enabling a platform whose client targets a missing API is refused with the reason and issue', async () => {
+  it('enabling a platform whose client targets a missing API is refused with the reason', async () => {
     const res = await enable('accounting', 'giddh')
     expect(res.statusCode).toBe(400)
     const error = res.json().error as { code: string; reason: string; issueUrl?: string }
     expect(error.code).toBe('PLATFORM_UNSUPPORTED')
     expect(error.reason.trim().length).toBeGreaterThan(20)
-    expect(error.issueUrl).toBe('https://github.com/open-steward/opensteward/issues/445')
+    expect(error.reason).toContain('Giddh')
+    // Shipped metadata carries no tracking-issue links: none of them would
+    // resolve on the public repo.
+    expect(error).not.toHaveProperty('issueUrl')
   })
 
   it('the refused platform stays listed for the operator, carrying its reason', async () => {
@@ -1037,17 +1040,16 @@ describe('Journey: An operator sees an unsupported platform but can never connec
     }>
     const giddh = rows.find((r) => r.slug === 'giddh')
     expect(giddh?.enabled).toBe(false)
-    expect(giddh?.unsupported?.issueUrl).toBe(
-      'https://github.com/open-steward/opensteward/issues/445',
-    )
+    expect(giddh?.unsupported?.reason).toContain('Giddh')
+    expect(giddh?.unsupported).not.toHaveProperty('issueUrl')
   })
 
-  it('enabling a per-instance OAuth platform is refused, pointing at the per-connection client issue', async () => {
+  it('enabling a per-instance OAuth platform is refused, naming the missing per-connection client support', async () => {
     const res = await enable('crm', 'accelo')
     expect(res.statusCode).toBe(400)
     expect(res.json().error).toMatchObject({
       code: 'PLATFORM_UNSUPPORTED',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
+      reason: expect.stringContaining('Per-connection client credentials are not supported yet'),
     })
   })
 
@@ -1060,7 +1062,7 @@ describe('Journey: An operator sees an unsupported platform but can never connec
     expect(res.headers.location).toBeUndefined()
     expect(res.json().error).toMatchObject({
       code: 'PLATFORM_UNSUPPORTED',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/447',
+      reason: 'Jimdo does not offer a developer API.',
     })
   })
 

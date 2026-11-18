@@ -33651,7 +33651,7 @@ components:
               type: string
               format: uri
               description: Tracking issue for adding support, when one exists.
-              example: https://github.com/open-steward/opensteward/issues/445
+              example: https://example.com/issues/123
     AdapterRow:
       type: object
       required:
@@ -33686,7 +33686,7 @@ components:
             issueUrl:
               type: string
               format: uri
-              example: https://github.com/open-steward/opensteward/issues/445
+              example: https://example.com/issues/123
     SyncJob:
       type: object
       description: Background sync job. Created by `POST /v1/{vertical}/sync`.

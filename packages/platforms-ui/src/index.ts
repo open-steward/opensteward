@@ -72,7 +72,7 @@ export interface PlatformEntry {
   unsupported?: {
     /** Why the platform cannot be connected today. */
     reason: string
-    /** Tracking issue, e.g. https://github.com/open-steward/opensteward/issues/445 */
+    /** Tracking issue, e.g. https://github.com/open-steward/opensteward/issues/<n> */
     issueUrl?: string
   }
   /**

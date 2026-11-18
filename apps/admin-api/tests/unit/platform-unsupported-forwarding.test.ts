@@ -50,7 +50,7 @@ const PLATFORM_UNSUPPORTED_BODY = {
     message:
       "Acme ERP is not supported: OAuth client must be registered inside each customer's own instance.",
     reason: "OAuth client must be registered inside each customer's own instance.",
-    issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
+    issueUrl: 'https://github.com/open-steward/opensteward/issues/1',
   },
 }
 

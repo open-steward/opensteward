@@ -724,7 +724,7 @@ export const PlatformUnsupported = z
     }),
     issueUrl: z.string().url().optional().meta({
       description: 'Tracking issue for adding support, when one exists.',
-      example: 'https://github.com/open-steward/opensteward/issues/445',
+      example: 'https://example.com/issues/123',
     }),
   })
   .meta({

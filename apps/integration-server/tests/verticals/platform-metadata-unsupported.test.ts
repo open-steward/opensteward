@@ -95,7 +95,7 @@ describe('platform metadata: unsupported entries', () => {
       expect(
         isValidUnsupported({
           reason: 'Per-instance OAuth client',
-          issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
+          issueUrl: 'https://github.com/open-steward/opensteward/issues/1',
         }),
       ).toBe(true)
     })

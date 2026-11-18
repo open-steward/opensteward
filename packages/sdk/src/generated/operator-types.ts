@@ -6952,7 +6952,7 @@ export interface components {
       /**
        * Format: uri
        * @description Tracking issue for adding support, when one exists.
-       * @example https://github.com/open-steward/opensteward/issues/445
+       * @example https://example.com/issues/123
        */
       issueUrl?: string
     }

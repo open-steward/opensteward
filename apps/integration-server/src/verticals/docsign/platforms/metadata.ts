@@ -782,7 +782,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Agiloft are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1090,7 +1089,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Icertis are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1134,7 +1132,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Ironclad are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {

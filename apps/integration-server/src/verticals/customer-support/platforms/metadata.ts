@@ -607,7 +607,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for eGain are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -731,7 +730,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Genesys Cloud are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {

@@ -70,8 +70,7 @@
       "domain": "abacus.ch",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Abacus are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Abacus are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -226,8 +225,7 @@
       "domain": "accountsiq.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "The AccountsIQ API is SOAP, but this adapter sends its data calls to REST endpoints that do not exist.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "The AccountsIQ API is SOAP, but this adapter sends its data calls to REST endpoints that do not exist."
       }
     },
     {
@@ -287,8 +285,7 @@
       "domain": "acumatica.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Acumatica are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Acumatica are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -1299,8 +1296,7 @@
       "domain": "contpaqi.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "The ContPAQi data host this adapter calls refuses every request, and the public developer portal only offers the CFDI stamping and cancellation API, so there is no documented accounting API to connect to.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "The ContPAQi data host this adapter calls refuses every request, and the public developer portal only offers the CFDI stamping and cancellation API, so there is no documented accounting API to connect to."
       }
     },
     {
@@ -1683,8 +1679,7 @@
       "domain": "ecounterp.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Ecount requires a zone lookup and a session login, but this adapter calls a fixed host with a bearer token Ecount does not accept.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "Ecount requires a zone lookup and a session login, but this adapter calls a fixed host with a bearer token Ecount does not accept."
       }
     },
     {
@@ -2220,8 +2215,7 @@
       "domain": "frontaccounting.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "FrontAccounting has no token API, and this adapter calls an endpoint that does not exist.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "FrontAccounting has no token API, and this adapter calls an endpoint that does not exist."
       }
     },
     {
@@ -2262,8 +2256,7 @@
       "domain": "giddh.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Giddh endpoints include the company in every path and could not be verified, and this adapter calls paths without it.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "Giddh endpoints include the company in every path and could not be verified, and this adapter calls paths without it."
       }
     },
     {
@@ -3311,8 +3304,7 @@
       "domain": "mrisoftware.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "MRI Software uses Basic authentication against MRIAPIServices, but this adapter calls OAuth and REST endpoints MRI does not provide.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "MRI Software uses Basic authentication against MRIAPIServices, but this adapter calls OAuth and REST endpoints MRI does not provide."
       }
     },
     {
@@ -5406,8 +5398,7 @@
       "domain": "1crm.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for 1CRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for 1CRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -5429,8 +5420,7 @@
       "domain": "accelo.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Accelo are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Accelo are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -5737,8 +5727,7 @@
       "domain": "carerix.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Carerix are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Carerix are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -5988,8 +5977,7 @@
       "domain": "cortezaproject.org",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Corteza are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Corteza are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -6011,8 +5999,7 @@
       "domain": "creatio.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Creatio are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Creatio are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -7118,8 +7105,7 @@
       "domain": "oroinc.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for OroCRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for OroCRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -7179,8 +7165,7 @@
       "domain": "pega.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Pega are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Pega are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -8668,8 +8653,7 @@
       "domain": "egain.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for eGain are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for eGain are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -8881,8 +8865,7 @@
       "domain": "genesys.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Genesys Cloud are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Genesys Cloud are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -10389,8 +10372,7 @@
       "domain": "agiloft.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Agiloft are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Agiloft are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -11213,8 +11195,7 @@
       "domain": "icertis.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Icertis are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Icertis are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -11293,8 +11274,7 @@
       "domain": "ironcladapp.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Ironclad are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Ironclad are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -12779,8 +12759,7 @@
       "domain": "boldcommerce.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Bold Commerce is a checkout and subscription add-on rather than a store backend, and its catalog and order APIs are not publicly available.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "Bold Commerce is a checkout and subscription add-on rather than a store backend, and its catalog and order APIs are not publicly available."
       }
     },
     {
@@ -13467,8 +13446,7 @@
       "domain": "gmarket.co.kr",
       "has_guide": false,
       "unsupported": {
-        "reason": "This adapter calls a host that does not exist. The Gmarket ESM Trading API uses signed JWT requests and needs a rewrite.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "This adapter calls a host that does not exist. The Gmarket ESM Trading API uses signed JWT requests and needs a rewrite."
       }
     },
     {
@@ -13490,8 +13468,7 @@
       "domain": "godaddy.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "GoDaddy does not offer a public commerce API for Websites + Commerce stores.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "GoDaddy does not offer a public commerce API for Websites + Commerce stores."
       }
     },
     {
@@ -13722,8 +13699,7 @@
       "domain": "jimdo.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Jimdo does not offer a developer API.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "Jimdo does not offer a developer API."
       }
     },
     {
@@ -13954,8 +13930,7 @@
       "domain": "logicommerce.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "LogiCommerce API access is partner-gated and its reference documentation is not publicly readable.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "LogiCommerce API access is partner-gated and its reference documentation is not publicly readable."
       }
     },
     {
@@ -13977,8 +13952,7 @@
       "domain": "lojaintegrada.com.br",
       "has_guide": false,
       "unsupported": {
-        "reason": "The documented Loja Integrada API is discontinued, and the current API specification is not publicly readable.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "The documented Loja Integrada API is discontinued, and the current API specification is not publicly readable."
       }
     },
     {
@@ -14798,8 +14772,7 @@
       "domain": "sellfy.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Sellfy does not offer a public integration API.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "Sellfy does not offer a public integration API."
       }
     },
     {
@@ -14878,8 +14851,7 @@
       "domain": "getshogun.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Shogun retired the product this adapter targeted, and its API is no longer available.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "Shogun retired the product this adapter targeted, and its API is no longer available."
       }
     },
     {
@@ -14901,8 +14873,7 @@
       "domain": "shopaccino.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Shopaccino publishes no developer API documentation.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "Shopaccino publishes no developer API documentation."
       }
     },
     {
@@ -15691,8 +15662,7 @@
       "domain": "weebly.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "The Weebly developer platform has been shut down, and Square offers no replacement API for these sites.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/447"
+        "reason": "The Weebly developer platform has been shut down, and Square offers no replacement API for these sites."
       }
     },
     {
@@ -16945,8 +16915,7 @@
       "domain": "kinaxis.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Kinaxis API documentation is available only to customers, so the hosts, token endpoint and resource paths this adapter uses cannot be verified.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/445"
+        "reason": "Kinaxis API documentation is available only to customers, so the hosts, token endpoint and resource paths this adapter uses cannot be verified."
       }
     },
     {
@@ -27966,8 +27935,7 @@
       "domain": "height.app",
       "has_guide": false,
       "unsupported": {
-        "reason": "Height shut down on 2025-09-24. api.height.app no longer resolves, so no connection can be made.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/507"
+        "reason": "Height shut down on 2025-09-24. api.height.app no longer resolves, so no connection can be made."
       }
     },
     {
@@ -28483,8 +28451,7 @@
       "domain": "ones.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for ONES are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for ONES are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -28506,8 +28473,7 @@
       "domain": "openproject.org",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for OpenProject are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for OpenProject are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -28605,8 +28571,7 @@
       "domain": "pivotaltracker.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "Pivotal Tracker was sunset on 2025-04-30 for all plan tiers. pivotaltracker.com no longer resolves, so no connection can be made.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/507"
+        "reason": "Pivotal Tracker was sunset on 2025-04-30 for all plan tiers. pivotaltracker.com no longer resolves, so no connection can be made."
       }
     },
     {
@@ -29103,8 +29068,7 @@
       "domain": "netsuite.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for SuiteProjects Pro are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for SuiteProjects Pro are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
@@ -29506,8 +29470,7 @@
       "domain": "adobe.com",
       "has_guide": false,
       "unsupported": {
-        "reason": "OAuth clients for Workfront are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.",
-        "issueUrl": "https://github.com/open-steward/opensteward/issues/446"
+        "reason": "OAuth clients for Workfront are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet."
       }
     },
     {
