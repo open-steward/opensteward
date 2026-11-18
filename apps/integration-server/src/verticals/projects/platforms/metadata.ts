@@ -288,7 +288,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Height shut down on 2025-09-24. api.height.app no longer resolves, so no connection can be made.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/507',
     },
   },
   {
@@ -590,7 +589,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'Pivotal Tracker was sunset on 2025-04-30 for all plan tiers. pivotaltracker.com no longer resolves, so no connection can be made.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/507',
     },
   },
   {
@@ -1065,7 +1063,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for ONES are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1083,7 +1080,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for OpenProject are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1387,7 +1383,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for SuiteProjects Pro are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1574,7 +1569,6 @@ export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Workfront are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {

@@ -61,7 +61,7 @@ describe('unsupportedRefusal', () => {
   it('includes `issueUrl` when present', () => {
     const info: UnsupportedPlatform = {
       reason: 'Per-instance OAuth client cannot be authorized by our deployment-wide app',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
+      issueUrl: 'https://github.com/open-steward/opensteward/issues/1',
     }
     const body = unsupportedRefusal('Acme Corp', info)
     expect(body).toEqual({
@@ -70,7 +70,7 @@ describe('unsupportedRefusal', () => {
         message:
           'Acme Corp is not supported: Per-instance OAuth client cannot be authorized by our deployment-wide app',
         reason: 'Per-instance OAuth client cannot be authorized by our deployment-wide app',
-        issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
+        issueUrl: 'https://github.com/open-steward/opensteward/issues/1',
       },
     })
   })

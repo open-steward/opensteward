@@ -558,7 +558,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Creatio are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1455,7 +1454,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for 1CRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1474,7 +1472,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Accelo are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1520,7 +1517,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Carerix are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1633,7 +1629,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Corteza are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1953,7 +1948,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for OroCRM are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {
@@ -1972,7 +1966,6 @@ const PLATFORMS_ARRAY: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         'OAuth clients for Pega are registered inside each customer instance, so one deployment-wide client cannot connect different customers. Per-connection client credentials are not supported yet.',
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/446',
     },
   },
   {

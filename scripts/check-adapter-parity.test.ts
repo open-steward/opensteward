@@ -43,7 +43,7 @@ const MULTI_LINE = `export const PLATFORMS: ReadonlyArray<PlatformMetadata> = [
     unsupported: {
       reason:
         "OAuth client must be registered inside each customer's own instance; not supported yet.",
-      issueUrl: 'https://github.com/open-steward/opensteward/issues/445',
+      issueUrl: 'https://github.com/open-steward/opensteward/issues/1',
     },
   },
   {

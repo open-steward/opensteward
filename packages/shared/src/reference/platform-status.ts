@@ -16,7 +16,7 @@
 export interface UnsupportedPlatform {
   /** Why the platform cannot be connected today. Shown in admin, catalog, API errors. */
   reason: string
-  /** Tracking issue, e.g. https://github.com/open-steward/opensteward/issues/445 */
+  /** Tracking issue, e.g. https://github.com/open-steward/opensteward/issues/<n> */
   issueUrl?: string
 }
 
