@@ -1,7 +1,7 @@
 ARG APP
 
 # ── Build stage ──────────────────────────────────────────────────────────────
-FROM node:24-alpine AS builder
+FROM node:25-alpine AS builder
 # python3/make/g++ required by node-gyp to compile better-sqlite3 from source on musl/Alpine
 RUN apk add --no-cache python3 make g++
 RUN corepack enable && corepack prepare pnpm@9 --activate
@@ -197,7 +197,7 @@ RUN mkdir -p /assets \
     done
 
 # ── Runtime stage ────────────────────────────────────────────────────────────
-FROM node:24-alpine
+FROM node:25-alpine
 # No compiler toolchain here, deliberately. `apk add python3 make g++` used to
 # be repeated in this stage. Measured on node:24-alpine: it takes the image
 # from 18 to 48 apk packages and adds 273 MB — and node-gyp never ran, because
